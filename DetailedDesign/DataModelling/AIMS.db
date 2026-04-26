@@ -1,0 +1,180 @@
+CREATE TABLE "Role" (
+    "roleID" SERIAL PRIMARY KEY,
+    "name" VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE "User" (
+    "userID" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255),
+    "email" VARCHAR(255) UNIQUE,
+    "password" VARCHAR(255),
+    "status" VARCHAR(20)
+);
+
+CREATE TABLE "User_Role" (
+    "userID" INT REFERENCES "User"("userID") ON DELETE CASCADE,
+    "roleID" INT REFERENCES "Role"("roleID") ON DELETE CASCADE,
+    PRIMARY KEY ("userID", "roleID")
+);
+
+CREATE TABLE "ActionLogHistory" (
+    "ActionLogHistoryID" SERIAL PRIMARY KEY,
+    "performedBy" INT REFERENCES "User"("userID"),
+    "type" VARCHAR(50),
+    "description" TEXT,
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "Order" (
+    "orderID" SERIAL PRIMARY KEY,
+    "shippingFee" DOUBLE PRECISION,
+    "status" VARCHAR(50),
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "DeliveryInfo" (
+    "deliveryID" SERIAL PRIMARY KEY,
+    "orderID" INT UNIQUE REFERENCES "Order"("orderID") ON DELETE CASCADE,
+    "receiverName" VARCHAR(255),
+    "email" VARCHAR(255),
+    "phoneNumber" VARCHAR(20),
+    "address" VARCHAR(255),
+    "province" VARCHAR(100),
+    "delivery_notes" TEXT
+);
+
+CREATE TABLE "Invoice" (
+    "invoiceID" SERIAL PRIMARY KEY,
+    "orderID" INT UNIQUE REFERENCES "Order"("orderID") ON DELETE CASCADE,
+    "totalExcludeVAT" DOUBLE PRECISION,
+    "totalIncludeVAT" DOUBLE PRECISION,
+    "shippingFee" DOUBLE PRECISION,
+    "totalPayment" DOUBLE PRECISION,
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "PaymentTransaction" (
+    "transactionID" SERIAL PRIMARY KEY,
+    "invoiceID" INT REFERENCES "Invoice"("invoiceID") ON DELETE CASCADE,
+    "method" VARCHAR(45),
+    "amount" DOUBLE PRECISION,
+    "transactionContent" TEXT,
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "PaypalTransaction" (
+    "payPalTransactionID" SERIAL PRIMARY KEY,
+    "transactionID" INT UNIQUE REFERENCES "PaymentTransaction"("transactionID") ON DELETE CASCADE,
+    "payPalOrderID" VARCHAR(100),
+    "payPalCaptureID" VARCHAR(100),
+    "payerID" VARCHAR(100),
+    "amount" DOUBLE PRECISION,
+    "status" VARCHAR(50)
+);
+
+CREATE TABLE "Product" (
+    "productID" SERIAL PRIMARY KEY,
+    "title" VARCHAR(255),
+    "category" VARCHAR(45),
+    "description" TEXT,
+    "barcode" VARCHAR(50),
+    "length" DOUBLE PRECISION,
+    "width" DOUBLE PRECISION,
+    "height" DOUBLE PRECISION,
+    "weight" DOUBLE PRECISION,
+    "originalValue" DOUBLE PRECISION,
+    "currentPrice" DOUBLE PRECISION,
+    "quantityInStock" INT,
+    "status" VARCHAR(20),
+    "imageUrl" VARCHAR(255)
+);
+
+CREATE TABLE "OrderItem" (
+    "orderItemID" SERIAL PRIMARY KEY,
+    "orderID" INT REFERENCES "Order"("orderID") ON DELETE CASCADE,
+    "productID" INT REFERENCES "Product"("productID") ON DELETE CASCADE,
+    "quantity" INT,
+    "unitPrice" DOUBLE PRECISION
+);
+
+CREATE TABLE "ProductHistoryLog" (
+    "ProductHistoryLogID" SERIAL PRIMARY KEY,
+    "productID" INT REFERENCES "Product"("productID") ON DELETE CASCADE,
+    "performedBy" INT REFERENCES "User"("userID"),
+    "updatedBy" VARCHAR(255),
+    "action" VARCHAR(50),
+    "reason" TEXT,
+    "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "description" TEXT
+);
+
+CREATE TABLE "PrintableProduct" (
+    "productID" INT PRIMARY KEY REFERENCES "Product"("productID") ON DELETE CASCADE,
+    "type" VARCHAR(45),
+    "publisher" VARCHAR(255),
+    "publishDate" TIMESTAMP,
+    "language" VARCHAR(45)
+);
+
+CREATE TABLE "Book" (
+    "productID" INT PRIMARY KEY REFERENCES "PrintableProduct"("productID") ON DELETE CASCADE,
+    "coverType" VARCHAR(45),
+    "numberOfPage" INT,
+    "bookCategory" VARCHAR(100)
+);
+
+CREATE TABLE "Newspaper" (
+    "productID" INT PRIMARY KEY REFERENCES "PrintableProduct"("productID") ON DELETE CASCADE,
+    "editorInChief" VARCHAR(255),
+    "issueNumber" VARCHAR(50),
+    "publicationFrequency" VARCHAR(50),
+    "issn" VARCHAR(50),
+    "sections" TEXT
+);
+
+CREATE TABLE "DiscProduct" (
+    "productID" INT PRIMARY KEY REFERENCES "Product"("productID") ON DELETE CASCADE,
+    "type" VARCHAR(45),
+    "genre" VARCHAR(100),
+    "language" VARCHAR(45),
+    "releasedDate" TIMESTAMP
+);
+
+CREATE TABLE "CD" (
+    "productID" INT PRIMARY KEY REFERENCES "DiscProduct"("productID") ON DELETE CASCADE,
+    "artists" VARCHAR(255),
+    "recordLabel" VARCHAR(255),
+    "musicType" VARCHAR(45)
+);
+
+CREATE TABLE "DVD" (
+    "productID" INT PRIMARY KEY REFERENCES "DiscProduct"("productID") ON DELETE CASCADE,
+    "discType" VARCHAR(45),
+    "director" VARCHAR(255),
+    "runtime" INT,
+    "studio" VARCHAR(255),
+    "subtitles" VARCHAR(255)
+);
+
+CREATE TABLE "Track" (
+    "trackID" SERIAL PRIMARY KEY,
+    "title" VARCHAR(255),
+    "length" INT
+);
+
+CREATE TABLE "CD_Track" (
+    "productID" INT REFERENCES "CD"("productID") ON DELETE CASCADE,
+    "trackID" INT REFERENCES "Track"("trackID") ON DELETE CASCADE,
+    PRIMARY KEY ("productID", "trackID")
+);
+
+CREATE TABLE "Author" (
+    "authorID" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255)
+);
+
+CREATE TABLE "Book_Author" (
+    "productID" INT REFERENCES "Book"("productID") ON DELETE CASCADE,
+    "authorID" INT REFERENCES "Author"("authorID") ON DELETE CASCADE,
+    PRIMARY KEY ("productID", "authorID")
+);
