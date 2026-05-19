@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { ProductDetail } from './domain/product.entity';
-import { UserRole } from './domain/user-role.enum';
-import { ProductForbiddenException } from './exceptions/product-forbidden.exception';
+import type { ProductDTO } from './domain/product.entity';
+import { normalizeUserRole, UserRole } from './domain/user-role.enum';
+import { ProductHiddenException } from './exceptions/product-hidden.exception';
 import { ProductNotFoundException } from './exceptions/product-not-found.exception';
 import { PRODUCT_REPOSITORY } from './product.repository';
 import type { ProductRepository } from './product.repository';
@@ -13,27 +13,34 @@ export class ProductService {
     private readonly productRepository: ProductRepository,
   ) {}
 
-  async findProductDetail(
+  async viewProductDetails(
     productID: number,
-    userRole: UserRole = UserRole.Customer,
-  ): Promise<ProductDetail> {
+    userRole: string = UserRole.Customer,
+  ): Promise<ProductDTO> {
     const product = await this.productRepository.findOne(productID);
 
     if (!product) {
       throw new ProductNotFoundException(productID);
     }
 
-    if (!product.isViewableBy(userRole)) {
-      throw new ProductForbiddenException(productID);
+    if (!product.isViewableBy(normalizeUserRole(userRole))) {
+      throw new ProductHiddenException(productID);
     }
 
-    return product.toDetail();
+    return product.toDTO();
+  }
+
+  async findProductDetail(
+    productID: number,
+    userRole: string = UserRole.Customer,
+  ): Promise<ProductDTO> {
+    return this.viewProductDetails(productID, userRole);
   }
 
   async getProductDetail(
     productID: number,
-    userRole: UserRole = UserRole.Customer,
-  ): Promise<ProductDetail> {
-    return this.findProductDetail(productID, userRole);
+    userRole: string = UserRole.Customer,
+  ): Promise<ProductDTO> {
+    return this.viewProductDetails(productID, userRole);
   }
 }

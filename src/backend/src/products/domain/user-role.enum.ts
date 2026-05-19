@@ -1,10 +1,10 @@
 export enum UserRole {
   Customer = 'Customer',
-  ProductManager = 'Product Manager',
+  ProductManager = 'ProductManager',
 }
 
 export function normalizeUserRole(role?: string): UserRole {
-  if (role === UserRole.ProductManager || role === 'ProductManager') {
+  if (role === UserRole.ProductManager || role === 'Product Manager') {
     return UserRole.ProductManager;
   }
 

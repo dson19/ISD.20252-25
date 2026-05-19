@@ -3,7 +3,7 @@ import { UserRole } from './user-role.enum';
 
 export type ProductSpecifications = Readonly<Record<string, unknown>>;
 
-export type ProductDetail = Readonly<{
+export type ProductDTO = Readonly<{
   productID: number;
   title: string;
   category: string;
@@ -57,7 +57,7 @@ export class Product {
     );
   }
 
-  toDetail(): ProductDetail {
+  toDTO(): ProductDTO {
     return {
       productID: this.props.productID,
       title: this.props.title,
