@@ -64,5 +64,38 @@ export class PaymentService {
         return { success: false };
       }
     }
+
+    if (actionType === 'PAYPAL_REFUND') {
+      const requiredFields = ['captureID'];
+      const missingFields = requiredFields.filter(field => data[field] === undefined || data[field] === null || data[field] === '');
+
+      if (missingFields.length > 0) {
+        throw new Error(`Thiếu các tham số bắt buộc: ${missingFields.join(', ')}`);
+      }
+
+      const body: any = {};
+      if (data.amount && data.amount > 0) {
+        body.amount = {
+          value: data.amount.toString(),
+          currency_code: 'USD'
+        };
+      }
+
+      try {
+        const response = await this.httpService.post(`https://api-m.sandbox.paypal.com/v2/payments/captures/${data.captureID}/refund`, body);
+        
+        if (response.data.status === 'COMPLETED') {
+          const transaction = await this.paypalRepo.findOne({ where: { captureID: data.captureID } });
+          if (transaction) {
+            transaction.status = 'REFUNDED';
+            await this.paypalRepo.save(transaction);
+          }
+          return { success: true, refundID: response.data.id };
+        }
+        return { success: false };
+      } catch (error) {
+        throw new Error( 'PayPal Refund Error');
+      }
+    }
   }
 }

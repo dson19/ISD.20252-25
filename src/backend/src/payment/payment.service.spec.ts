@@ -100,5 +100,61 @@ describe('PaymentService', () => {
       });
     });
 
+    describe('PAYPAL_REFUND', () => {
+      it('nên ném lỗi khi thiếu tham số captureID', async () => {
+        await expect(
+          service.payThroughGatewayService('PAYPAL_REFUND', {})
+        ).rejects.toThrow('Thiếu các tham số bắt buộc: captureID');
+      });
+
+      it('nên ném lỗi khi số tiền amount nhỏ hơn hoặc bằng 0', async () => {
+        const payload = { captureID: 'CAP-123', amount: 0 };
+        await expect(
+          service.payThroughGatewayService('PAYPAL_REFUND', payload)
+        ).rejects.toThrow('PayPal Refund Error');
+      });
+
+      it('nên ném lỗi khi không tìm thấy giao dịch tương ứng với captureID trong database', async () => {
+        const payload = { captureID: 'NOT_FOUND', amount: 50 };
+        paypalRepoMock.findOne.mockResolvedValue(null);
+
+        await expect(
+          service.payThroughGatewayService('PAYPAL_REFUND', payload)
+        ).rejects.toThrow('PayPal Refund Error');
+      });
+
+      it('nên hoàn tiền một phần thành công khi các tham số đều hợp lệ', async () => {
+        const payload = { captureID: 'CAP-123', amount: 40 };
+        const mockTransaction = { captureID: 'CAP-123', totalPayment: 100, status: 'APPROVED' };
+        
+        paypalRepoMock.findOne.mockResolvedValue(mockTransaction);
+        httpServiceMock.post.mockResolvedValue({
+          data: { status: 'COMPLETED', id: 'REF-111' }
+        });
+
+        const result = await service.payThroughGatewayService('PAYPAL_REFUND', payload);
+
+        expect(result).toEqual({ success: true, refundID: 'REF-111' });
+        expect(paypalRepoMock.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'REFUNDED' }));
+      });
+
+      it('nên hoàn tiền toàn bộ 100% thành công khi không truyền tham số amount', async () => {
+        const payload = { captureID: 'CAP-123' };
+        const mockTransaction = { captureID: 'CAP-123', totalPayment: 100, status: 'APPROVED' };
+        
+        paypalRepoMock.findOne.mockResolvedValue(mockTransaction);
+        httpServiceMock.post.mockResolvedValue({
+          data: { status: 'COMPLETED', id: 'REF-222' }
+        });
+
+        const result = await service.payThroughGatewayService('PAYPAL_REFUND', payload);
+
+        expect(result).toEqual({ success: true, refundID: 'REF-222' });
+        expect(httpServiceMock.post).toHaveBeenCalledWith(expect.any(String), {});
+        expect(paypalRepoMock.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'REFUNDED' }));
+      });
+
+    });
+
   });
 });
