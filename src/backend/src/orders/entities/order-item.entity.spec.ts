@@ -12,23 +12,23 @@ describe('OrderItem.calculateSubTotal', () => {
     expect(item.calculateSubTotal()).toBe(120000);
   });
 
-  it('O_TC02 throws InvalidQuantityException when quantity is zero or negative', () => {
-    const zeroQuantityItem = new OrderItem({
+  it('O_TC02a throws InvalidQuantityException when quantity is zero', () => {
+    const item = new OrderItem({
       productId: 'book-001',
       quantity: 0,
       unitPrice: 30000,
     });
-    const negativeQuantityItem = new OrderItem({
+
+    expect(() => item.calculateSubTotal()).toThrow(InvalidQuantityException);
+  });
+
+  it('O_TC02b throws InvalidQuantityException when quantity is negative', () => {
+    const item = new OrderItem({
       productId: 'book-001',
       quantity: -1,
       unitPrice: 30000,
     });
 
-    expect(() => zeroQuantityItem.calculateSubTotal()).toThrow(
-      InvalidQuantityException,
-    );
-    expect(() => negativeQuantityItem.calculateSubTotal()).toThrow(
-      InvalidQuantityException,
-    );
+    expect(() => item.calculateSubTotal()).toThrow(InvalidQuantityException);
   });
 });
