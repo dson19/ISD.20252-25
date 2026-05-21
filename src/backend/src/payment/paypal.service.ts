@@ -49,7 +49,6 @@ export class PaypalService {
         }
     }
 
-    // 2. Tạo đơn thanh toán trên PayPal (Create Order)
     async createOrderInPaypal(orderId: number) {
         const order = await this.orderRepository.findById(orderId);
         if (!order) {
@@ -97,13 +96,10 @@ export class PaypalService {
 
             const paypalOrder: any = await response.json();
 
-            // Lưu trữ thông tin giao dịch chung ở dạng PENDING
             const paymentTx = await this.paymentRepository.createTransaction(orderId, vndAmount, 'PAYPAL');
 
-            // Lưu trữ thông tin giao dịch cụ thể của PayPal
             await this.paypalRepository.createPaypalTx(paypalOrder.id, paymentTx.transactionID, paypalOrder.status);
 
-            // Tìm link approve để gửi về cho frontend redirect
             const approveLink = paypalOrder.links.find((l: any) => l.rel === 'approve')?.href;
 
             return {
@@ -116,7 +112,6 @@ export class PaypalService {
         }
     }
 
-    // 3. Khấu trừ tiền thanh toán (Capture Order)
     async captureOrderInPaypal(paypalOrderID: string, orderId: number) {
         const { apiBaseUrl } = this.getPaypalConfig();
         const accessToken = await this.getAccessToken();
@@ -136,18 +131,17 @@ export class PaypalService {
             }
 
             const captureData: any = await response.json();
-            const status = captureData.status; // COMPLETED, etc.
+            const status = captureData.status;
 
             if (status === 'COMPLETED') {
                 const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id;
 
-                // Cập nhật thông tin giao dịch PayPal
                 await this.paypalRepository.updatePaypalTx(paypalOrderID, {
                     paypalCaptureID: captureId,
                     status: status,
                 });
 
-                // Tìm thông tin giao dịch PayPal trong DB để cập nhật giao dịch chung
+
                 const paypalTx = await this.paypalRepository.findByPaypalOrderId(paypalOrderID);
                 if (paypalTx && paypalTx.paymentTransaction) {
                     await this.paymentRepository.updateTransactionStatus(
@@ -156,7 +150,6 @@ export class PaypalService {
                     );
                 }
 
-                // Cập nhật trạng thái Order trong hệ thống thành PENDING_PROCESSING
                 await this.orderRepository.updateStatus(orderId, 'PENDING_PROCESSING');
             }
 
@@ -166,7 +159,6 @@ export class PaypalService {
         }
     }
 
-    // 4. Hoàn tiền giao dịch (Refund Order)
     async refundOrderInPaypal(orderId: number) {
         const { apiBaseUrl } = this.getPaypalConfig();
         const accessToken = await this.getAccessToken();
@@ -196,7 +188,6 @@ export class PaypalService {
 
             const refundData: any = await response.json();
 
-            // Cập nhật trạng thái giao dịch
             await this.paypalRepository.updatePaypalTx(paypalTx.paypalOrderID, {
                 status: 'REFUNDED',
             });
@@ -208,7 +199,6 @@ export class PaypalService {
                 );
             }
 
-            // Cập nhật trạng thái đơn hàng thành CANCELLED
             await this.orderRepository.updateStatus(orderId, 'CANCELLED');
 
             return refundData;
