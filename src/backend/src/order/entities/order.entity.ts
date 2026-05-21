@@ -9,8 +9,8 @@ import {
   OneToOne,
   Check
 } from 'typeorm';
-import { OrderItem } from './orderItem.entity';
-import { DeliveryInfo } from './deliveryInfo.entity';
+import { OrderItem } from './order-item.entity';
+import { DeliveryInfo } from './delivery-info.entity';
 import { Invoice } from './invoice.entity';
 
 @Entity('orders')

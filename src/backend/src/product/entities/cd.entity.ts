@@ -1,6 +1,6 @@
 import { Entity, Column, OneToOne, JoinColumn, PrimaryColumn, OneToMany } from 'typeorm';
 import { Product } from './product.entity';
-import { CdTrack } from './cdTrack.entity';
+import { CdTrack } from './cd-track.entity';
 
 @Entity('cds')
 export class Cd {

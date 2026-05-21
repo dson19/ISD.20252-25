@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
-import { PaymentTransaction } from './paymentTransaction.entity';
+import { PaymentTransaction } from './payment-transaction.entity';
 
 @Entity('paypal_transactions')
 export class PaypalTransaction {

@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToOne, JoinColumn, Check } from 'typeorm';
 import { Invoice } from '../../order/entities/invoice.entity'; 
-import { PaypalTransaction } from './payPalTransaction.entity';
+import { PaypalTransaction } from './paypal-transaction.entity';
 
 @Entity('payment_transactions')
 @Check(`amount > 0`)
