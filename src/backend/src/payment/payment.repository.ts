@@ -1,37 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { Order } from '../order/entities/order.entity';
-import { Invoice } from '../order/entities/invoice.entity';
+import { PaymentTransaction } from './entities/payment-transaction.entity';
 
 @Injectable()
 export class PaymentRepository {
-  private orderRepository: Repository<Order>;
-  private invoiceRepository: Repository<Invoice>;
+  private transactionRepository: Repository<PaymentTransaction>;
 
   constructor(private dataSource: DataSource) {
-    this.orderRepository = this.dataSource.getRepository(Order);
-    this.invoiceRepository = this.dataSource.getRepository(Invoice);
+    this.transactionRepository = this.dataSource.getRepository(PaymentTransaction);
   }
 
-  async findOrderById(orderId: number): Promise<Order | null> {
-    return this.orderRepository.findOne({
-      where: { orderID: orderId },
+  async createTransaction(orderId: number, amount: number, method: 'PAYPAL' | 'VIETQR'): Promise<PaymentTransaction> {
+    const newTx = this.transactionRepository.create({
+      order: { orderID: orderId }, 
+      amount,
+      method: method,
+      status: 'PENDING',
     });
+    return await this.transactionRepository.save(newTx);
   }
 
-  async createInvoice(invoiceData: Partial<Invoice>): Promise<Invoice> {
-    const invoice = this.invoiceRepository.create(invoiceData);
-    return this.invoiceRepository.save(invoice);
+  async updateTransactionStatus(transactionId: number, status: 'SUCCESS' | 'FAILED' | 'REFUNDED'): Promise<void> {
+    await this.transactionRepository.update(transactionId, { status });
   }
 
-  async updateOrderStatus(orderId: number, status: string): Promise<void> {
-    await this.orderRepository.update(orderId, { status });
-  }
-
-  async getInvoiceByOrderId(orderId: number): Promise<Invoice | null> {
-    return this.invoiceRepository.findOne({
+  async findTransactionByOrderId(orderId: number): Promise<PaymentTransaction | null> {
+    return await this.transactionRepository.findOne({
       where: { order: { orderID: orderId } },
-      relations: ['order'],
+      order: { createdAt: 'DESC' }, 
     });
   }
 }
