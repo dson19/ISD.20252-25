@@ -29,7 +29,8 @@ import { OrderModule } from './order/order.module';
           database: configService.get('DB_DATABASE'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
-          ssl: isRemote ? { rejectUnauthorized: false } : false
+          ssl: isRemote ? { rejectUnauthorized: false } : false,
+          extra: isRemote ? { statement_timeout: 30000 } : {}
         };
       },
     })

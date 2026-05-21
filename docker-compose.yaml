@@ -11,7 +11,6 @@ services:
       - ./src/backend/.env
     environment:
       - NODE_ENV=development
-      - DB_HOST=db
     volumes:
       - ./src/backend:/usr/src/app
       - /usr/src/app/node_modules
