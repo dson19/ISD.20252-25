@@ -27,8 +27,10 @@ CREATE TABLE "ActionLogHistory" (
 
 CREATE TABLE "Order" (
     "orderID" SERIAL PRIMARY KEY,
-    "shippingFee" DOUBLE PRECISION,
+    "shippingFee" DECIMAL(12, 2),
+    "orderDate" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "status" VARCHAR(50),
+    "totalPayment" DECIMAL(12, 2),
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

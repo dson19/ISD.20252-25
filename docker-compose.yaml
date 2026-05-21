@@ -1,0 +1,39 @@
+services:
+  aims-backend-api:
+    build:
+      context: ./src/backend
+      target: development
+    container_name: aims_backend_api
+    command: npm run start:dev
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./src/backend/.env
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=db
+    volumes:
+      - ./src/backend:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - aims-network
+
+  aims-frontend-app:
+    build:
+      context: ./src/frontend
+      target: development
+    container_name: aims_frontend_app
+    command: ng serve --host 0.0.0.0
+    ports:
+      - '4200:4200'
+    volumes:
+      - ./src/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - aims-backend-api
+    networks:
+      - aims-network
+
+networks:
+  aims-network:
+    driver: bridge
