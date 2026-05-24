@@ -29,7 +29,7 @@ export class ProductLog {
   createdAt: Date; 
 
   
-  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Product, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'product_id' })
-  product: Product;
+  product: Product | null;
 }
