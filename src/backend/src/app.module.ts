@@ -32,7 +32,7 @@ import { PaymentModule } from './payment/payment.module';
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
           ssl: isRemote ? { rejectUnauthorized: false } : false,
-          extra: isRemote ? { statement_timeout: 30000 } : {}
+          extra: isRemote ? { statement_timeout: 30000, maxPreparedStatements: 0 } : {}
         };
       },
     })
