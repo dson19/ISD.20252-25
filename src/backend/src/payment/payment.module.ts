@@ -9,6 +9,7 @@ import { PaypalRepository } from './paypal.repository';
 import { PaypalService } from './paypal.service';
 import { PaymentController } from './paypal.controller';
 import { OrderModule } from '../order/order.module';
+import { PaypalApiClient } from './paypal-api-client';
 
 @Module({
   imports: [
@@ -20,11 +21,13 @@ import { OrderModule } from '../order/order.module';
     PaymentRepository,
     PaypalRepository,
     PaypalService,
+    PaypalApiClient,
   ],
   exports: [
     PaymentRepository,
     PaypalRepository,
     PaypalService,
+    PaypalApiClient,
   ],
 })
 export class PaymentModule { }
