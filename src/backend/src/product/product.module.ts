@@ -6,14 +6,26 @@ import { Newspaper } from './entities/newspaper.entity';
 import { Cd } from './entities/cd.entity';
 import { CdTrack } from './entities/cd-track.entity';
 import { Dvd } from './entities/dvd.entity';
+import { ProductLog } from './entities/product-audit-log.entity';
+import { ProductController } from './product.controller';
 import { ProductRepository } from './product.repository';
+import { ProductService } from './product.service';
+import { ProductValidatorFactory } from './validators/product-validator.factory';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product, Book, Newspaper, Cd, CdTrack, Dvd]),
+    TypeOrmModule.forFeature([
+      Product,
+      Book,
+      Newspaper,
+      Cd,
+      CdTrack,
+      Dvd,
+      ProductLog,
+    ]),
   ],
-  controllers: [],
-  providers: [ProductRepository],
-  exports: [ProductRepository],
+  controllers: [ProductController],
+  providers: [ProductRepository, ProductService, ProductValidatorFactory],
+  exports: [ProductRepository, ProductService],
 })
 export class ProductsModule {}
