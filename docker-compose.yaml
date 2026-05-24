@@ -12,8 +12,8 @@ services:
     environment:
       - NODE_ENV=development
     volumes:
-      - ./src/backend:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./src/backend:/app
+      - /app/node_modules
     networks:
       - aims-network
 
@@ -26,8 +26,8 @@ services:
     ports:
       - '4200:4200'
     volumes:
-      - ./src/frontend:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./src/frontend:/app
+      - /app/node_modules
     depends_on:
       - aims-backend-api
     networks:
