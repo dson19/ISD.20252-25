@@ -4,6 +4,22 @@ import { PaypalTransaction } from './paypal-transaction.entity';
 
 @Entity('payment_transactions')
 @Check(`amount > 0`)
+/**
+ * Lab 11 Design Review
+ * Coupling:
+ * - Data Coupling with gateway-specific transaction entities because it stores shared payment fields and relation ids only.
+ * - Avoids Control Coupling by not deciding which gateway flow should run.
+ * - Avoids Stamp Coupling by not embedding PayPal or VietQR request/response objects in the shared transaction table.
+ *
+ * Cohesion:
+ * - Functional Cohesion because this entity represents one shared payment transaction record.
+ *
+ * Reason:
+ * - VietQR-specific QR and callback data belongs in a separate entity while this entity keeps gateway-neutral payment state.
+ *
+ * Improvement Direction:
+ * - Replace string status/method columns with enums when schema migration control is introduced.
+ */
 export class PaymentTransaction {
   @PrimaryGeneratedColumn({ name: 'transaction_id' })
   transactionID: number;

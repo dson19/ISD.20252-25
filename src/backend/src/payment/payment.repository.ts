@@ -24,6 +24,25 @@ export class PaymentRepository {
     await this.transactionRepository.update(transactionId, { status });
   }
 
+  async updateTransactionStatusIfCurrent(
+    transactionId: number,
+    currentStatus: string,
+    nextStatus: 'SUCCESS' | 'FAILED' | 'REFUNDED',
+  ): Promise<boolean> {
+    const result = await this.transactionRepository.update(
+      { transactionID: transactionId, status: currentStatus },
+      { status: nextStatus },
+    );
+    return (result.affected ?? 0) > 0;
+  }
+
+  async findTransactionById(transactionId: number): Promise<PaymentTransaction | null> {
+    return await this.transactionRepository.findOne({
+      where: { transactionID: transactionId },
+      relations: ['order'],
+    });
+  }
+
   async findTransactionByOrderId(orderId: number): Promise<PaymentTransaction | null> {
     return await this.transactionRepository.findOne({
       where: { order: { orderID: orderId } },
