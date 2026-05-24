@@ -24,7 +24,7 @@ Intentionally not touched:
 | Content Coupling | PayOrder/VietQR backend scope | Not found in PayOrder/VietQR backend scope because there was no existing VietQR code directly modifying another module's internals. | Not found | VietQR code stores payment state through payment repositories and entities only. | Avoided | No controller/service directly changes another module's private data. | Keep Order state changes outside this lab scope unless an explicit payment contract is added. |
 | Common Coupling | `VietqrApiClient`, env config | No existing VietQR code. PayPal reads env variables directly, but no shared mutable global VietQR state existed. | Not found | VietQR reads immutable runtime config from environment and does not use static mutable data. | Avoided | Credentials are not stored in global mutable objects or logged. | Consider Nest `ConfigService` if the project standardizes config injection. |
 | Control Coupling | Payment controller/service layer | No VietQR gateway existed. A risky design would add a generic payment method flag and switch across gateways. | Not found for VietQR | Added `VietqrController` and `VietqrPaymentService` with dedicated VietQR methods. | Avoided | No large `if/switch` dispatch based on `paymentMethod`. | Split gateway submodules if payment grows further. |
-| Stamp Coupling | DTOs, service, repositories | No VietQR DTO existed. A risky design would pass whole Order/Cart objects to payment code. | Not found for VietQR | `CreateVietqrPaymentDto` contains only `orderId`, `amount`, optional `paymentContent`; callback DTO contains only required transaction-sync fields. | Data Coupling | Only needed fields cross each boundary. | Add explicit response DTOs later if public API documentation is required. |
+| Stamp Coupling | DTOs, service, repositories | No VietQR DTO existed. A risky design would pass whole Order/Cart objects to payment code. | Not found for VietQR | `CreateVietqrPaymentDto` contains only required `orderId`, `amount`, and `content`; callback DTO contains only required transaction-sync fields. | Data Coupling | Only needed fields cross each boundary. | Add explicit response DTOs later if public API documentation is required. |
 | Data Coupling | `VietqrController`, `VietqrPaymentService`, `VietqrRepository`, `VietqrApiClient` | No existing VietQR implementation. | N/A | Controller passes validated DTOs; service passes scalar ids/amount/content; API client maps small VietQR request/response shapes. | Data Coupling | Each module communicates through necessary values only. | Keep external VietQR response shape isolated in `VietqrApiClient`. |
 
 Official VietQR references used:
@@ -50,11 +50,11 @@ Official VietQR references used:
 |---|---|---|---|---|
 | `VietqrController` | Did not exist. | Handles only VietQR HTTP endpoints and DTO validation. | Keeps routing separate from business and API logic. | SRP, Data Coupling, Functional Cohesion |
 | `VietqrPaymentService` | Did not exist. | Owns create/status/callback PayOrder business flow. | Centralizes VietQR use-case decisions without gateway switches. | SRP, DIP, avoids Control Coupling |
-| `VietqrApiClient` | Did not exist. | Encapsulates VietQR token and QR generation calls. | External API mapping is isolated and mockable. | Adapter separation, Functional Cohesion |
+| `VietqrApiClient` | Did not exist. | Encapsulates VietQR token and QR generation calls. | External API mapping is isolated from service and persistence logic. | Adapter separation, Functional Cohesion |
 | `VietqrRepository` | Did not exist. | Persists VietQR transaction records only. | Database operations are not mixed into controller/API client. | SRP, Data Coupling |
 | `CreateVietqrPaymentDto`, `VietqrCallbackDto` | Did not exist. | Validate only fields needed by VietQR PayOrder. | Avoids passing whole Order/Cart objects. | Avoids Stamp Coupling |
 | `VietqrTransaction` | Did not exist. | Stores QR metadata, references, expiry, paid time, callback snapshot. | Keeps VietQR-specific data out of shared payment record. | High Cohesion, low coupling |
-| `PaymentTransaction` | Shared payment entity with PayPal relation. | Adds minimal VietQR relation. | Reuses shared payment state without adding VietQR fields to generic entity. | Data Coupling |
+| `PaymentTransaction` | Shared payment entity with PayPal relation and order foreign key. | Keeps gateway-neutral payment state shared by PayPal and VietQR. | Reuses shared payment state without adding VietQR fields to the generic entity. | Data Coupling |
 | `PaymentModule` | Registered PayPal providers/entities only. | Registers VietQR providers/entities beside PayPal. | Adds integration through DI without PayPal refactor. | DIP, avoids Control Coupling |
 
 ## 5. Changed Files
@@ -64,15 +64,27 @@ Official VietQR references used:
 | `src/backend/src/payment/dto/create-vietqr-payment.dto.ts` | Defines narrow creation input for VietQR PayOrder. |
 | `src/backend/src/payment/dto/vietqr-callback.dto.ts` | Defines narrow transaction-sync callback input. |
 | `src/backend/src/payment/entities/vietqr-transaction.entity.ts` | Stores VietQR-specific QR, reference, expiry, and callback data. |
-| `src/backend/src/payment/entities/payment-transaction.entity.ts` | Adds minimal relation from shared payment transaction to VietQR transaction. |
+| `src/backend/src/payment/entities/payment-transaction.entity.ts` | Keeps shared transaction fields and the order foreign key cleanly documented. |
 | `src/backend/src/payment/vietqr-api.client.ts` | Encapsulates VietQR token and QR generation API calls. |
 | `src/backend/src/payment/vietqr.repository.ts` | Encapsulates VietQR persistence operations. |
 | `src/backend/src/payment/vietqr-payment.service.ts` | Implements VietQR PayOrder business flow and idempotent callback handling. |
 | `src/backend/src/payment/vietqr.controller.ts` | Adds VietQR create/status/callback endpoints. |
 | `src/backend/src/payment/payment.repository.ts` | Adds minimal shared transaction lookup and idempotent status update support. |
 | `src/backend/src/payment/payment.module.ts` | Registers VietQR providers/entities/controllers. |
-| `src/backend/src/payment/vietqr-payment.service.spec.ts` | Adds payment-only unit coverage for VietQR flow. |
 | `src/backend/.env.example` | Documents required VietQR sandbox placeholders. |
 | `GoodDesign/GroupXX-DesignConcepts.md` | Lab 11 coupling/cohesion report for PayOrder/VietQR backend. |
+
+## 6. Manual Testing Guidance
+
+Manual testing is used for this Lab 11 VietQR flow because the important behavior depends on sandbox credentials and callback behavior from VietQR.
+
+Recommended flow:
+- Start the backend.
+- Start ngrok with `ngrok http 3000`.
+- Create a payment with `POST https://<ngrok-url>/api/vietqr/payments` and body `{ "orderId": 2, "amount": 50000, "content": "PAYORDER1" }`.
+- If VietQR credentials are missing or invalid, the API should return a VietQR token/generate error and the created `payment_transactions` row should be marked `FAILED`.
+- If VietQR credentials are valid, the API should create both `payment_transactions` and `vietqr_transactions`, then return QR fields and payment status.
+- Send a matching callback to `POST https://<ngrok-url>/api/vietqr/payments/callback`.
+- Check status with `GET https://<ngrok-url>/api/vietqr/payments/<paymentId>/status`.
 
 PDF export was not added as a dependency. If a local PDF tool is available, this Markdown report can be exported without changing source code.

@@ -20,7 +20,7 @@ import { VietqrPaymentService } from './vietqr-payment.service';
  * - Add authentication/authorization guards if payment endpoints are secured later.
  */
 @Controller('api/vietqr/payments')
-@UsePipes(new ValidationPipe({ whitelist: true }))
+@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 export class VietqrController {
   constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
 

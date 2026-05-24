@@ -16,7 +16,7 @@ export interface CreateVietqrTransactionData {
 
 export interface MarkVietqrPaidData {
   transactionId: string;
-  transactionRefId: string;
+  transactionRefId: string | null;
   paidAt: Date;
   rawCallback: Record<string, unknown>;
 }
@@ -78,9 +78,9 @@ export class VietqrRepository {
     });
   }
 
-  async findByContent(content: string): Promise<VietqrTransaction | null> {
+  async findByContentOrderAndAmount(content: string, orderId: number, amount: number): Promise<VietqrTransaction | null> {
     return await this.vietqrRepository.findOne({
-      where: { content },
+      where: { content, orderId, amount },
       relations: ['paymentTransaction'],
     });
   }
