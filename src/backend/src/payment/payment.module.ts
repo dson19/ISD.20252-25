@@ -29,6 +29,7 @@ import { PaypalApiClient } from './paypal-api-client';
     PaypalService,
     PaypalApiClient,
     VietqrRepository,
+    PaypalApiClient,
     VietqrApiClient,
     VietqrPaymentService,
     PaypalApiClient
