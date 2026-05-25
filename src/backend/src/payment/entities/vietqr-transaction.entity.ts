@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { PaymentTransaction } from './payment-transaction.entity';
 
+export type VietqrPaymentStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
+
 @Entity('vietqr_transactions')
 /**
  * Lab 11 Design Review
@@ -62,7 +64,7 @@ export class VietqrTransaction {
   paidAt: Date | null;
 
   @Column({ type: 'varchar', length: 50, default: 'PENDING' })
-  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
+  status: VietqrPaymentStatus;
 
   @Column({ name: 'raw_callback', type: 'jsonb', nullable: true })
   rawCallback: Record<string, unknown> | null;

@@ -1,4 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Order } from '../order/entities/order.entity';
 import { CreateVietqrPaymentDto } from './dto/create-vietqr-payment.dto';
 import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
 import { VietqrTransaction } from './entities/vietqr-transaction.entity';
@@ -6,10 +9,29 @@ import { PaymentRepository } from './payment.repository';
 import { VietqrApiClient } from './vietqr-api.client';
 import { VietqrRepository } from './vietqr.repository';
 
+export interface VietqrPaymentResponse {
+  paymentId: number;
+  orderId: number;
+  amount: number;
+  transactionRef: string | null;
+  content: string;
+  paymentContent: string;
+  qrCode: string | null;
+  qrLink: string | null;
+  expiredAt: Date;
+  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
+}
+
+export interface VietqrCallbackResult {
+  status: 'SUCCESS';
+  message: 'Callback processed' | 'Callback already processed';
+  paymentId: number;
+}
+
 /**
  * Lab 11 Design Review
  * Coupling:
- * - Data Coupling with VietqrController, VietqrRepository, PaymentRepository, and VietqrApiClient through narrow DTOs and scalar ids.
+ * - Data Coupling with VietqrController, VietqrRepository, PaymentRepository, VietqrApiClient, and Order repository through narrow DTOs and scalar ids.
  * - Avoids Control Coupling by providing dedicated VietQR methods instead of gateway selection flags or payment-method switches.
  * - Avoids Stamp Coupling by not receiving whole Order, Cart, Checkout, or Shipping objects.
  *
@@ -21,44 +43,64 @@ import { VietqrRepository } from './vietqr.repository';
  *
  * Improvement Direction:
  * - Add signature verification once the merchant account provides a callback signing secret.
+ * - Add a database transaction if the project later requires atomic base-payment and VietQR-row persistence.
  */
 @Injectable()
 export class VietqrPaymentService {
   constructor(
+    @InjectRepository(Order)
+    private readonly orderRepository: Repository<Order>,
     private readonly paymentRepository: PaymentRepository,
     private readonly vietqrRepository: VietqrRepository,
     private readonly vietqrApiClient: VietqrApiClient,
   ) {}
 
-  async createPayment(dto: CreateVietqrPaymentDto) {
+  async createPayment(dto: CreateVietqrPaymentDto): Promise<VietqrPaymentResponse> {
     this.validateOrderIdForVietqr(dto.orderId);
     this.validateAmount(dto.amount);
+    const content = this.validateAndNormalizeContent(dto.content);
+
+    const order = await this.orderRepository.findOne({
+      select: { orderID: true },
+      where: { orderID: dto.orderId },
+    });
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${dto.orderId} not found`);
+    }
 
     const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, dto.amount, 'VIETQR');
-    const content = this.buildPaymentContent(dto.paymentContent, dto.orderId, paymentTransaction.transactionID);
-    const qrResponse = await this.vietqrApiClient.generateQrCode({
-      orderId: String(dto.orderId),
-      amount: dto.amount,
-      content,
-    });
-    const expiredAt = this.calculateExpiredAt();
+    try {
+      const qrResponse = await this.vietqrApiClient.generateQrCode({
+        orderId: String(dto.orderId),
+        amount: dto.amount,
+        content,
+      });
+      const expiredAt = this.calculateExpiredAt();
 
-    const vietqrTransaction = await this.vietqrRepository.createVietqrTransaction({
-      paymentTransactionId: paymentTransaction.transactionID,
-      orderId: dto.orderId,
-      amount: dto.amount,
-      content,
-      qrCode: qrResponse.qrCode,
-      qrLink: qrResponse.qrLink,
-      transactionId: qrResponse.transactionId,
-      transactionRefId: qrResponse.transactionRefId,
-      expiredAt,
-    });
+      const vietqrTransaction = await this.vietqrRepository.createVietqrTransaction({
+        paymentTransactionId: paymentTransaction.transactionID,
+        orderId: dto.orderId,
+        amount: dto.amount,
+        content,
+        qrCode: qrResponse.qrCode,
+        qrLink: qrResponse.qrLink,
+        transactionId: qrResponse.transactionId,
+        transactionRefId: qrResponse.transactionRefId,
+        expiredAt,
+      });
 
-    return this.toPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
+      return this.toPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
+    } catch (error) {
+      await this.paymentRepository.updateTransactionStatusIfCurrent(
+        paymentTransaction.transactionID,
+        'PENDING',
+        'FAILED',
+      );
+      throw error;
+    }
   }
 
-  async getStatusByPaymentId(paymentId: number) {
+  async getStatusByPaymentId(paymentId: number): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
@@ -68,7 +110,7 @@ export class VietqrPaymentService {
     return this.toPaymentResponse(vietqrTransaction, paymentId);
   }
 
-  async getStatusByTransactionRef(transactionRef: string) {
+  async getStatusByTransactionRef(transactionRef: string): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByTransactionRefId(transactionRef);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR transaction reference ${transactionRef} was not found`);
@@ -78,7 +120,7 @@ export class VietqrPaymentService {
     return this.toPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
   }
 
-  async handleCallback(dto: VietqrCallbackDto) {
+  async handleCallback(dto: VietqrCallbackDto): Promise<VietqrCallbackResult> {
     if (dto.transType !== 'C') {
       throw new BadRequestException('Only credit VietQR callbacks can mark a payment as paid');
     }
@@ -99,9 +141,10 @@ export class VietqrPaymentService {
     }
 
     const paidAt = new Date(dto.transactiontime);
+    const transactionRefId = dto.referencenumber.trim() || vietqrTransaction.transactionRefId;
     const changed = await this.vietqrRepository.markPaidIfPending(vietqrTransaction.vietqrTransactionID, {
       transactionId: dto.transactionid,
-      transactionRefId: dto.referencenumber,
+      transactionRefId,
       paidAt,
       rawCallback: this.sanitizeCallback(dto),
     });
@@ -122,14 +165,21 @@ export class VietqrPaymentService {
   }
 
   private async findCallbackTarget(dto: VietqrCallbackDto): Promise<VietqrTransaction> {
-    const byReference = await this.vietqrRepository.findByTransactionRefId(dto.referencenumber);
-    if (byReference) {
-      return byReference;
+    const transactionRefId = dto.referencenumber.trim();
+    if (transactionRefId) {
+      const byReference = await this.vietqrRepository.findByTransactionRefId(transactionRefId);
+      if (byReference) {
+        return byReference;
+      }
     }
 
-    const byContent = await this.vietqrRepository.findByContent(dto.content);
-    if (byContent) {
-      return byContent;
+    const byDetails = await this.vietqrRepository.findByContentOrderAndAmount(
+      dto.content,
+      Number(dto.orderId),
+      Number(dto.amount),
+    );
+    if (byDetails) {
+      return byDetails;
     }
 
     throw new NotFoundException('Matching VietQR payment was not found');
@@ -179,13 +229,13 @@ export class VietqrPaymentService {
     }
   }
 
-  private buildPaymentContent(paymentContent: string | undefined, orderId: number, paymentId: number): string {
-    const content = paymentContent?.trim() || `AIMS${orderId}P${paymentId}`;
-    if (content.length > 23 || !/^[A-Za-z0-9 ]+$/.test(content)) {
+  private validateAndNormalizeContent(content: string): string {
+    const normalizedContent = content.trim();
+    if (!normalizedContent || normalizedContent.length > 23 || !/^[A-Za-z0-9 ]+$/.test(normalizedContent)) {
       throw new BadRequestException('VietQR payment content must be at most 23 non-accented alphanumeric characters');
     }
 
-    return content;
+    return normalizedContent;
   }
 
   private calculateExpiredAt(): Date {
@@ -207,12 +257,13 @@ export class VietqrPaymentService {
     };
   }
 
-  private toPaymentResponse(vietqrTransaction: VietqrTransaction, paymentId: number) {
+  private toPaymentResponse(vietqrTransaction: VietqrTransaction, paymentId: number): VietqrPaymentResponse {
     return {
       paymentId,
       orderId: vietqrTransaction.orderId,
       amount: Number(vietqrTransaction.amount),
       transactionRef: vietqrTransaction.transactionRefId,
+      content: vietqrTransaction.content,
       paymentContent: vietqrTransaction.content,
       qrCode: vietqrTransaction.qrCode,
       qrLink: vietqrTransaction.qrLink,

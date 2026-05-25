@@ -11,6 +11,7 @@ import { PaypalService } from './paypal.service';
 import { PaymentController } from './paypal.controller';
 import { OrderModule } from '../order/order.module';
 import { VietqrController } from './vietqr.controller';
+import { VietqrMerchantController } from './vietqr-merchant.controller';
 import { VietqrApiClient } from './vietqr-api.client';
 import { VietqrPaymentService } from './vietqr-payment.service';
 import { VietqrRepository } from './vietqr.repository';
@@ -21,11 +22,12 @@ import { PaypalApiClient } from './paypal-api-client';
     TypeOrmModule.forFeature([Order, Invoice, PaymentTransaction, PaypalTransaction, VietqrTransaction]),
     OrderModule,
   ],
-  controllers: [PaymentController, VietqrController],
+  controllers: [PaymentController, VietqrController, VietqrMerchantController],
   providers: [
     PaymentRepository,
     PaypalRepository,
     PaypalService,
+    PaypalApiClient,
     VietqrRepository,
     VietqrApiClient,
     VietqrPaymentService,
@@ -35,7 +37,9 @@ import { PaypalApiClient } from './paypal-api-client';
     PaymentRepository,
     PaypalRepository,
     PaypalService,
+    PaypalApiClient,
     VietqrRepository,
+    VietqrApiClient,
     VietqrPaymentService,
   ],
 })
