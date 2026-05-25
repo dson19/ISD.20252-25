@@ -1,0 +1,125 @@
+<div class="p-8">
+  <div class="flex justify-between items-end mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight mb-1">Quản lý người dùng</h1>
+      <p class="text-sm text-gray-500">Quản lý người dùng, quyền truy cập và phân quyền nhân sự cho hệ thống AIMS.</p>
+    </div>
+    <button class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all flex items-center transform hover:-translate-y-0.5">
+      <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      Tạo người dùng
+    </button>
+  </div>
+
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- Toolbar -->
+    <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+      <div class="flex-1 max-w-lg relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </div>
+        <input type="text" class="block w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:ring-primary focus:border-primary shadow-sm" placeholder="Tìm theo tên, email hoặc mã người dùng...">
+      </div>
+      
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider mr-2">Lọc theo vai trò & trạng thái</span>
+        
+        <!-- Filter Chips -->
+        <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-primary border border-blue-100 hover:bg-blue-100 transition-colors">
+          Quản trị viên
+        </button>
+        <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors">
+          Quản lý sản phẩm
+        </button>
+        <div class="h-4 w-px bg-gray-300 mx-1"></div>
+        <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-green-50 text-success border border-green-100 hover:bg-green-100 transition-colors">
+          Đang hoạt động
+        </button>
+        <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors">
+          Đã khóa
+        </button>
+        <button class="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors">
+          Vô hiệu hóa
+        </button>
+        
+        <button class="text-xs text-primary hover:text-primary-hover font-medium ml-2 underline underline-offset-2">Xóa lọc</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th class="p-4 pl-6">Mã Người Dùng</th>
+            <th class="p-4">Họ Và Tên</th>
+            <th class="p-4">Email</th>
+            <th class="p-4">Vai Trò</th>
+            <th class="p-4 text-center">Trạng Thái</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (user of users; track user.id) {
+            <tr class="hover:bg-gray-50/80 transition-colors cursor-pointer group">
+              <td class="p-4 pl-6">
+                <span class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ user.id }}</span>
+              </td>
+              <td class="p-4">
+                <div class="flex items-center">
+                  <div class="h-8 w-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs mr-3">
+                    {{ user.name.substring(0,2).toUpperCase() }}
+                  </div>
+                  <span class="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">{{ user.name }}</span>
+                </div>
+              </td>
+              <td class="p-4 text-sm text-gray-500">
+                {{ user.email }}
+              </td>
+              <td class="p-4">
+                @if (user.role === 'Admin') {
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-primary">
+                    QUẢN TRỊ VIÊN
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600">
+                    QUẢN LÝ SẢN PHẨM
+                  </span>
+                }
+              </td>
+              <td class="p-4 text-center">
+                @if (user.status === 'Hoạt động') {
+                  <span class="inline-flex items-center text-xs font-medium text-success">
+                    <span class="w-2 h-2 rounded-full bg-success mr-2"></span>
+                    Đang hoạt động
+                  </span>
+                } @else if (user.status === 'Đã khóa') {
+                  <span class="inline-flex items-center text-xs font-medium text-danger">
+                    <span class="w-2 h-2 rounded-full bg-danger mr-2"></span>
+                    Đã khóa
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center text-xs font-medium text-gray-400">
+                    <span class="w-2 h-2 rounded-full bg-gray-300 mr-2"></span>
+                    Vô hiệu hóa
+                  </span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+      <p class="text-xs text-gray-500">Hiển thị <span class="font-bold text-gray-900">1 đến 4</span> trên <span class="font-bold text-gray-900">42</span> tài khoản</p>
+      <div class="flex items-center space-x-1">
+        <span class="text-xs text-gray-400 mr-2">Trước</span>
+        <button class="w-8 h-8 rounded-md bg-primary text-white text-sm font-medium shadow-sm">1</button>
+        <button class="w-8 h-8 rounded-md hover:bg-gray-200 text-sm font-medium text-gray-600 transition-colors">2</button>
+        <button class="w-8 h-8 rounded-md hover:bg-gray-200 text-sm font-medium text-gray-600 transition-colors">3</button>
+        <span class="px-1 text-gray-400 text-sm">...</span>
+        <span class="text-xs text-gray-600 font-medium ml-2 cursor-pointer hover:underline">Tiếp</span>
+      </div>
+    </div>
+  </div>
+</div>

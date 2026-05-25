@@ -14,6 +14,7 @@ import { VietqrController } from './vietqr.controller';
 import { VietqrApiClient } from './vietqr-api.client';
 import { VietqrPaymentService } from './vietqr-payment.service';
 import { VietqrRepository } from './vietqr.repository';
+import { PaypalApiClient } from './paypal-api-client';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { VietqrRepository } from './vietqr.repository';
     VietqrRepository,
     VietqrApiClient,
     VietqrPaymentService,
+    PaypalApiClient
   ],
   exports: [
     PaymentRepository,

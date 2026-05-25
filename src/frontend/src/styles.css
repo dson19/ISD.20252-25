@@ -1,3 +1,16 @@
-/* You can add global styles to this file, and also import other style files */
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --color-primary: #0062cc; /* Blue from standard aims */
+  --color-primary-hover: #0056b3;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-success: #28a745;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  @apply bg-gray-50 text-gray-900;
+}
