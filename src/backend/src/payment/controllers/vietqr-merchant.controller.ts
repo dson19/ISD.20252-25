@@ -1,7 +1,7 @@
 import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
-import { VietqrPaymentService } from './vietqr-payment.service';
+import { VietqrCallbackDto } from '../dto/vietqr-callback.dto';
+import { VietqrPaymentService } from '../services/vietqr-payment.service';
 
 /**
  * Lab 11 Design Review

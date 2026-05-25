@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { PaypalTransaction } from './entities/paypal-transaction.entity';
+import { PaypalTransaction } from '../entities/paypal-transaction.entity';
 
 @Injectable()
 export class PaypalRepository {

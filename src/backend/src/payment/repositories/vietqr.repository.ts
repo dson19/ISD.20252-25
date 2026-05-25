@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { VietqrTransaction } from './entities/vietqr-transaction.entity';
-import { PaymentTransaction } from './entities/payment-transaction.entity';
+import { VietqrTransaction } from '../entities/vietqr-transaction.entity';
+import { PaymentTransaction } from '../entities/payment-transaction.entity';
 
 export interface CreateVietqrTransactionData {
   paymentTransactionId: number;

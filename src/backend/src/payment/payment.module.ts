@@ -5,17 +5,17 @@ import { Invoice } from '../order/entities/invoice.entity';
 import { PaymentTransaction } from './entities/payment-transaction.entity';
 import { PaypalTransaction } from './entities/paypal-transaction.entity';
 import { VietqrTransaction } from './entities/vietqr-transaction.entity';
-import { PaymentRepository } from './payment.repository';
-import { PaypalRepository } from './paypal.repository';
-import { PaypalService } from './paypal.service';
-import { PaymentController } from './paypal.controller';
+import { PaymentRepository } from './repositories/payment.repository';
+import { PaypalRepository } from './repositories/paypal.repository';
+import { PaypalService } from './services/paypal.service';
+import { PaymentController } from './controllers/paypal.controller';
 import { OrderModule } from '../order/order.module';
-import { VietqrController } from './vietqr.controller';
-import { VietqrMerchantController } from './vietqr-merchant.controller';
-import { VietqrApiClient } from './vietqr-api.client';
-import { VietqrPaymentService } from './vietqr-payment.service';
-import { VietqrRepository } from './vietqr.repository';
-import { PaypalApiClient } from './paypal-api-client';
+import { VietqrController } from './controllers/vietqr.controller';
+import { VietqrMerchantController } from './controllers/vietqr-merchant.controller';
+import { VietqrApiClient } from './API/vietqr-api.client';
+import { VietqrPaymentService } from './services/vietqr-payment.service';
+import { VietqrRepository } from './repositories/vietqr.repository';
+import { PaypalApiClient } from './API/paypal-api-client';
 
 @Module({
   imports: [
@@ -29,10 +29,8 @@ import { PaypalApiClient } from './paypal-api-client';
     PaypalService,
     PaypalApiClient,
     VietqrRepository,
-    PaypalApiClient,
     VietqrApiClient,
     VietqrPaymentService,
-    PaypalApiClient
   ],
   exports: [
     PaymentRepository,

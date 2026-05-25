@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order } from '../order/entities/order.entity';
-import { CreateVietqrPaymentDto } from './dto/create-vietqr-payment.dto';
-import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
-import { VietqrTransaction } from './entities/vietqr-transaction.entity';
-import { PaymentRepository } from './payment.repository';
-import { VietqrApiClient } from './vietqr-api.client';
-import { VietqrRepository } from './vietqr.repository';
+import { Order } from '../../order/entities/order.entity';
+import { CreateVietqrPaymentDto } from '../dto/create-vietqr-payment.dto';
+import { VietqrCallbackDto } from '../dto/vietqr-callback.dto';
+import { VietqrTransaction } from '../entities/vietqr-transaction.entity';
+import { PaymentRepository } from '../repositories/payment.repository';
+import { VietqrApiClient } from '../API/vietqr-api.client';
+import { VietqrRepository } from '../repositories/vietqr.repository';
 
 export interface VietqrPaymentResponse {
   paymentId: number;
@@ -53,7 +53,7 @@ export class VietqrPaymentService {
     private readonly paymentRepository: PaymentRepository,
     private readonly vietqrRepository: VietqrRepository,
     private readonly vietqrApiClient: VietqrApiClient,
-  ) {}
+  ) { }
 
   async createPayment(dto: CreateVietqrPaymentDto): Promise<VietqrPaymentResponse> {
     this.validateOrderIdForVietqr(dto.orderId);

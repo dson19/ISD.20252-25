@@ -1,8 +1,8 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { PaymentRepository } from './payment.repository';
-import { PaypalRepository } from './paypal.repository';
-import { OrderRepository } from '../order/order.repository';
-import { PaypalApiClient } from './paypal-api-client';
+import { PaymentRepository } from '../repositories/payment.repository';
+import { PaypalRepository } from '../repositories/paypal.repository';
+import { OrderRepository } from '../../order/order.repository';
+import { PaypalApiClient } from '../API/paypal-api-client';
 
 /**
  * PaypalService - Xử lý nghiệp vụ thanh toán qua PayPal của hệ thống.

@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, UsePipes, ValidationPipe } from '@nestjs/common';
-import { CreateVietqrPaymentDto } from './dto/create-vietqr-payment.dto';
-import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
-import { VietqrPaymentService } from './vietqr-payment.service';
+import { CreateVietqrPaymentDto } from '../dto/create-vietqr-payment.dto';
+import { VietqrCallbackDto } from '../dto/vietqr-callback.dto';
+import { VietqrPaymentService } from '../services/vietqr-payment.service';
 
 @Controller('api/vietqr/payments')
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 export class VietqrController {
-  constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
+  constructor(private readonly vietqrPaymentService: VietqrPaymentService) { }
 
   @Post()
   async createPayment(@Body() dto: CreateVietqrPaymentDto) {

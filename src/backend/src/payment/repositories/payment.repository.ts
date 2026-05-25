@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { PaymentTransaction } from './entities/payment-transaction.entity';
+import { PaymentTransaction } from '../entities/payment-transaction.entity';
 
 @Injectable()
 export class PaymentRepository {
@@ -12,7 +12,7 @@ export class PaymentRepository {
 
   async createTransaction(orderId: number, amount: number, method: 'PAYPAL' | 'VIETQR'): Promise<PaymentTransaction> {
     const newTx = this.transactionRepository.create({
-      order: { orderID: orderId }, 
+      order: { orderID: orderId },
       amount,
       method: method,
       status: 'PENDING',
@@ -46,7 +46,7 @@ export class PaymentRepository {
   async findTransactionByOrderId(orderId: number): Promise<PaymentTransaction | null> {
     return await this.transactionRepository.findOne({
       where: { order: { orderID: orderId } },
-      order: { createdAt: 'DESC' }, 
+      order: { createdAt: 'DESC' },
     });
   }
 }

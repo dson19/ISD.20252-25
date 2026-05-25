@@ -1,9 +1,9 @@
 // src/payments/payments.controller.ts
 import { Controller, Post, Body, UsePipes, ValidationPipe } from '@nestjs/common';
-import { PaypalService } from './paypal.service';
-import { CreatePaypalOrderDto } from './dto/create-paypal-order.dto';
-import { CapturePaypalOrderDto } from './dto/capture-paypal-order.dto';
-import { RefundOrderDto } from './dto/refund-paypal-order.dto';
+import { PaypalService } from '../services/paypal.service';
+import { CreatePaypalOrderDto } from '../dto/create-paypal-order.dto';
+import { CapturePaypalOrderDto } from '../dto/capture-paypal-order.dto';
+import { RefundOrderDto } from '../dto/refund-paypal-order.dto';
 
 @Controller('api/paypal/order')
 @UsePipes(new ValidationPipe({ whitelist: true }))
