@@ -22,22 +22,6 @@ export interface MarkVietqrPaidData {
   rawCallback: Record<string, unknown>;
 }
 
-/**
- * Lab 11 Design Review
- * Coupling:
- * - Data Coupling with VietqrPaymentService because persistence methods accept only VietQR payment fields required for storage.
- * - Avoids Control Coupling by not deciding payment state transitions outside the requested repository operation.
- * - Avoids Stamp Coupling by not accepting full DTOs or raw external API responses as method inputs.
- *
- * Cohesion:
- * - Functional Cohesion because this class only persists and retrieves VietQR transaction records.
- *
- * Reason:
- * - VietQR storage stays isolated from HTTP routing, external API calls, and PayPal persistence.
- *
- * Improvement Direction:
- * - Add database transactions around paired payment/VietQR updates if multi-step consistency becomes a production requirement.
- */
 @Injectable()
 export class VietqrRepository {
   private vietqrRepository: Repository<VietqrTransaction>;

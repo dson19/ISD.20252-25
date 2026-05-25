@@ -14,14 +14,6 @@ export interface GenerateVietqrCodeResponse {
   orderId: string | null;
 }
 
-interface VietqrTokenResponse {
-  access_token?: string;
-  token_type?: string;
-  expires_in?: number;
-  status?: string;
-  message?: string;
-}
-
 interface VietqrApiConfig {
   apiBaseUrl: string;
   username: string;
@@ -95,25 +87,34 @@ export class VietqrApiClient {
   }
 
   private async requestAccessToken(config: VietqrApiConfig): Promise<string> {
+    const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
+
     const response = await fetch(`${config.apiBaseUrl}/vqr/api/token_generate`, {
       method: 'POST',
       headers: {
-        Authorization: this.buildBasicAuthHeader(config.username, config.password),
+        Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
     });
 
-    const data = (await response.json().catch(() => ({}))) as VietqrTokenResponse;
-    if (!response.ok || data.status === 'FAILED' || !data.access_token) {
-      throw new BadRequestException(`VietQR token request failed: ${data.message || response.statusText}`);
+    const rawText = await response.text();
+
+    let data: any = {};
+    try {
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      data = { raw: rawText };
     }
 
-    return data.access_token;
-  }
+    const accessToken = data.access_token || data.accessToken || data.data?.access_token || data.data?.accessToken;
 
-  private buildBasicAuthHeader(username: string, password: string): string {
-    const auth = Buffer.from(`${username}:${password}`).toString('base64');
-    return `Basic ${auth}`;
+    if (!response.ok || data.status === 'FAILED' || !accessToken) {
+      throw new BadRequestException(
+        `VietQR token request failed: httpStatus=${response.status}, body=${JSON.stringify(data)}`,
+      );
+    }
+
+    return accessToken;
   }
 
   private mapGenerateQrResponse(data: any): GenerateVietqrCodeResponse {

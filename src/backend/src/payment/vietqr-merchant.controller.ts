@@ -1,8 +1,7 @@
-import { Body, Controller, Headers, Post } from '@nestjs/common';
-import { toVietqrCallbackDto } from './vietqr.mapper';
-import { VietqrMerchantAuthService } from './vietqr-merchant-auth.service';
+import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
 import { VietqrPaymentService } from './vietqr-payment.service';
-import type { VietqrMerchantCallbackPayload } from './vietqr.types';
 
 /**
  * Lab 11 Design Review
@@ -16,24 +15,57 @@ import type { VietqrMerchantCallbackPayload } from './vietqr.types';
  *
  * Reason:
  * - VietQR merchant portal integration has a different URL contract from internal payment APIs, so it stays in a separate controller.
- *
- * Improvement Direction:
- * - Replace the sandbox token with persisted short-lived token validation if VietQR requires bearer verification in production callbacks.
+ * - The Basic Auth sandbox logic is inlined here because it has exactly one merchant-facing consumer.
  */
 @Controller('vqr')
 export class VietqrMerchantController {
-  constructor(
-    private readonly vietqrMerchantAuthService: VietqrMerchantAuthService,
-    private readonly vietqrPaymentService: VietqrPaymentService,
-  ) {}
+  constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
 
   @Post('api/token_generate')
   generateToken(@Headers('authorization') authorization?: string) {
-    return this.vietqrMerchantAuthService.generateToken(authorization);
+    this.validateBasicAuth(authorization);
+
+    return {
+      access_token: randomUUID(),
+      token_type: 'Bearer' as const,
+      expires_in: 300,
+    };
   }
 
   @Post('bank/api/transaction-callback')
-  async handleTransactionCallback(@Body() payload: VietqrMerchantCallbackPayload) {
-    return await this.vietqrPaymentService.handleCallback(toVietqrCallbackDto(payload));
+  async handleTransactionCallback(@Body() payload: Record<string, unknown>) {
+    return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
+  }
+
+  private validateBasicAuth(authorization?: string): void {
+    const prefix = 'Basic ';
+    if (!authorization?.startsWith(prefix)) {
+      throw new UnauthorizedException('Invalid VietQR merchant credentials');
+    }
+
+    const credentials = Buffer.from(authorization.slice(prefix.length), 'base64').toString('utf8');
+    const separatorIndex = credentials.indexOf(':');
+    const username = separatorIndex >= 0 ? credentials.slice(0, separatorIndex) : '';
+    const password = separatorIndex >= 0 ? credentials.slice(separatorIndex + 1) : '';
+
+    if (username !== process.env.VIETQR_MERCHANT_USERNAME || password !== process.env.VIETQR_MERCHANT_PASSWORD) {
+      throw new UnauthorizedException('Invalid VietQR merchant credentials');
+    }
+  }
+
+  private toCallbackDto(payload: Record<string, unknown>): VietqrCallbackDto {
+    return {
+      bankaccount: String(payload.bankaccount ?? payload.bankAccount ?? ''),
+      amount: Number(payload.amount),
+      transType: String(payload.transType ?? '') as 'C' | 'D',
+      content: String(payload.content ?? ''),
+      transactionid: String(payload.transactionid ?? payload.transactionId ?? ''),
+      transactiontime: Number(payload.transactiontime ?? payload.transactionTime),
+      referencenumber: String(payload.referencenumber ?? payload.referenceNumber ?? ''),
+      orderId: String(payload.orderId ?? payload.orderid ?? ''),
+      terminalCode:
+        payload.terminalCode === undefined || payload.terminalCode === null ? undefined : String(payload.terminalCode),
+      sign: payload.sign === undefined || payload.sign === null ? undefined : String(payload.sign),
+    };
   }
 }

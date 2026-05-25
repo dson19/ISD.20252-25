@@ -7,9 +7,26 @@ import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
 import { VietqrTransaction } from './entities/vietqr-transaction.entity';
 import { PaymentRepository } from './payment.repository';
 import { VietqrApiClient } from './vietqr-api.client';
-import { toVietqrPaymentResponse } from './vietqr.mapper';
 import { VietqrRepository } from './vietqr.repository';
-import { VietqrCallbackResult, VietqrPaymentResponse } from './vietqr.types';
+
+export interface VietqrPaymentResponse {
+  paymentId: number;
+  orderId: number;
+  amount: number;
+  transactionRef: string | null;
+  content: string;
+  paymentContent: string;
+  qrCode: string | null;
+  qrLink: string | null;
+  expiredAt: Date;
+  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
+}
+
+export interface VietqrCallbackResult {
+  status: 'SUCCESS';
+  message: 'Callback processed' | 'Callback already processed';
+  paymentId: number;
+}
 
 /**
  * Lab 11 Design Review
@@ -72,7 +89,7 @@ export class VietqrPaymentService {
         expiredAt,
       });
 
-      return toVietqrPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
+      return this.toPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
     } catch (error) {
       await this.paymentRepository.updateTransactionStatusIfCurrent(
         paymentTransaction.transactionID,
@@ -90,7 +107,7 @@ export class VietqrPaymentService {
     }
 
     await this.expireIfNeeded(vietqrTransaction);
-    return toVietqrPaymentResponse(vietqrTransaction, paymentId);
+    return this.toPaymentResponse(vietqrTransaction, paymentId);
   }
 
   async getStatusByTransactionRef(transactionRef: string): Promise<VietqrPaymentResponse> {
@@ -100,7 +117,7 @@ export class VietqrPaymentService {
     }
 
     await this.expireIfNeeded(vietqrTransaction);
-    return toVietqrPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
+    return this.toPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
   }
 
   async handleCallback(dto: VietqrCallbackDto): Promise<VietqrCallbackResult> {
@@ -240,4 +257,18 @@ export class VietqrPaymentService {
     };
   }
 
+  private toPaymentResponse(vietqrTransaction: VietqrTransaction, paymentId: number): VietqrPaymentResponse {
+    return {
+      paymentId,
+      orderId: vietqrTransaction.orderId,
+      amount: Number(vietqrTransaction.amount),
+      transactionRef: vietqrTransaction.transactionRefId,
+      content: vietqrTransaction.content,
+      paymentContent: vietqrTransaction.content,
+      qrCode: vietqrTransaction.qrCode,
+      qrLink: vietqrTransaction.qrLink,
+      expiredAt: vietqrTransaction.expiredAt,
+      status: vietqrTransaction.status,
+    };
+  }
 }

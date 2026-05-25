@@ -8,7 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PaymentTransaction } from './payment-transaction.entity';
-import type { VietqrPaymentStatus } from '../vietqr.types';
+
+export type VietqrPaymentStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
 
 @Entity('vietqr_transactions')
 /**
