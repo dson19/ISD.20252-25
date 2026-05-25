@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { VietqrTransaction } from './entities/vietqr-transaction.entity';
+import { PaymentTransaction } from './entities/payment-transaction.entity';
 
 export interface CreateVietqrTransactionData {
   paymentTransactionId: number;
@@ -46,8 +47,9 @@ export class VietqrRepository {
   }
 
   async createVietqrTransaction(data: CreateVietqrTransactionData): Promise<VietqrTransaction> {
+    const paymentTransaction = { transactionID: data.paymentTransactionId } as PaymentTransaction;
     const entity = this.vietqrRepository.create({
-      paymentTransaction: { transactionID: data.paymentTransactionId } as any,
+      paymentTransaction,
       orderId: data.orderId,
       amount: data.amount,
       content: data.content,

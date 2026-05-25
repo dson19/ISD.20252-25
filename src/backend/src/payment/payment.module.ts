@@ -12,6 +12,7 @@ import { PaymentController } from './paypal.controller';
 import { OrderModule } from '../order/order.module';
 import { VietqrController } from './vietqr.controller';
 import { VietqrMerchantController } from './vietqr-merchant.controller';
+import { VietqrMerchantAuthService } from './vietqr-merchant-auth.service';
 import { VietqrApiClient } from './vietqr-api.client';
 import { VietqrPaymentService } from './vietqr-payment.service';
 import { VietqrRepository } from './vietqr.repository';
@@ -30,6 +31,7 @@ import { PaypalApiClient } from './paypal-api-client';
     PaypalApiClient,
     VietqrRepository,
     VietqrApiClient,
+    VietqrMerchantAuthService,
     VietqrPaymentService,
   ],
   exports: [
@@ -39,6 +41,7 @@ import { PaypalApiClient } from './paypal-api-client';
     PaypalApiClient,
     VietqrRepository,
     VietqrApiClient,
+    VietqrMerchantAuthService,
     VietqrPaymentService,
   ],
 })

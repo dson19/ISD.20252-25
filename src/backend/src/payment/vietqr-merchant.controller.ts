@@ -1,9 +1,8 @@
-import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
+import { Body, Controller, Headers, Post } from '@nestjs/common';
+import { toVietqrCallbackDto } from './vietqr.mapper';
+import { VietqrMerchantAuthService } from './vietqr-merchant-auth.service';
 import { VietqrPaymentService } from './vietqr-payment.service';
-
-type VietqrMerchantCallbackPayload = Record<string, unknown>;
+import type { VietqrMerchantCallbackPayload } from './vietqr.types';
 
 /**
  * Lab 11 Design Review
@@ -23,53 +22,18 @@ type VietqrMerchantCallbackPayload = Record<string, unknown>;
  */
 @Controller('vqr')
 export class VietqrMerchantController {
-  constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
+  constructor(
+    private readonly vietqrMerchantAuthService: VietqrMerchantAuthService,
+    private readonly vietqrPaymentService: VietqrPaymentService,
+  ) {}
 
   @Post('api/token_generate')
   generateToken(@Headers('authorization') authorization?: string) {
-    this.validateBasicAuth(authorization);
-
-    return {
-      access_token: randomUUID(),
-      token_type: 'Bearer',
-      expires_in: 300,
-    };
+    return this.vietqrMerchantAuthService.generateToken(authorization);
   }
 
   @Post('bank/api/transaction-callback')
   async handleTransactionCallback(@Body() payload: VietqrMerchantCallbackPayload) {
-    return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
-  }
-
-  private validateBasicAuth(authorization?: string): void {
-    const prefix = 'Basic ';
-    if (!authorization?.startsWith(prefix)) {
-      throw new UnauthorizedException('Invalid VietQR merchant credentials');
-    }
-
-    const credentials = Buffer.from(authorization.slice(prefix.length), 'base64').toString('utf8');
-    const separatorIndex = credentials.indexOf(':');
-    const username = separatorIndex >= 0 ? credentials.slice(0, separatorIndex) : '';
-    const password = separatorIndex >= 0 ? credentials.slice(separatorIndex + 1) : '';
-
-    if (username !== process.env.VIETQR_MERCHANT_USERNAME || password !== process.env.VIETQR_MERCHANT_PASSWORD) {
-      throw new UnauthorizedException('Invalid VietQR merchant credentials');
-    }
-  }
-
-  private toCallbackDto(payload: VietqrMerchantCallbackPayload): VietqrCallbackDto {
-    return {
-      bankaccount: String(payload.bankaccount ?? payload.bankAccount ?? ''),
-      amount: Number(payload.amount),
-      transType: String(payload.transType ?? '') as 'C' | 'D',
-      content: String(payload.content ?? ''),
-      transactionid: String(payload.transactionid ?? payload.transactionId ?? ''),
-      transactiontime: Number(payload.transactiontime ?? payload.transactionTime),
-      referencenumber: String(payload.referencenumber ?? payload.referenceNumber ?? ''),
-      orderId: String(payload.orderId ?? payload.orderid ?? ''),
-      terminalCode:
-        payload.terminalCode === undefined || payload.terminalCode === null ? undefined : String(payload.terminalCode),
-      sign: payload.sign === undefined || payload.sign === null ? undefined : String(payload.sign),
-    };
+    return await this.vietqrPaymentService.handleCallback(toVietqrCallbackDto(payload));
   }
 }

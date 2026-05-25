@@ -7,7 +7,9 @@ import { VietqrCallbackDto } from './dto/vietqr-callback.dto';
 import { VietqrTransaction } from './entities/vietqr-transaction.entity';
 import { PaymentRepository } from './payment.repository';
 import { VietqrApiClient } from './vietqr-api.client';
+import { toVietqrPaymentResponse } from './vietqr.mapper';
 import { VietqrRepository } from './vietqr.repository';
+import { VietqrCallbackResult, VietqrPaymentResponse } from './vietqr.types';
 
 /**
  * Lab 11 Design Review
@@ -36,7 +38,7 @@ export class VietqrPaymentService {
     private readonly vietqrApiClient: VietqrApiClient,
   ) {}
 
-  async createPayment(dto: CreateVietqrPaymentDto) {
+  async createPayment(dto: CreateVietqrPaymentDto): Promise<VietqrPaymentResponse> {
     this.validateOrderIdForVietqr(dto.orderId);
     this.validateAmount(dto.amount);
     const content = this.validateAndNormalizeContent(dto.content);
@@ -70,7 +72,7 @@ export class VietqrPaymentService {
         expiredAt,
       });
 
-      return this.toPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
+      return toVietqrPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
     } catch (error) {
       await this.paymentRepository.updateTransactionStatusIfCurrent(
         paymentTransaction.transactionID,
@@ -81,27 +83,27 @@ export class VietqrPaymentService {
     }
   }
 
-  async getStatusByPaymentId(paymentId: number) {
+  async getStatusByPaymentId(paymentId: number): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
     }
 
     await this.expireIfNeeded(vietqrTransaction);
-    return this.toPaymentResponse(vietqrTransaction, paymentId);
+    return toVietqrPaymentResponse(vietqrTransaction, paymentId);
   }
 
-  async getStatusByTransactionRef(transactionRef: string) {
+  async getStatusByTransactionRef(transactionRef: string): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByTransactionRefId(transactionRef);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR transaction reference ${transactionRef} was not found`);
     }
 
     await this.expireIfNeeded(vietqrTransaction);
-    return this.toPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
+    return toVietqrPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
   }
 
-  async handleCallback(dto: VietqrCallbackDto) {
+  async handleCallback(dto: VietqrCallbackDto): Promise<VietqrCallbackResult> {
     if (dto.transType !== 'C') {
       throw new BadRequestException('Only credit VietQR callbacks can mark a payment as paid');
     }
@@ -238,18 +240,4 @@ export class VietqrPaymentService {
     };
   }
 
-  private toPaymentResponse(vietqrTransaction: VietqrTransaction, paymentId: number) {
-    return {
-      paymentId,
-      orderId: vietqrTransaction.orderId,
-      amount: Number(vietqrTransaction.amount),
-      transactionRef: vietqrTransaction.transactionRefId,
-      content: vietqrTransaction.content,
-      paymentContent: vietqrTransaction.content,
-      qrCode: vietqrTransaction.qrCode,
-      qrLink: vietqrTransaction.qrLink,
-      expiredAt: vietqrTransaction.expiredAt,
-      status: vietqrTransaction.status,
-    };
-  }
 }

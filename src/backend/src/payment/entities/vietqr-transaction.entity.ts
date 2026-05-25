@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PaymentTransaction } from './payment-transaction.entity';
+import type { VietqrPaymentStatus } from '../vietqr.types';
 
 @Entity('vietqr_transactions')
 /**
@@ -62,7 +63,7 @@ export class VietqrTransaction {
   paidAt: Date | null;
 
   @Column({ type: 'varchar', length: 50, default: 'PENDING' })
-  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
+  status: VietqrPaymentStatus;
 
   @Column({ name: 'raw_callback', type: 'jsonb', nullable: true })
   rawCallback: Record<string, unknown> | null;
