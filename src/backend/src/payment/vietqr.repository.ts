@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { VietqrTransaction } from './entities/vietqr-transaction.entity';
+import { PaymentTransaction } from './entities/payment-transaction.entity';
 
 export interface CreateVietqrTransactionData {
   paymentTransactionId: number;
@@ -16,27 +17,11 @@ export interface CreateVietqrTransactionData {
 
 export interface MarkVietqrPaidData {
   transactionId: string;
-  transactionRefId: string;
+  transactionRefId: string | null;
   paidAt: Date;
   rawCallback: Record<string, unknown>;
 }
 
-/**
- * Lab 11 Design Review
- * Coupling:
- * - Data Coupling with VietqrPaymentService because persistence methods accept only VietQR payment fields required for storage.
- * - Avoids Control Coupling by not deciding payment state transitions outside the requested repository operation.
- * - Avoids Stamp Coupling by not accepting full DTOs or raw external API responses as method inputs.
- *
- * Cohesion:
- * - Functional Cohesion because this class only persists and retrieves VietQR transaction records.
- *
- * Reason:
- * - VietQR storage stays isolated from HTTP routing, external API calls, and PayPal persistence.
- *
- * Improvement Direction:
- * - Add database transactions around paired payment/VietQR updates if multi-step consistency becomes a production requirement.
- */
 @Injectable()
 export class VietqrRepository {
   private vietqrRepository: Repository<VietqrTransaction>;
@@ -46,8 +31,9 @@ export class VietqrRepository {
   }
 
   async createVietqrTransaction(data: CreateVietqrTransactionData): Promise<VietqrTransaction> {
+    const paymentTransaction = { transactionID: data.paymentTransactionId } as PaymentTransaction;
     const entity = this.vietqrRepository.create({
-      paymentTransaction: { transactionID: data.paymentTransactionId } as any,
+      paymentTransaction,
       orderId: data.orderId,
       amount: data.amount,
       content: data.content,
@@ -78,9 +64,9 @@ export class VietqrRepository {
     });
   }
 
-  async findByContent(content: string): Promise<VietqrTransaction | null> {
+  async findByContentOrderAndAmount(content: string, orderId: number, amount: number): Promise<VietqrTransaction | null> {
     return await this.vietqrRepository.findOne({
-      where: { content },
+      where: { content, orderId, amount },
       relations: ['paymentTransaction'],
     });
   }

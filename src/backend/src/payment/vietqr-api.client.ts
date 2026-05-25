@@ -14,12 +14,13 @@ export interface GenerateVietqrCodeResponse {
   orderId: string | null;
 }
 
-interface VietqrTokenResponse {
-  access_token?: string;
-  token_type?: string;
-  expires_in?: number;
-  status?: string;
-  message?: string;
+interface VietqrApiConfig {
+  apiBaseUrl: string;
+  username: string;
+  password: string;
+  bankCode: string;
+  bankAccount: string;
+  userBankName: string;
 }
 
 /**
@@ -40,7 +41,7 @@ interface VietqrTokenResponse {
  */
 @Injectable()
 export class VietqrApiClient {
-  private getConfig() {
+  private getConfig(): VietqrApiConfig {
     const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
     const username = process.env.VIETQR_USERNAME;
     const password = process.env.VIETQR_PASSWORD;
@@ -56,19 +57,19 @@ export class VietqrApiClient {
   }
 
   async generateQrCode(request: GenerateVietqrCodeRequest): Promise<GenerateVietqrCodeResponse> {
-    const token = await this.getAccessToken();
-    const { apiBaseUrl, bankCode, bankAccount, userBankName } = this.getConfig();
+    const config = this.getConfig();
+    const token = await this.requestAccessToken(config);
 
-    const response = await fetch(`${apiBaseUrl}/vqr/api/qr/generate-customer`, {
+    const response = await fetch(`${config.apiBaseUrl}/vqr/api/qr/generate-customer`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        bankCode,
-        bankAccount,
-        userBankName,
+        bankCode: config.bankCode,
+        bankAccount: config.bankAccount,
+        userBankName: config.userBankName,
         amount: request.amount,
         content: request.content,
         orderId: request.orderId,
@@ -82,20 +83,13 @@ export class VietqrApiClient {
       throw new BadRequestException(`VietQR QR generation failed: ${data.message || response.statusText}`);
     }
 
-    return {
-      qrCode: data.qrCode ?? null,
-      qrLink: data.qrLink ?? null,
-      transactionId: data.transactionId ?? null,
-      transactionRefId: data.transactionRefId ?? null,
-      orderId: data.orderId ?? null,
-    };
+    return this.mapGenerateQrResponse(data);
   }
 
-  private async getAccessToken(): Promise<string> {
-    const { apiBaseUrl, username, password } = this.getConfig();
-    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+  private async requestAccessToken(config: VietqrApiConfig): Promise<string> {
+    const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
 
-    const response = await fetch(`${apiBaseUrl}/vqr/api/token_generate`, {
+    const response = await fetch(`${config.apiBaseUrl}/vqr/api/token_generate`, {
       method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
@@ -103,11 +97,33 @@ export class VietqrApiClient {
       },
     });
 
-    const data = (await response.json().catch(() => ({}))) as VietqrTokenResponse;
-    if (!response.ok || data.status === 'FAILED' || !data.access_token) {
-      throw new BadRequestException(`VietQR token request failed: ${data.message || response.statusText}`);
+    const rawText = await response.text();
+
+    let data: any = {};
+    try {
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      data = { raw: rawText };
     }
 
-    return data.access_token;
+    const accessToken = data.access_token || data.accessToken || data.data?.access_token || data.data?.accessToken;
+
+    if (!response.ok || data.status === 'FAILED' || !accessToken) {
+      throw new BadRequestException(
+        `VietQR token request failed: httpStatus=${response.status}, body=${JSON.stringify(data)}`,
+      );
+    }
+
+    return accessToken;
+  }
+
+  private mapGenerateQrResponse(data: any): GenerateVietqrCodeResponse {
+    return {
+      qrCode: data.qrCode ?? null,
+      qrLink: data.qrLink ?? null,
+      transactionId: data.transactionId ?? null,
+      transactionRefId: data.transactionRefId ?? null,
+      orderId: data.orderId ?? null,
+    };
   }
 }
