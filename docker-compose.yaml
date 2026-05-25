@@ -1,50 +1,38 @@
 services:
-  aims-db:
-    image: postgres:16-alpine
-    container_name: aims-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin_password_aims
-      POSTGRES_DB: aims_db
-    ports:
-      - "5433:5432"
-    volumes:
-      - aims-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d aims_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   aims-backend-api:
     build:
       context: ./src/backend
-    container_name: aims-backend-api
+      target: development
+    container_name: aims_backend_api
+    command: npm run start:dev
+    ports:
+      - '3000:3000'
     env_file:
       - ./src/backend/.env
     environment:
-      NODE_ENV: development
-    ports:
-      - "3000:3000"
+      - NODE_ENV=development
     volumes:
       - ./src/backend:/app
-      - backend-node-modules:/app/node_modules
+      - /app/node_modules
+    networks:
+      - aims-network
 
   aims-frontend-app:
     build:
       context: ./src/frontend
-    container_name: aims-frontend-app
-    environment:
-      NODE_ENV: development
+      target: development
+    container_name: aims_frontend_app
+    command: ng serve --host 0.0.0.0
     ports:
-      - "4200:4200"
+      - '4200:4200'
     volumes:
       - ./src/frontend:/app
-      - frontend-node-modules:/app/node_modules
+      - /app/node_modules
     depends_on:
       - aims-backend-api
+    networks:
+      - aims-network
 
-volumes:
-  aims-db-data:
-  backend-node-modules:
-  frontend-node-modules:
+networks:
+  aims-network:
+    driver: bridge

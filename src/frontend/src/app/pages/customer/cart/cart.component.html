@@ -1,0 +1,107 @@
+<div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
+  
+  <!-- Main Cart List -->
+  <div class="flex-1">
+    <div class="flex items-center space-x-2 mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Đơn hàng của bạn</h1>
+    </div>
+    <p class="text-gray-500 text-sm mb-6">Kiểm tra các tài liệu lưu trữ đã chọn trước khi hoàn tất yêu cầu.</p>
+    
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+      @if (cartItems.length === 0) {
+        <div class="p-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <h3 class="text-sm font-medium text-gray-900">Giỏ hàng trống</h3>
+          <p class="mt-1 text-sm text-gray-500">Bạn chưa thêm sản phẩm nào vào giỏ hàng.</p>
+        </div>
+      }
+      
+      @for (item of cartItems; track item.id) {
+        <div class="p-6 flex flex-col sm:flex-row gap-6 hover:bg-gray-50 transition-colors duration-200">
+          <div class="w-24 h-32 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 relative border border-gray-200 shadow-sm">
+            <img [src]="item.imageUrl" [alt]="item.title" class="w-full h-full object-cover">
+            <span class="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 text-[8px] font-bold text-gray-700 rounded shadow-sm">{{ item.category }}</span>
+          </div>
+          
+          <div class="flex-1 flex flex-col">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="font-bold text-gray-900 text-lg leading-tight mb-1">{{ item.title }}</h3>
+                <p class="text-sm text-gray-500">{{ item.author }}</p>
+              </div>
+              <p class="font-bold text-gray-900 whitespace-nowrap ml-4">{{ item.price | number:'1.0-0' }} đ</p>
+            </div>
+            
+            @if (item.isLowStock) {
+              <div class="flex items-center text-warning text-xs font-medium bg-orange-50 w-fit px-2 py-1 rounded-md mb-4">
+                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                {{ item.stockStatus }}
+              </div>
+            }
+
+            <div class="flex items-center justify-between mt-auto">
+              <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                <button (click)="decreaseQuantity(item)" class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">-</button>
+                <input type="number" [value]="item.quantity" class="w-12 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900" readonly>
+                <button (click)="increaseQuantity(item)" class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">+</button>
+              </div>
+              
+              <button (click)="removeItem(item)" class="text-gray-400 hover:text-danger text-sm flex items-center group transition-colors">
+                <svg class="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Order Summary -->
+  <div class="lg:w-80 flex-shrink-0">
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
+      <h2 class="text-lg font-bold text-gray-900 mb-6">Tóm tắt đơn hàng</h2>
+      
+      <div class="space-y-4 mb-6 text-sm">
+        <div class="flex justify-between text-gray-600">
+          <span>Tạm tính (chưa bao gồm VAT)</span>
+          <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} đ</span>
+        </div>
+        <div class="flex justify-between text-gray-600">
+          <span>Thuế VAT (10%)</span>
+          <span class="font-medium text-gray-900">{{ vat | number:'1.0-0' }} đ</span>
+        </div>
+        <div class="flex justify-between text-gray-600">
+          <span>Phí vận chuyển</span>
+          <span class="italic text-xs">Sẽ được tính khi thanh toán</span>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-100 pt-4 mb-6">
+        <div class="flex justify-between items-end mb-1">
+          <span class="font-semibold text-gray-900">Tổng thanh toán</span>
+          <span class="text-2xl font-bold text-primary">{{ total | number:'1.0-0' }} đ</span>
+        </div>
+        <p class="text-xs text-right text-gray-400 uppercase tracking-wide">Chưa bao gồm phí ship</p>
+      </div>
+      
+      <button routerLink="/checkout" class="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 mb-3 flex justify-center items-center">
+        Đặt hàng ngay
+        <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+      </button>
+      
+      <button routerLink="/" class="w-full bg-white text-gray-600 border border-gray-200 py-3 rounded-xl font-medium text-sm hover:bg-gray-50 hover:text-gray-900 transition-colors">
+        Tiếp tục mua sắm
+      </button>
+      
+      <div class="mt-6 flex items-start space-x-2 text-xs text-gray-500 bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
+        <svg class="w-4 h-4 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+        <p>Giao dịch được bảo mật với mã hóa cấp độ tổ chức. Đơn hàng cần sự phê duyệt của quản trị viên.</p>
+      </div>
+    </div>
+  </div>
+</div>
