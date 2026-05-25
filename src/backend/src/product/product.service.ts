@@ -41,6 +41,14 @@ const COMMON_PRODUCT_FIELDS: (keyof CreateProductDto)[] = [
   'imageUrl',
 ];
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Control Coupling: ProductService passes the `mediaType` string to ProductValidatorFactory to retrieve validator strategies.
+ *   - Data Coupling: Interacts with ProductRepository by passing primitive search parameters and IDs.
+ *   - Procedural Cohesion: Sequences database transactions, entity creations, audit log writing, and attachment logic.
+ * + Reason why:
+ *   - Outsourcing specific validations to ProductValidatorFactory keeps core catalog operations stateless and free of hardcoded conditional switches.
+ */
 @Injectable()
 export class ProductService {
   constructor(

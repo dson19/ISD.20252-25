@@ -24,20 +24,12 @@ interface VietqrApiConfig {
 }
 
 /**
- * Lab 11 Design Review
- * Coupling:
- * - Data Coupling with VietqrPaymentService because it accepts only amount, content, and order id needed for QR generation.
- * - Avoids Control Coupling by exposing a dedicated VietQR client instead of a generic gateway switch.
- * - Avoids Stamp Coupling by mapping external VietQR responses into a small internal response interface.
- *
- * Cohesion:
- * - Functional Cohesion because this class only handles VietQR API configuration, token retrieval, and QR generation.
- *
- * Reason:
- * - External API concerns should not be mixed with controller routing or database updates.
- *
- * Improvement Direction:
- * - Add token caching with expiry if VietQR traffic increases.
+ * + Coupling/Cohesion level:
+ *   - Common Coupling: VietqrApiClient reads endpoint configuration from `process.env`.
+ *   - Data Coupling: Interacts with VietqrPaymentService by passing primitive scalar parameters.
+ *   - Functional Cohesion: Focuses solely on communicating with the third-party VietQR API.
+ * + Reason why:
+ *   - Keeping API integration logic decoupled from application controllers and database tables ensures the class has a single, testable responsibility.
  */
 @Injectable()
 export class VietqrApiClient {

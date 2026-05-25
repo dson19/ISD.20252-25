@@ -11,16 +11,11 @@ import { CartStockIssue, CartService } from './cart.service';
 import { ShippingCalculatorService } from './shipping-calculator.service';
 
 /**
- * OrderService - Xu ly quy trinh dat hang va duyet don hang.
- *
- * COHESION: Procedural Cohesion for placeOrder, Functional Cohesion at service level
- * placeOrder thuc hien dung chuoi nghiep vu: kiem tra kho, giu cho ton kho, luu giao hang,
- * tinh ship, va tao invoice nhap. Cac cong thuc ship va kiem tra cart duoc uy thac cho
- * service chuyen trach de giu lop nay tap trung vao quy trinh Order.
- *
- * COUPLING: Low Data Coupling
- * Service nhan DTO/cart data don gian, lam viec voi entity qua TypeORM repository/transaction,
- * khong phu thuoc vao HTTP request object hay chi tiet controller.
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Communicates via validated DTOs, primitive order parameters, and repository states.
+ *   - Procedural Cohesion: Sequences complex order validations, shipping calculations, and entity persistence steps inside placeOrder().
+ * + Reason why:
+ *   - Delegating shipping calculations and cart validations to dedicated services ensures the ordering service maintains a clean, single procedural focus.
  */
 @Injectable()
 export class OrderService {

@@ -166,6 +166,13 @@ class NewspaperValidator extends BaseProductValidator {
   }
 }
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Control Coupling: Decides and dispatches validator strategy instances based on string parameter flags passed by ProductService.
+ *   - Functional Cohesion: Dedicated entirely to instantiating, selecting, and returning the correct type-specific validator.
+ * + Reason why:
+ *   - Centralizing sub-validation setup inside a specialized factory prevents core catalog modules from hardcoding product-type rules.
+ */
 @Injectable()
 export class ProductValidatorFactory {
   private readonly validators = new Map<ProductMediaType, ProductValidator>([

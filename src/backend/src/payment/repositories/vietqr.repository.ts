@@ -22,6 +22,13 @@ export interface MarkVietqrPaidData {
   rawCallback: Record<string, unknown>;
 }
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Passes clean data parameters and transaction objects to execute save/update operations.
+ *   - Communicational Cohesion: Gathers functions that operate exclusively on the `vietqr_transactions` database entity.
+ * + Reason why:
+ *   - Encapsulating VietQR-specific TypeORM commands inside a separate repository protects core services from SQL or database-specific changes.
+ */
 @Injectable()
 export class VietqrRepository {
   private vietqrRepository: Repository<VietqrTransaction>;

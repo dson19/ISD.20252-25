@@ -42,4 +42,11 @@ import { PaypalApiClient } from './API/paypal-api-client';
     VietqrPaymentService,
   ],
 })
+/**
+ * + Coupling/Cohesion level:
+ *   - Common Coupling: PaymentModule registers shared services and configurations inside the NestJS container.
+ *   - Temporal Cohesion: Resolves and instantiates registered singletons during NestJS boot time.
+ * + Reason why:
+ *   - Centrally configuring and bootstrapping services prevents scattered instantiation logic, keeping system modules separated.
+ */
 export class PaymentModule { }

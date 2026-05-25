@@ -1,5 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Common Coupling: PaypalApiClient reads sandbox credentials from the global `process.env`.
+ *   - Data Coupling: Interacts with PaypalService by passing primitive scalar parameters like `orderId` and `usdAmount`.
+ *   - Functional Cohesion: Focuses solely on executing external HTTP calls to the PayPal REST API.
+ * + Reason why:
+ *   - Isolating remote API communications from local databases and route handlers guarantees a highly mockable and single-purpose client.
+ */
 @Injectable()
 export class PaypalApiClient {
     private getPaypalConfig() {

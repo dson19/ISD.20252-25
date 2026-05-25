@@ -5,15 +5,11 @@ import { OrderRepository } from '../../order/order.repository';
 import { PaypalApiClient } from '../API/paypal-api-client';
 
 /**
- * PaypalService - Xử lý nghiệp vụ thanh toán qua PayPal của hệ thống.
- * 
- * ĐỘ GẮN KẾT (COHESION): High Functional Cohesion
- * Lớp này chỉ tập trung vào nghiệp vụ thanh toán của hệ thống (ghi nhận giao dịch, cập nhật DB,
- * cập nhật trạng thái đơn hàng). Đã bóc tách toàn bộ logic kết nối hạ tầng HTTP API sang PaypalApiClient.
- * 
- * SỰ LIÊN KẾT (COUPLING): Low Coupling
- * Bằng cách ủy thác việc giao tiếp API PayPal cho PaypalApiClient, lớp này không trực tiếp phụ thuộc
- * vào chi tiết triển khai gọi fetch hay cấu hình credentials của PayPal.
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Interacts with PaypalApiClient and OrderRepository using primitive parameters.
+ *   - Procedural Cohesion: Sequences steps for checking orders, creating PayPal references, and writing transactions.
+ * + Reason why:
+ *   - Delegating third-party REST client queries to a separate adapter class keeps the service clean, robust, and testable.
  */
 @Injectable()
 export class PaypalService {

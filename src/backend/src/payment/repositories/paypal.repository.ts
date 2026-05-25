@@ -2,6 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { PaypalTransaction } from '../entities/paypal-transaction.entity';
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Exchanges database parameters and transaction entity structures via repository commands.
+ *   - Communicational Cohesion: Handles SQL persistence methods solely targeting the `paypal_transactions` entity.
+ * + Reason why:
+ *   - Abstracting PayPal-specific database details from the central payment service isolates persistence mapping logic.
+ */
 @Injectable()
 export class PaypalRepository {
   private paypalTxRepository: Repository<PaypalTransaction>;

@@ -29,21 +29,12 @@ export interface VietqrCallbackResult {
 }
 
 /**
- * Lab 11 Design Review
- * Coupling:
- * - Data Coupling with VietqrController, VietqrRepository, PaymentRepository, VietqrApiClient, and Order repository through narrow DTOs and scalar ids.
- * - Avoids Control Coupling by providing dedicated VietQR methods instead of gateway selection flags or payment-method switches.
- * - Avoids Stamp Coupling by not receiving whole Order, Cart, Checkout, or Shipping objects.
- *
- * Cohesion:
- * - Functional Cohesion because this class owns only the VietQR PayOrder business flow.
- *
- * Reason:
- * - Payment orchestration belongs in a service, while HTTP routing, database access, and external API mapping stay in separate classes.
- *
- * Improvement Direction:
- * - Add signature verification once the merchant account provides a callback signing secret.
- * - Add a database transaction if the project later requires atomic base-payment and VietQR-row persistence.
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Interacts with VietqrRepository and PaymentRepository passing primitive parameters.
+ *   - Procedural Cohesion: Orchestrates order status validation, requesting dynamic QR code, and writing transaction logs in sequence.
+ *   - Sequential Cohesion: Receives raw webhook callback, parses callback payload, validates transaction reference, updates status, and maps result.
+ * + Reason why:
+ *   - Bundling state transitions, validations, and callback sync logic keeps the payment process transactional, safe, and easily testable.
  */
 @Injectable()
 export class VietqrPaymentService {

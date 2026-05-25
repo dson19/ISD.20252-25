@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 /**
- * ShippingCalculatorService - Tinh phi van chuyen cho quy trinh dat hang.
- *
- * COHESION: Functional Cohesion
- * Lop nay chi chiu trach nhiem tinh phi ship dua tren tinh/thanh, tong khoi luong,
- * va tong gia tri hang hoa. OrderService khong phai chua cac cong thuc van chuyen.
- *
- * COUPLING: Low Data Coupling
- * Service nhan cac gia tri vo huong can thiet thay vi nhan ca Order, Cart, hay request object.
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Receives only primitive parameters (`province`, `totalWeight`, `subtotal`) to perform its calculations.
+ *   - Functional Cohesion: Exclusively focused on calculating order shipping fees based on weight and geographic factors.
+ * + Reason why:
+ *   - Isolating dynamic shipping fee algorithms from the main OrderService prevents formula duplication and simplifies price calculation test suites.
  */
 @Injectable()
 export class ShippingCalculatorService {

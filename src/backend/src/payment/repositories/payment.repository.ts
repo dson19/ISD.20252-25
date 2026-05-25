@@ -2,6 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { PaymentTransaction } from '../entities/payment-transaction.entity';
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Receives simple primitive inputs and minimalistic Transaction IDs to query or write records.
+ *   - Communicational Cohesion: All query and update methods manipulate fields on the shared `payment_transactions` entity.
+ * + Reason why:
+ *   - Centralizing core CRUD operations for system-wide payment logs keeps persistence rules separate from business process engines.
+ */
 @Injectable()
 export class PaymentRepository {
   private transactionRepository: Repository<PaymentTransaction>;
