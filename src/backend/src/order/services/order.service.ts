@@ -146,8 +146,17 @@ export class OrderService {
     });
   }
 
-  async getOrderDetail(orderId: number): Promise<Order> {
-    return this.findOrderOrFail(this.dataSource.manager, orderId);
+  async getOrderDetail(orderId: number): Promise<any> {
+    const order = await this.findOrderOrFail(this.dataSource.manager, orderId);
+    const txs = await this.dataSource.manager.query(
+      'SELECT method FROM payment_transactions WHERE order_id = $1 AND status = $2 LIMIT 1',
+      [orderId, 'SUCCESS']
+    );
+    const paymentMethod = txs.length > 0 ? txs[0].method : null;
+    return {
+      ...order,
+      paymentMethod
+    };
   }
 
   async approveOrder(orderId: number): Promise<Order> {
