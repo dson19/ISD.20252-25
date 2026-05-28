@@ -39,8 +39,12 @@ export class PaypalRepository {
 
   async findBySystemOrderId(orderId: number): Promise<PaypalTransaction | null> {
     return await this.paypalTxRepository.findOne({
-      where: { paymentTransaction: { order: { orderID: orderId } } },
+      where: { 
+        paymentTransaction: { order: { orderID: orderId } },
+        status: 'COMPLETED'
+      },
       relations: ['paymentTransaction', 'paymentTransaction.order'],
+      order: { paypalTransactionID: 'DESC' }
     });
   }
 }

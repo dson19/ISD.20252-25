@@ -75,6 +75,8 @@ export class PaypalApiClient {
                         brand_name: 'AIMS Store',
                         landing_page: 'NO_PREFERENCE',
                         user_action: 'PAY_NOW',
+                        return_url: `http://localhost:4200/payment?orderId=${orderId}&success=true`,
+                        cancel_url: `http://localhost:4200/payment?orderId=${orderId}&cancel=true`,
                     },
                 }),
             });
