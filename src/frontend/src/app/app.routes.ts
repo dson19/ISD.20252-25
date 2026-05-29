@@ -26,8 +26,12 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/customer/payment/payment.component').then(m => m.PaymentComponent)
       },
       {
-        path: 'order-success',
-        loadComponent: () => import('./pages/customer/order-success/order-success.component').then(m => m.OrderSuccessComponent)
+        path: 'payment-result',
+        loadComponent: () => import('./pages/customer/payment-result/payment-result.component').then(m => m.PaymentResultComponent)
+      },
+      {
+        path: 'order-detail',
+        loadComponent: () => import('./pages/customer/order-detail/order-detail.component').then(m => m.OrderDetailComponent)
       }
     ]
   },
