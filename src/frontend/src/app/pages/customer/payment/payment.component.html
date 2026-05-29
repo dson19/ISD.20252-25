@@ -1,122 +1,163 @@
-<div class="max-w-4xl mx-auto">
+@if (!orderLoaded()) {
+<div class="flex flex-col items-center justify-center min-h-[400px] text-center">
+  <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4"></div>
+  <p class="text-gray-500 font-semibold">Đang tải thông tin thanh toán...</p>
+</div>
+} @else {
+<div class="max-w-4xl mx-auto animate-fade-in">
+  <!-- Loading Overlay -->
+  @if (loading()) {
+  <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white">
+    <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mb-4"></div>
+    <p class="text-sm font-semibold">{{ statusMessage() }}</p>
+  </div>
+  }
+
+  <!-- Payment Header -->
   <div class="text-center mb-8">
     <div class="inline-flex items-center justify-center p-2 bg-blue-50 rounded-full mb-4">
-      <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
     </div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">Thanh toan an toan</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">Thanh toán an toàn</h1>
     <p class="text-sm text-gray-500 flex items-center justify-center">
-      <svg class="w-4 h-4 mr-1 text-success" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
-      Ket noi thanh toan duoc bao mat
+      <svg class="w-4 h-4 mr-1 text-success" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+          clip-rule="evenodd"></path>
+      </svg>
+      Kết nối SSL 256-bit được mã hóa
     </p>
   </div>
 
   <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Left Column: Payment Methods & Details -->
     <div class="md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-gray-100 bg-gray-50/50">
       <div class="mb-8">
-        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Don hang</p>
-        <p class="text-gray-900 font-medium">#AIMS-{{ orderId }}</p>
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Đơn hàng</p>
+        <p class="text-gray-900 font-medium">#{{ orderId() || 'AIMS-2024-VN2481' }}</p>
       </div>
 
-      @if (errorMessage) {
-        <div class="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-danger">
-          {{ errorMessage }}
-        </div>
-      }
-
+      <!-- Payment Method Toggle -->
       <div class="flex p-1 bg-gray-200/50 rounded-xl mb-8">
-        <button (click)="selectMethod('QR')" [class.bg-white]="paymentMethod === 'QR'" [class.shadow-sm]="paymentMethod === 'QR'" class="flex-1 py-2.5 text-sm font-medium rounded-lg transition-all text-gray-700">
-          VietQR
+        <button (click)="selectMethod('QR')" [class.bg-white]="paymentMethod() === 'QR'"
+          [class.shadow-sm]="paymentMethod() === 'QR'"
+          class="flex-1 py-2.5 text-sm font-medium rounded-lg transition-all text-gray-700">
+          Chuyển khoản QR
         </button>
-        <button (click)="selectMethod('CARD')" [class.bg-white]="paymentMethod === 'CARD'" [class.shadow-sm]="paymentMethod === 'CARD'" class="flex-1 py-2.5 text-sm font-medium rounded-lg transition-all text-gray-700">
-          PayPal
+        <button (click)="selectMethod('CARD')" [class.bg-white]="paymentMethod() === 'CARD'"
+          [class.shadow-sm]="paymentMethod() === 'CARD'"
+          class="flex-1 py-2.5 text-sm font-medium rounded-lg transition-all text-gray-700">
+          Thẻ Tín dụng
         </button>
       </div>
 
-      @if (paymentMethod === 'QR') {
-        <div class="text-center">
-          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 inline-block mb-4">
-            @if (loadingQr) {
-              <div class="w-48 h-48 flex items-center justify-center text-sm text-gray-500">
-                Dang tao ma QR...
-              </div>
-            } @else {
-              <img [src]="vietqrPayment?.qrCode || vietqrPayment?.qrLink || 'https://placehold.co/200x200/ffffff/000000?text=QR+Code'" alt="VietQR" class="w-48 h-48">
-            }
-            <p class="mt-3 font-bold text-gray-800 text-sm">Quet ma de thanh toan</p>
-            <p class="text-xs text-gray-500">Mo ung dung ngan hang de quet ma VietQR</p>
-          </div>
-          <div class="flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-100 py-2 px-4 rounded-full w-fit mx-auto">
-            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            Con lai <span class="text-danger ml-1">{{ qrTimeLeft }}</span>
-          </div>
+      @if (paymentMethod() === 'QR') {
+      <div class="text-center">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 inline-block mb-4">
+          <img src="https://placehold.co/200x200/ffffff/000000?text=QR+Code" alt="VietQR" class="w-48 h-48">
+          <p class="mt-3 font-bold text-gray-800 text-sm">Quét mã để thanh toán</p>
+          <p class="text-xs text-gray-500">Mở ứng dụng ngân hàng để quét mã VietQR</p>
         </div>
+        <div
+          class="flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-100 py-2 px-4 rounded-full w-fit mx-auto">
+          <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Còn lại <span class="text-danger ml-1">{{ qrTimeLeft() }}</span>
+        </div>
+      </div>
       } @else {
-        <div class="space-y-5">
-          <div class="bg-gradient-to-tr from-primary to-blue-400 rounded-xl p-5 text-white shadow-lg relative overflow-hidden h-40 flex flex-col justify-between">
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
-            <div class="flex justify-between items-start z-10">
-              <svg class="w-8 h-8 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-              <span class="font-bold italic text-lg tracking-widest">PayPal</span>
-            </div>
-            <div class="z-10">
-              <p class="font-mono text-lg tracking-widest mb-2 shadow-sm">AIMS-{{ orderId }}</p>
-              <div class="flex justify-between text-xs uppercase opacity-80 font-medium">
-                <span>{{ cardName || 'PAYPAL CHECKOUT' }}</span>
-                <span>{{ cardExpiry || 'USD' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Email PayPal</label>
-              <input type="text" [(ngModel)]="cardName" placeholder="buyer@example.com" class="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-primary focus:border-primary">
-            </div>
-          </div>
+      <!-- PayPal Redirect Info -->
+      <div class="flex flex-col items-center justify-start pt-2 pb-6 px-4 text-center">
+        <div class="bg-blue-50 p-4 rounded-full mb-4">
+          <svg class="w-12 h-12 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
         </div>
+        <h3 class="text-base font-bold text-gray-900 mb-2">Thanh toán với PayPal</h3>
+        <p class="text-xs text-gray-500 leading-relaxed max-w-xs">
+          Hệ thống sẽ chuyển hướng bạn sang cổng thanh toán bảo mật của PayPal Sandbox. Bạn có thể sử dụng tài khoản
+          PayPal hoặc Thẻ tín dụng trực tiếp tại đó để hoàn tất thanh toán.
+        </p>
+      </div>
       }
     </div>
 
+    <!-- Right Column: Amount & Actions -->
     <div class="md:w-1/2 p-8 bg-white flex flex-col justify-center">
       <div class="mb-8">
-        <p class="text-sm text-gray-500 font-medium mb-1">Tong thanh toan</p>
-        <p class="text-4xl font-bold text-primary tracking-tight">{{ totalAmount | number:'1.0-0' }} <span class="text-xl">VND</span></p>
+        <p class="text-sm text-gray-500 font-medium mb-1">Tổng thanh toán</p>
+        <p class="text-4xl font-bold text-primary tracking-tight">{{ totalAmount() | number:'1.0-0' }} <span
+            class="text-xl">VND</span></p>
       </div>
 
-      @if (paymentMethod === 'QR') {
-        <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-8 space-y-3 text-sm">
-          <div class="flex justify-between border-b border-blue-100 pb-2">
-            <span class="text-gray-500">Ngan hang</span>
-            <span class="font-bold text-gray-900">VietQR</span>
-          </div>
-          <div class="flex justify-between border-b border-blue-100 pb-2">
-            <span class="text-gray-500">Ma giao dich</span>
-            <span class="font-bold text-gray-900">{{ vietqrPayment?.transactionRef || '-' }}</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-500">Noi dung</span>
-            <span class="font-bold text-gray-900">{{ vietqrPayment?.paymentContent || ('AIMS ' + orderId) }}</span>
+      @if (paymentMethod() === 'QR') {
+      <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-8 space-y-3 text-sm">
+        <div class="flex justify-between border-b border-blue-100 pb-2">
+          <span class="text-gray-500">Ngân hàng</span>
+          <span class="font-bold text-gray-900">Vietcombank</span>
+        </div>
+        <div class="flex justify-between items-center border-b border-blue-100 pb-2">
+          <span class="text-gray-500">Số tài khoản</span>
+          <div class="flex items-center">
+            <span class="font-bold text-gray-900 mr-2">0123456789</span>
+            <button class="text-primary hover:text-primary-hover"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg></button>
           </div>
         </div>
+        <div class="flex justify-between pb-2 border-b border-blue-100">
+          <span class="text-gray-500">Chủ tài khoản</span>
+          <span class="font-bold text-gray-900">AIMS DIGITAL ARCHIVE</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">Nội dung</span>
+          <div class="flex items-center">
+            <span class="font-bold text-gray-900 mr-2">AIMS VN2481</span>
+            <button class="text-primary hover:text-primary-hover"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg></button>
+          </div>
+        </div>
+      </div>
 
-        <div class="flex gap-4">
-          <button (click)="checkQrStatus()" [disabled]="!vietqrPayment" class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm disabled:bg-gray-100 disabled:text-gray-400">
-            Kiem tra
-          </button>
-          <button (click)="confirmPayment()" [disabled]="!vietqrPayment" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:shadow-none">
-            Xac nhan
-          </button>
-        </div>
-      } @else {
-        <button (click)="confirmPayment()" [disabled]="paying" class="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 mt-auto flex justify-center items-center disabled:bg-gray-300 disabled:shadow-none">
-          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-          {{ paying ? 'Dang tao thanh toan...' : 'Thanh toan' }} {{ totalAmount | number:'1.0-0' }} VND
+      <div class="flex gap-4">
+        <button
+          class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
+          Kiểm tra
         </button>
+        <button (click)="confirmPayment()"
+          class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+          Xác nhận
+        </button>
+      </div>
+      } @else {
+      <button (click)="confirmPayment()"
+        class="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 mt-auto flex justify-center items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        Thanh toán {{ totalAmount() | number:'1.0-0' }} VND
+      </button>
       }
 
       <div class="mt-8 text-center">
-        <a routerLink="/checkout" class="text-sm text-gray-500 hover:text-gray-900 underline underline-offset-2 transition-colors">Huy thanh toan</a>
+        <a routerLink="/checkout"
+          class="text-sm text-gray-500 hover:text-gray-900 underline underline-offset-2 transition-colors">Hủy thanh
+          toán</a>
       </div>
     </div>
   </div>
 </div>
+}

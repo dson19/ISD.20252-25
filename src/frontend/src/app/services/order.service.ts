@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CartItem } from './cart.service';
-
-const API_BASE_URL = 'http://localhost:3001/api';
+import { API_BASE_URL } from '../app.config';
 
 export interface DeliveryInfo {
   receiverName: string;
@@ -68,10 +67,13 @@ export interface ShippingFeeResponse {
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Inject(API_BASE_URL) private readonly baseUrl: string
+  ) {}
 
   checkCartStock(cartItems: CartItem[]): Observable<StockCheckResponse> {
-    return this.http.post<StockCheckResponse>(`${API_BASE_URL}/orders/cart/check-stock`, {
+    return this.http.post<StockCheckResponse>(`${this.baseUrl}/api/orders/cart/check-stock`, {
       cartItems: cartItems.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
@@ -80,7 +82,7 @@ export class OrderService {
   }
 
   placeOrder(cartItems: CartItem[], deliveryInfo: DeliveryInfo): Observable<OrderResponse> {
-    return this.http.post<OrderResponse>(`${API_BASE_URL}/orders`, {
+    return this.http.post<OrderResponse>(`${this.baseUrl}/api/orders`, {
       cartItems: cartItems.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
@@ -90,11 +92,11 @@ export class OrderService {
   }
 
   updateDeliveryInfo(orderId: number, deliveryInfo: DeliveryInfo): Observable<OrderResponse> {
-    return this.http.patch<OrderResponse>(`${API_BASE_URL}/orders/${orderId}/delivery-info`, deliveryInfo);
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/api/orders/${orderId}/delivery-info`, deliveryInfo);
   }
 
   calculateShippingFee(cartItems: CartItem[], province: string): Observable<ShippingFeeResponse> {
-    return this.http.post<ShippingFeeResponse>(`${API_BASE_URL}/orders/shipping-fee`, {
+    return this.http.post<ShippingFeeResponse>(`${this.baseUrl}/api/orders/shipping-fee`, {
       province,
       cartItems: cartItems.map((item) => ({
         productId: item.id,
@@ -104,6 +106,6 @@ export class OrderService {
   }
 
   getOrderDetail(orderId: number): Observable<OrderResponse> {
-    return this.http.get<OrderResponse>(`${API_BASE_URL}/orders/${orderId}`);
+    return this.http.get<OrderResponse>(`${this.baseUrl}/api/orders/${orderId}`);
   }
 }

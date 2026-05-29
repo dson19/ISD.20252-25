@@ -1,8 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { Observable } from 'rxjs';
-
-const API_BASE_URL = 'http://localhost:3001/api';
+import { API_BASE_URL } from '../app.config';
 
 export interface CdTrack {
   id?: number;
@@ -78,10 +77,13 @@ export interface ProductSearchParams {
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Inject(API_BASE_URL) private readonly baseUrl: string
+  ) {}
 
   getRandomProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${API_BASE_URL}/products/random`);
+    return this.http.get<Product[]>(`${this.baseUrl}/api/products/random`);
   }
 
   searchProducts(params: ProductSearchParams): Observable<Product[]> {
@@ -102,10 +104,10 @@ export class ProductService {
       httpParams = httpParams.set('maxPrice', params.maxPrice);
     }
 
-    return this.http.get<Product[]>(`${API_BASE_URL}/products`, { params: httpParams });
+    return this.http.get<Product[]>(`${this.baseUrl}/api/products`, { params: httpParams });
   }
 
   getProductById(id: number): Observable<Product> {
-    return this.http.get<Product>(`${API_BASE_URL}/products/${id}`);
+    return this.http.get<Product>(`${this.baseUrl}/api/products/${id}`);
   }
 }

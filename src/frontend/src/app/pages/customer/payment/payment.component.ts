@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { PaymentService, VietqrPaymentResponse } from '../../../services/payment.service';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { PaymentService } from '../../../services/payment.service';
 
 @Component({
   selector: 'app-payment',
@@ -11,146 +10,119 @@ import { PaymentService, VietqrPaymentResponse } from '../../../services/payment
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './payment.component.html'
 })
-export class PaymentComponent implements OnInit, OnDestroy {
-  orderId: number | null = null;
-  totalAmount = 0;
-  paymentMethod: 'QR' | 'CARD' = 'QR';
-  qrTimeLeft = '09:59';
-  vietqrPayment: VietqrPaymentResponse | null = null;
-  loadingQr = false;
-  paying = false;
-  errorMessage = '';
-  
-  // Card form details
-  cardNumber = '';
-  cardExpiry = '';
-  cardCvv = '';
-  cardName = '';
+export class PaymentComponent implements OnInit {
+  totalAmount = signal<number>(0);
+  paymentMethod = signal<'QR' | 'CARD'>('QR');
+  qrTimeLeft = signal<string>('09:59');
+  orderId = signal<number | null>(null);
 
-  private readonly subscriptions = new Subscription();
+  loading = signal<boolean>(false);
+  statusMessage = signal<string>('');
+  orderLoaded = signal<boolean>(false);
 
   constructor(
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly paymentService: PaymentService,
-  ) {}
+    private router: Router,
+    private route: ActivatedRoute,
+    private paymentService: PaymentService
+  ) { }
 
-  ngOnInit(): void {
-    const orderId = Number(this.route.snapshot.queryParamMap.get('orderId'));
-    const amount = Number(this.route.snapshot.queryParamMap.get('amount'));
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const orderIdParam = params['orderId'];
+      const paypalToken = params['token'];
+      const success = params['success'];
+      const cancel = params['cancel'];
 
-    if (!Number.isFinite(orderId) || !Number.isFinite(amount) || orderId <= 0 || amount <= 0) {
-      this.router.navigate(['/checkout']);
-      return;
-    }
+      if (orderIdParam) {
+        this.orderId.set(Number(orderIdParam));
 
-    this.orderId = orderId;
-    this.totalAmount = amount;
-    this.createQrPayment();
-  }
+        this.paymentService.getOrderDetail(this.orderId()!).subscribe({
+          next: (order) => {
+            this.totalAmount.set(Number(order.totalPayment));
+            this.orderLoaded.set(true);
+          },
+          error: (err) => {
+            this.orderLoaded.set(true);
+            console.error('Lỗi khi lấy thông tin đơn hàng:', err);
+          }
+        });
+      } else {
+        this.orderLoaded.set(true);
+      }
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+      if (cancel === 'true' && this.orderId()) {
+        this.router.navigate(['/payment-result'], {
+          queryParams: {
+            success: 'false',
+            orderId: this.orderId(),
+            error: 'Người dùng đã hủy giao dịch trên PayPal.'
+          }
+        });
+        return;
+      }
+
+      // Trường hợp nhận callback từ PayPal chuyển hướng về
+      if (paypalToken && success === 'true' && this.orderId()) {
+        this.loading.set(true);
+        this.statusMessage.set('Đang xác thực giao dịch PayPal, vui lòng không đóng trình duyệt...');
+
+        this.paymentService.captureOrder(paypalToken, this.orderId()!).subscribe({
+          next: () => {
+            // Xóa sạch giỏ hàng trong localStorage
+            localStorage.removeItem('aims_cart');
+            this.loading.set(false);
+            this.router.navigate(['/payment-result'], {
+              queryParams: { success: 'true', orderId: this.orderId() }
+            });
+          },
+          error: (err) => {
+            this.loading.set(false);
+            this.router.navigate(['/payment-result'], {
+              queryParams: {
+                success: 'false',
+                orderId: this.orderId(),
+                error: err.error?.message || err.message || 'Xác thực thanh toán PayPal thất bại.'
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   selectMethod(method: 'QR' | 'CARD') {
-    this.paymentMethod = method;
-    this.errorMessage = '';
+    this.paymentMethod.set(method);
   }
 
-  checkQrStatus(): void {
-    if (!this.vietqrPayment) {
+  confirmPayment() {
+    const currentOrderId = this.orderId();
+    if (!currentOrderId) {
+      alert('Không tìm thấy ID đơn hàng hợp lệ!');
       return;
     }
 
-    this.errorMessage = '';
-    this.subscriptions.add(
-      this.paymentService.getVietqrStatus(this.vietqrPayment.paymentId).subscribe({
-        next: (payment) => {
-          this.vietqrPayment = payment;
-          if (payment.status === 'PAID') {
-            this.goToSuccess(payment.transactionRef ?? `VQR-${payment.paymentId}`);
-          } else if (payment.status === 'EXPIRED' || payment.status === 'FAILED') {
-            this.errorMessage = 'Thanh toán QR đã hết hạn hoặc thất bại. Vui lòng tạo lại đơn hàng.';
+    if (this.paymentMethod() === 'QR') {
+      this.router.navigate(['/payment-result'], {
+        queryParams: { success: 'true', orderId: currentOrderId }
+      });
+    } else {
+      this.loading.set(true);
+      this.statusMessage.set('Đang chuẩn bị giao dịch PayPal...');
+
+      this.paymentService.createOrder(currentOrderId).subscribe({
+        next: (res) => {
+          if (res.approveUrl) {
+            window.location.href = res.approveUrl;
           } else {
-            this.errorMessage = 'Chưa nhận được thanh toán. Vui lòng thử kiểm tra lại sau.';
+            this.loading.set(false);
+            alert('Không nhận được link thanh toán từ PayPal.');
           }
         },
-        error: () => {
-          this.errorMessage = 'Không thể kiểm tra trạng thái thanh toán VietQR.';
-        },
-      }),
-    );
-  }
-
-  confirmPayment(): void {
-    if (!this.orderId) {
-      return;
+        error: (err) => {
+          this.loading.set(false);
+          alert(err.error?.message || 'Lỗi khi kết nối với cổng thanh toán PayPal.');
+        }
+      });
     }
-
-    if (this.paymentMethod === 'QR') {
-      this.checkQrStatus();
-      return;
-    }
-
-    this.paying = true;
-    this.errorMessage = '';
-    this.subscriptions.add(
-      this.paymentService.createPaypalOrder(this.orderId).subscribe({
-        next: (paypalOrder) => {
-          this.paying = false;
-          if (paypalOrder.approveUrl) {
-            window.location.href = paypalOrder.approveUrl;
-            return;
-          }
-
-          this.errorMessage = 'PayPal chưa trả về đường dẫn phê duyệt thanh toán.';
-        },
-        error: () => {
-          this.paying = false;
-          this.errorMessage = 'Không thể tạo thanh toán PayPal. Vui lòng thử lại.';
-        },
-      }),
-    );
-  }
-
-  private createQrPayment(): void {
-    if (!this.orderId || this.totalAmount <= 0) {
-      return;
-    }
-
-    this.loadingQr = true;
-    this.errorMessage = '';
-    this.subscriptions.add(
-      this.paymentService.createVietqrPayment(this.orderId, this.totalAmount).subscribe({
-        next: (payment) => {
-          this.vietqrPayment = payment;
-          this.loadingQr = false;
-          this.updateQrTimeLeft(payment.expiredAt);
-        },
-        error: () => {
-          this.loadingQr = false;
-          this.errorMessage = 'Không thể tạo mã VietQR cho đơn hàng này.';
-        },
-      }),
-    );
-  }
-
-  private updateQrTimeLeft(expiredAt: string): void {
-    const millisecondsLeft = new Date(expiredAt).getTime() - Date.now();
-    const totalSeconds = Math.max(0, Math.floor(millisecondsLeft / 1000));
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    this.qrTimeLeft = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  private goToSuccess(transactionId: string): void {
-    this.router.navigate(['/order-success'], {
-      queryParams: {
-        orderId: this.orderId,
-        amount: this.totalAmount,
-        transactionId,
-      },
-    });
   }
 }

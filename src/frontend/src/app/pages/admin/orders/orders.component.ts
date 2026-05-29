@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { PaymentService } from '../../../services/payment.service';
 
 interface Order {
   id: string;
@@ -14,7 +16,7 @@ interface Order {
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './orders.component.html'
 })
 export class OrdersComponent {
@@ -47,4 +49,34 @@ export class OrdersComponent {
       status: 'PROCESSING'
     }
   ];
+
+  refundOrderId = signal<number | null>(null);
+  refundLoading = signal<boolean>(false);
+
+  constructor(private paymentService: PaymentService) {}
+
+  executeRefund() {
+    const id = this.refundOrderId();
+    if (!id) {
+      alert('Vui lòng nhập ID đơn hàng hợp lệ để hoàn tiền!');
+      return;
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn hoàn tiền cho đơn hàng #${id} qua cổng PayPal?`)) {
+      return;
+    }
+
+    this.refundLoading.set(true);
+    this.paymentService.refundOrder(id).subscribe({
+      next: (res) => {
+        this.refundLoading.set(false);
+        alert(`Hoàn tiền thành công cho đơn hàng #${id}! Trạng thái PayPal: ${res.status || 'REFUNDED'}`);
+        this.refundOrderId.set(null);
+      },
+      error: (err) => {
+        this.refundLoading.set(false);
+        alert(err.error?.message || `Lỗi khi hoàn tiền đơn hàng #${id}. Vui lòng kiểm tra lại.`);
+      }
+    });
+  }
 }
