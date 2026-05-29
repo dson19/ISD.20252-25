@@ -21,7 +21,7 @@ export class UserAuditLog {
   description: string; 
 
   @Column({ name: 'performed_by', type: 'varchar', length: 50, nullable: true })
-  performedBy: User; 
+  performedBy: string; 
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date; 

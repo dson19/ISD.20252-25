@@ -11,12 +11,16 @@ import {
   Query,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { BatchDeleteProductsDto } from './dto/batch-delete-products.dto';
 import { ChangeStockDto } from './dto/change-stock.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('api/products')
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
@@ -46,6 +50,8 @@ export class ProductController {
   }
 
   @Get('audit-logs')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async getAuditLogs(@Headers('x-manager-id') managerId?: string) {
     this.requireManager(managerId);
     return this.productService.getAuditLogs();
@@ -57,6 +63,8 @@ export class ProductController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async createProduct(
     @Body() dto: CreateProductDto,
     @Headers('x-manager-id') managerId?: string,
@@ -65,6 +73,8 @@ export class ProductController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async updateProduct(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateProductDto,
@@ -78,6 +88,8 @@ export class ProductController {
   }
 
   @Post('batch-delete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async batchDeleteProducts(
     @Body() dto: BatchDeleteProductsDto,
     @Headers('x-manager-id') managerId?: string,
@@ -86,6 +98,8 @@ export class ProductController {
   }
 
   @Patch(':id/stock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async adjustStock(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ChangeStockDto,

@@ -10,6 +10,7 @@ import {
   Query,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { CheckCartStockDto } from './dto/check-cart-stock.dto';
 import { DeliveryInfoDto } from './dto/delivery-info.dto';
@@ -17,6 +18,9 @@ import { PlaceOrderDto } from './dto/place-order.dto';
 import { ShippingFeeDto } from './dto/shipping-fee.dto';
 import { CartService } from './services/cart.service';
 import { OrderService } from './services/order.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 /**
  * OrderController - REST API cho cart va quy trinh dat/duyet/huy don hang.
@@ -51,6 +55,8 @@ export class OrderController {
   }
 
   @Get('pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async getPendingOrders(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
@@ -59,11 +65,15 @@ export class OrderController {
   }
 
   @Get(':orderId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async getOrderDetail(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.getOrderDetail(orderId);
   }
 
   @Patch(':orderId/delivery-info')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async updateDeliveryInfo(
     @Param('orderId', ParseIntPipe) orderId: number,
     @Body() dto: DeliveryInfoDto,
@@ -72,16 +82,22 @@ export class OrderController {
   }
 
   @Post(':orderId/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async approveOrder(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.approveOrder(orderId);
   }
 
   @Post(':orderId/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async rejectOrder(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.rejectOrder(orderId);
   }
 
   @Post(':orderId/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async cancelOrder(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.cancelOrder(orderId);
   }

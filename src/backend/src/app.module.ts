@@ -7,6 +7,7 @@ import { ProductsModule } from './product/product.module';
 import { UserModule } from './user/user.module';
 import { OrderModule } from './order/order.module';
 import { PaymentModule } from './payment/payment.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
@@ -14,6 +15,7 @@ import { PaymentModule } from './payment/payment.module';
     ConfigModule.forRoot(),
     ProductsModule,
     UserModule,
+    AuthModule,
     OrderModule,
     PaymentModule,
     TypeOrmModule.forRootAsync({
