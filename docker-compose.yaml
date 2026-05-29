@@ -11,6 +11,7 @@ services:
       - ./src/backend/.env
     environment:
       - NODE_ENV=development
+      - PORT=3000
     volumes:
       - ./src/backend:/app
       - /app/node_modules

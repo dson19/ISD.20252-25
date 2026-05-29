@@ -63,7 +63,11 @@
           <button (click)="proceedToPayment()" class="w-full bg-primary text-white py-3.5 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all active:scale-95">
             Tien hanh thanh toan
           </button>
-          <a routerLink="/checkout" class="block text-center mt-4 text-sm text-gray-500 hover:text-gray-900">
+          <a
+            routerLink="/checkout"
+            [queryParams]="{ orderId: order.orderID }"
+            class="block text-center mt-4 text-sm text-gray-500 hover:text-gray-900"
+          >
             Quay lai thong tin giao hang
           </a>
         </div>

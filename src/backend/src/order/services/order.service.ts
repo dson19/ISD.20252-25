@@ -186,6 +186,51 @@ export class OrderService {
     return this.findOrderOrFail(this.dataSource.manager, orderId);
   }
 
+  async updateDeliveryInfo(orderId: number, deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
+    return this.dataSource.transaction(async (manager) => {
+      const order = await this.findOrderOrFail(manager, orderId);
+      if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
+        throw new BadRequestException(`Order ${orderId} cannot update delivery info from status ${order.status}`);
+      }
+
+      const subtotal = this.roundMoney(Number(order.subTotal));
+      const tax = this.roundMoney(Number(order.tax));
+      const totalWeight = (order.orderItems ?? []).reduce((sum, item) => {
+        return sum + Number(item.product?.weight ?? 0) * item.quantity;
+      }, 0);
+      const shippingFee = this.shippingCalculatorService.calculateShippingFee(
+        deliveryInfoDto.province,
+        totalWeight,
+        subtotal,
+      );
+      const totalPayment = this.roundMoney(subtotal + tax + shippingFee);
+
+      order.shippingFee = shippingFee;
+      order.totalPayment = totalPayment;
+      await manager.save(Order, order);
+
+      const deliveryInfo = order.deliveryInfo ?? manager.create(DeliveryInfo, { order });
+      Object.assign(deliveryInfo, {
+        ...deliveryInfoDto,
+        deliveryNotes: deliveryInfoDto.deliveryNotes,
+        order,
+      });
+      await manager.save(DeliveryInfo, deliveryInfo);
+
+      const invoice = order.invoice ?? manager.create(Invoice, { order });
+      Object.assign(invoice, {
+        totalExcludeVAT: subtotal,
+        totalIncludeVAT: this.roundMoney(subtotal + tax),
+        shippingFee,
+        totalPayment,
+        order,
+      });
+      await manager.save(Invoice, invoice);
+
+      return this.findOrderOrFail(manager, orderId);
+    });
+  }
+
   async approveOrder(orderId: number): Promise<Order> {
     const order = await this.findOrderOrFail(this.dataSource.manager, orderId);
     if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {

@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CartItem } from './cart.service';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 export interface DeliveryInfo {
   receiverName: string;
@@ -47,6 +47,8 @@ export interface OrderItemResponse {
     title: string;
     currentPrice: number | string;
     imageUrl?: string | null;
+    mediaType?: string;
+    quantityInStock?: number;
   };
 }
 
@@ -85,6 +87,10 @@ export class OrderService {
       })),
       deliveryInfo,
     });
+  }
+
+  updateDeliveryInfo(orderId: number, deliveryInfo: DeliveryInfo): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${API_BASE_URL}/orders/${orderId}/delivery-info`, deliveryInfo);
   }
 
   calculateShippingFee(cartItems: CartItem[], province: string): Observable<ShippingFeeResponse> {

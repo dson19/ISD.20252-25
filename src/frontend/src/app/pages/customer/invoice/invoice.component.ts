@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { OrderItemResponse, OrderResponse, OrderService } from '../../../services/order.service';
 
 @Component({
@@ -16,11 +17,13 @@ export class InvoiceComponent implements OnInit, OnDestroy {
   errorMessage = '';
 
   private readonly subscriptions = new Subscription();
+  private destroyed = false;
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly orderService: OrderService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -31,20 +34,27 @@ export class InvoiceComponent implements OnInit, OnDestroy {
     }
 
     this.subscriptions.add(
-      this.orderService.getOrderDetail(orderId).subscribe({
-        next: (order) => {
-          this.order = order;
-          this.loading = false;
-        },
-        error: () => {
-          this.errorMessage = 'Khong the tai hoa don. Vui long thu lai.';
-          this.loading = false;
-        },
-      }),
+      this.orderService
+        .getOrderDetail(orderId)
+        .pipe(
+          finalize(() => {
+            this.loading = false;
+            this.refreshView();
+          }),
+        )
+        .subscribe({
+          next: (order) => {
+            this.order = order;
+          },
+          error: () => {
+            this.errorMessage = 'Khong the tai hoa don. Vui long kiem tra backend API va thu lai.';
+          },
+        }),
     );
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.subscriptions.unsubscribe();
   }
 
@@ -83,5 +93,11 @@ export class InvoiceComponent implements OnInit, OnDestroy {
         amount: this.totalPayment,
       },
     });
+  }
+
+  private refreshView(): void {
+    if (!this.destroyed) {
+      this.cdr.detectChanges();
+    }
   }
 }

@@ -5,12 +5,14 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { CheckCartStockDto } from './dto/check-cart-stock.dto';
+import { DeliveryInfoDto } from './dto/delivery-info.dto';
 import { PlaceOrderDto } from './dto/place-order.dto';
 import { ShippingFeeDto } from './dto/shipping-fee.dto';
 import { CartService } from './services/cart.service';
@@ -59,6 +61,14 @@ export class OrderController {
   @Get(':orderId')
   async getOrderDetail(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.getOrderDetail(orderId);
+  }
+
+  @Patch(':orderId/delivery-info')
+  async updateDeliveryInfo(
+    @Param('orderId', ParseIntPipe) orderId: number,
+    @Body() dto: DeliveryInfoDto,
+  ) {
+    return this.orderService.updateDeliveryInfo(orderId, dto);
   }
 
   @Post(':orderId/approve')
