@@ -31,11 +31,12 @@ describe('ProductController', () => {
   it('passes search and price filters to the service', async () => {
     productService.searchProducts.mockResolvedValue([]);
 
-    await controller.searchProducts('book', 'Fiction', '10', '20');
+    await controller.searchProducts('book', 'Fiction', 'BOOK,DVD', '10', '20');
 
     expect(productService.searchProducts).toHaveBeenCalledWith({
       keyword: 'book',
       category: 'Fiction',
+      mediaTypes: ['BOOK', 'DVD'],
       minPrice: 10,
       maxPrice: 20,
     });

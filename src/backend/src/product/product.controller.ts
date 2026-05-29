@@ -27,12 +27,14 @@ export class ProductController {
   async searchProducts(
     @Query('keyword') keyword?: string,
     @Query('category') category?: string,
+    @Query('mediaTypes') mediaTypes?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
   ) {
     return this.productService.searchProducts({
       keyword,
       category,
+      mediaTypes: this.parseMediaTypes(mediaTypes),
       minPrice: this.parseOptionalNumber(minPrice, 'minPrice'),
       maxPrice: this.parseOptionalNumber(maxPrice, 'maxPrice'),
     });
@@ -115,5 +117,24 @@ export class ProductController {
     }
 
     return parsed;
+  }
+
+  private parseMediaTypes(value: string | undefined): string[] | undefined {
+    if (!value?.trim()) {
+      return undefined;
+    }
+
+    const mediaTypes = value
+      .split(',')
+      .map((item) => item.trim().toUpperCase())
+      .filter(Boolean);
+    const validTypes = new Set(['BOOK', 'CD', 'DVD', 'NEWSPAPER']);
+    const invalidType = mediaTypes.find((item) => !validTypes.has(item));
+
+    if (invalidType) {
+      throw new BadRequestException(`Invalid media type: ${invalidType}`);
+    }
+
+    return [...new Set(mediaTypes)];
   }
 }

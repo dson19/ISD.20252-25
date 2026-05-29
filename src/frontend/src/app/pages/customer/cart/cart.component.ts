@@ -1,74 +1,103 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-interface CartItem {
-  id: string;
-  title: string;
-  author: string;
-  price: number;
-  category: string;
-  imageUrl: string;
-  quantity: number;
-  stockStatus: string; // e.g., 'Chỉ còn 2 sản phẩm trong kho'
-  isLowStock: boolean;
-}
+import { Subscription } from 'rxjs';
+import { CartItem, CartService } from '../../../services/cart.service';
+import { OrderService, StockIssue } from '../../../services/order.service';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './cart.component.html'
 })
-export class CartComponent {
-  cartItems: CartItem[] = [
-    {
-      id: '1',
-      title: 'Mũ nồi xanh Việt Nam - Người đi gieo hạt hòa bình',
-      author: 'Nguyễn Sỹ Công, Nam Kha',
-      price: 108000,
-      category: 'SÁCH',
-      imageUrl: 'https://placehold.co/100x130/e2e8f0/475569?text=Book',
-      quantity: 1,
-      stockStatus: 'Chỉ còn 2 sản phẩm trong kho',
-      isLowStock: true
-    },
-    {
-      id: '6',
-      title: 'Mai',
-      author: 'Phim Việt 2024 - Trấn Thành',
-      price: 95000,
-      category: 'DVD',
-      imageUrl: 'https://placehold.co/100x130/e2e8f0/475569?text=Mai',
-      quantity: 1,
-      stockStatus: 'Chỉ còn 1 sản phẩm trong kho',
-      isLowStock: true
-    }
-  ];
+export class CartComponent implements OnDestroy {
+  cartItems: CartItem[] = [];
+  checkingStock = false;
+  stockCheckError = '';
+  stockIssuesByProductId = new Map<number, StockIssue>();
+
+  private readonly subscriptions = new Subscription();
+  private activeStockCheck: Subscription | null = null;
+
+  constructor(
+    private readonly cartService: CartService,
+    private readonly orderService: OrderService,
+  ) {
+    this.cartItems = this.cartService.getCartItems();
+    this.subscriptions.add(
+      this.cartService.items$.subscribe((items) => {
+        this.cartItems = items;
+        this.checkStock();
+      }),
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+    this.activeStockCheck?.unsubscribe();
+  }
 
   get subtotal(): number {
-    return this.cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return this.cartService.priceExcludedVAT;
   }
 
-  get vat(): number {
-    return this.subtotal * 0.1;
+  get hasStockIssues(): boolean {
+    return this.stockIssuesByProductId.size > 0;
   }
 
-  get total(): number {
-    return this.subtotal + this.vat;
+  get canPlaceOrder(): boolean {
+    return this.cartItems.length > 0 && !this.checkingStock && !this.hasStockIssues && !this.stockCheckError;
   }
 
-  increaseQuantity(item: CartItem) {
-    item.quantity++;
+  increaseQuantity(item: CartItem): void {
+    this.cartService.updateQuantity(item.id, item.quantity + 1);
   }
 
-  decreaseQuantity(item: CartItem) {
-    if (item.quantity > 1) {
-      item.quantity--;
+  decreaseQuantity(item: CartItem): void {
+    this.cartService.updateQuantity(item.id, Math.max(1, item.quantity - 1));
+  }
+
+  updateQuantity(item: CartItem, quantity: number): void {
+    this.cartService.updateQuantity(item.id, quantity);
+  }
+
+  removeItem(item: CartItem): void {
+    this.cartService.removeItem(item.id);
+  }
+
+  itemTotal(item: CartItem): number {
+    return item.price * item.quantity;
+  }
+
+  stockIssueFor(item: CartItem): StockIssue | undefined {
+    return this.stockIssuesByProductId.get(item.id);
+  }
+
+  private checkStock(): void {
+    this.activeStockCheck?.unsubscribe();
+    this.stockCheckError = '';
+
+    if (this.cartItems.length === 0) {
+      this.checkingStock = false;
+      this.stockIssuesByProductId.clear();
+      return;
     }
-  }
 
-  removeItem(item: CartItem) {
-    this.cartItems = this.cartItems.filter(i => i.id !== item.id);
+    this.checkingStock = true;
+    this.activeStockCheck = this.orderService.checkCartStock(this.cartItems).subscribe({
+      next: (result) => {
+        this.stockIssuesByProductId = new Map(
+          result.issues.map((issue) => [issue.productId, issue]),
+        );
+        this.checkingStock = false;
+      },
+      error: () => {
+        this.stockIssuesByProductId.clear();
+        this.stockCheckError = 'Không thể kiểm tra tồn kho. Vui lòng thử lại sau.';
+        this.checkingStock = false;
+      },
+    });
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Between, DataSource, In, Repository } from 'typeorm';
+import { Between, Brackets, DataSource, In, Repository } from 'typeorm';
 import { ProductLog } from './entities/product-audit-log.entity';
 import { Product } from './entities/product.entity';
 
@@ -35,6 +35,7 @@ export class ProductRepository {
     category?: string,
     minPrice?: number,
     maxPrice?: number,
+    mediaTypes?: string[],
   ): Promise<Product[]> {
     const query = this.repository.createQueryBuilder('product');
     query.where('product.status = :status', { status: 'ACTIVE' });
@@ -45,7 +46,25 @@ export class ProductRepository {
       });
     }
     if (category) {
-      query.andWhere('product.category = :category', { category });
+      const categoryAliases = this.getCategoryAliases(category);
+      const mediaType = this.getMediaTypeForCategory(category);
+
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('product.category IN (:...categoryAliases)', {
+            categoryAliases,
+          });
+
+          if (mediaType) {
+            qb.orWhere('product.product_type = :mediaType', { mediaType });
+          }
+        }),
+      );
+    }
+    if (mediaTypes?.length) {
+      query.andWhere('product.product_type IN (:...mediaTypes)', {
+        mediaTypes,
+      });
     }
     if (minPrice !== undefined) {
       query.andWhere('product.current_price >= :minPrice', { minPrice });
@@ -64,6 +83,43 @@ export class ProductRepository {
       .orderBy('RANDOM()')
       .limit(limit)
       .getMany();
+  }
+
+  private getCategoryAliases(category: string): string[] {
+    const normalized = category.trim();
+    const upper = normalized.toUpperCase();
+    const aliasMap: Record<string, string[]> = {
+      'SÁCH': ['SÁCH', 'SACH', 'BOOK', 'Book', 'book'],
+      SACH: ['SÁCH', 'SACH', 'BOOK', 'Book', 'book'],
+      BOOK: ['SÁCH', 'SACH', 'BOOK', 'Book', 'book'],
+      CD: ['CD', 'cd'],
+      DVD: ['DVD', 'dvd'],
+      'BÁO': ['BÁO', 'BÁO CHÍ', 'BAO', 'BAO CHI', 'NEWSPAPER', 'Newspaper', 'newspaper'],
+      'BÁO CHÍ': ['BÁO', 'BÁO CHÍ', 'BAO', 'BAO CHI', 'NEWSPAPER', 'Newspaper', 'newspaper'],
+      BAO: ['BÁO', 'BÁO CHÍ', 'BAO', 'BAO CHI', 'NEWSPAPER', 'Newspaper', 'newspaper'],
+      'BAO CHI': ['BÁO', 'BÁO CHÍ', 'BAO', 'BAO CHI', 'NEWSPAPER', 'Newspaper', 'newspaper'],
+      NEWSPAPER: ['BÁO', 'BÁO CHÍ', 'BAO', 'BAO CHI', 'NEWSPAPER', 'Newspaper', 'newspaper'],
+    };
+
+    return Array.from(new Set([normalized, upper, ...(aliasMap[upper] ?? [])]));
+  }
+
+  private getMediaTypeForCategory(category: string): string | undefined {
+    const upper = category.trim().toUpperCase();
+    const mediaTypeMap: Record<string, string> = {
+      'SÁCH': 'BOOK',
+      SACH: 'BOOK',
+      BOOK: 'BOOK',
+      CD: 'CD',
+      DVD: 'DVD',
+      'BÁO': 'NEWSPAPER',
+      'BÁO CHÍ': 'NEWSPAPER',
+      BAO: 'NEWSPAPER',
+      'BAO CHI': 'NEWSPAPER',
+      NEWSPAPER: 'NEWSPAPER',
+    };
+
+    return mediaTypeMap[upper];
   }
 
   async countManagerDeleteActions(

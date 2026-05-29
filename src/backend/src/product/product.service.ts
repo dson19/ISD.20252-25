@@ -60,6 +60,7 @@ export class ProductService {
   async searchProducts(params: {
     keyword?: string;
     category?: string;
+    mediaTypes?: string[];
     minPrice?: number;
     maxPrice?: number;
   }): Promise<Product[]> {
@@ -68,6 +69,7 @@ export class ProductService {
       params.category,
       params.minPrice,
       params.maxPrice,
+      params.mediaTypes,
     );
   }
 

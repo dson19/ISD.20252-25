@@ -1,27 +1,27 @@
 <div class="min-h-screen bg-gray-50 flex flex-col">
-  <!-- Header -->
   <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <!-- Logo -->
       <div class="flex-shrink-0 cursor-pointer" routerLink="/">
         <span class="text-primary font-bold text-2xl tracking-tight">AIMS</span>
       </div>
 
-      <!-- Search Bar -->
-      <div class="flex-1 max-w-2xl mx-8">
+      <form class="flex-1 max-w-2xl mx-8" (ngSubmit)="searchProducts()">
         <div class="relative group">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg class="h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <input type="text" 
-            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary focus:bg-white sm:text-sm transition-all duration-200" 
-            placeholder="Tìm kiếm tài liệu, sách, đĩa...">
+          <input
+            type="text"
+            [(ngModel)]="searchKeyword"
+            name="searchKeyword"
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary focus:bg-white sm:text-sm transition-all duration-200"
+            placeholder="Tìm kiếm tài liệu, sách, đĩa..."
+          >
         </div>
-      </div>
+      </form>
 
-      <!-- Actions -->
       <div class="flex items-center space-x-6">
         <a routerLink="/cart" class="relative p-2 text-gray-600 hover:text-primary transition-colors cursor-pointer group">
           <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -37,7 +37,6 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <router-outlet></router-outlet>
   </main>
