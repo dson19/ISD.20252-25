@@ -1,25 +1,100 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { CartItem, CartService } from '../../../services/cart.service';
+import { DeliveryInfo, OrderService, StockIssue } from '../../../services/order.service';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './checkout.component.html'
 })
-export class CheckoutComponent {
-  subtotal = 203000;
-  vat = 20300;
+export class CheckoutComponent implements OnDestroy {
+  cartItems: CartItem[] = [];
   shippingFee = 35000;
+  submitting = false;
+  errorMessage = '';
+  stockIssues: StockIssue[] = [];
+
+  deliveryInfo: DeliveryInfo = {
+    receiverName: '',
+    email: '',
+    phoneNumber: '',
+    province: '',
+    address: '',
+    deliveryNotes: '',
+  };
+
+  private readonly cartSubscription: Subscription;
+
+  constructor(
+    private readonly router: Router,
+    private readonly cartService: CartService,
+    private readonly orderService: OrderService,
+  ) {
+    this.cartItems = this.cartService.getCartItems();
+    this.cartSubscription = this.cartService.items$.subscribe((items) => {
+      this.cartItems = items;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.cartSubscription.unsubscribe();
+  }
+
+  get subtotal(): number {
+    return this.cartService.priceExcludedVAT;
+  }
+
+  get vat(): number {
+    return this.cartService.vat;
+  }
 
   get total(): number {
     return this.subtotal + this.vat + this.shippingFee;
   }
 
-  constructor(private router: Router) {}
+  continueToPayment(): void {
+    if (this.cartItems.length === 0) {
+      this.router.navigate(['/cart']);
+      return;
+    }
 
-  continueToPayment() {
-    this.router.navigate(['/payment']);
+    this.submitting = true;
+    this.errorMessage = '';
+    this.stockIssues = [];
+
+    this.orderService.placeOrder(this.cartItems, this.deliveryInfo).subscribe({
+      next: () => {
+        this.cartService.clearCart();
+        this.submitting = false;
+        this.router.navigate(['/payment']);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.submitting = false;
+        this.errorMessage =
+          error.status === 400
+            ? 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.'
+            : 'Không thể đặt hàng. Hãy kiểm tra backend API và thử lại.';
+        this.stockIssues = this.extractStockIssues(error);
+      },
+    });
+  }
+
+  itemTotal(item: CartItem): number {
+    return item.price * item.quantity;
+  }
+
+  stockIssueTitle(issue: StockIssue): string {
+    return this.cartItems.find((item) => item.id === issue.productId)?.title ?? `Sản phẩm #${issue.productId}`;
+  }
+
+  private extractStockIssues(error: HttpErrorResponse): StockIssue[] {
+    const response = error.error as { issues?: StockIssue[] } | undefined;
+    return Array.isArray(response?.issues) ? response.issues : [];
   }
 }

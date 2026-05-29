@@ -1,137 +1,124 @@
+@if (toastMessage) {
+  <div class="fixed top-20 right-6 z-50 bg-success text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium">
+    {{ toastMessage }}
+  </div>
+}
+
 <div class="flex gap-8">
-  <!-- Sidebar Filters -->
   <aside class="w-64 flex-shrink-0">
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
-      <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Bộ Lọc Lưu Trữ</h3>
-      
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sticky top-24">
+      <h3 class="text-sm font-semibold text-gray-900 uppercase mb-4">Bộ lọc</h3>
+
       <div class="mb-8">
-        <h4 class="text-sm font-medium text-gray-700 mb-3">Định dạng</h4>
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Danh mục</h4>
         <div class="space-y-2">
-          @for (cat of categories; track cat) {
+          @for (cat of categories; track cat.value) {
             <label class="flex items-center group cursor-pointer">
-              <input type="checkbox" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2 transition-all">
-              <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ cat }}</span>
+              <input
+                type="checkbox"
+                class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2 transition-all"
+                [checked]="selectedCategories.has(cat.value)"
+                (change)="toggleCategory(cat.value, $any($event.target).checked)"
+              >
+              <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ cat.label }}</span>
             </label>
           }
         </div>
       </div>
 
-      <div>
+      <div class="mb-6">
         <h4 class="text-sm font-medium text-gray-700 mb-3">Khoảng giá (VND)</h4>
         <div class="space-y-2">
-          <label class="flex items-center group cursor-pointer">
-            <input type="radio" name="price" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2 transition-all">
-            <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">< 100,000</span>
-          </label>
-          <label class="flex items-center group cursor-pointer">
-            <input type="radio" name="price" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2 transition-all">
-            <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">100,000 - 500,000</span>
-          </label>
-          <label class="flex items-center group cursor-pointer">
-            <input type="radio" name="price" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2 transition-all">
-            <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">500,000 - 1,000,000</span>
-          </label>
-          <label class="flex items-center group cursor-pointer">
-            <input type="radio" name="price" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2 transition-all">
-            <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">> 1,000,000</span>
-          </label>
+          @for (price of priceFilters; track $index) {
+            <label class="flex items-center group cursor-pointer">
+              <input
+                type="radio"
+                name="price"
+                class="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2 transition-all"
+                [checked]="selectedPriceIndex === $index"
+                (change)="selectPrice($index)"
+              >
+              <span class="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ price.label }}</span>
+            </label>
+          }
         </div>
       </div>
+
+      <button (click)="clearFilters()" class="w-full border border-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+        Xóa bộ lọc
+      </button>
     </div>
   </aside>
 
-  <!-- Main Content Area -->
-  <div class="flex-1">
-    <!-- Hero Banner -->
-    <div class="bg-gradient-to-r from-primary to-blue-400 rounded-3xl p-8 mb-8 text-white shadow-lg relative overflow-hidden group">
-      <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      <div class="relative z-10">
-        <p class="text-blue-100 text-sm font-semibold tracking-wider uppercase mb-2">Bộ sưu tập nổi bật</p>
-        <h1 class="text-4xl font-bold mb-4 tracking-tight">Mới Nhất Tại AIMS</h1>
-        <p class="text-blue-50 max-w-xl mb-6 leading-relaxed">Khám phá các ấn phẩm học thuật và tài liệu nghe nhìn vừa được phục hồi tại kho lưu trữ AIMS.</p>
-        <button class="bg-white text-primary px-6 py-2.5 rounded-full font-semibold hover:bg-gray-50 hover:shadow-md transition-all transform hover:-translate-y-0.5">
-          Khám Phá Ngay
-        </button>
-      </div>
+  <div class="flex-1 min-w-0">
+    <div class="bg-white rounded-lg p-6 mb-8 border border-gray-100 shadow-sm">
+      <p class="text-primary text-sm font-semibold uppercase mb-2">AIMS</p>
+      <h1 class="text-3xl font-bold mb-3 tracking-tight text-gray-900">Sản phẩm đang hoạt động</h1>
+      <p class="text-gray-600 max-w-2xl leading-relaxed">Tìm kiếm, lọc và xem chi tiết sách, báo chí, CD và DVD trong kho.</p>
     </div>
 
-    <!-- Toolbar -->
-    <div class="flex justify-between items-center mb-6">
-      <p class="text-sm text-gray-500">Hiển thị <span class="font-semibold text-gray-900">1-20</span> của 142 sản phẩm</p>
-      <div class="flex items-center space-x-2">
-        <span class="text-sm text-gray-500">Sắp xếp theo:</span>
-        <select class="text-sm border-gray-300 rounded-lg focus:ring-primary focus:border-primary bg-white py-1.5 pl-3 pr-8 shadow-sm">
-          <option>Mới Nhất</option>
-          <option>Giá tăng dần</option>
-          <option>Giá giảm dần</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Product Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      @for (product of products; track product.id) {
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full transform hover:-translate-y-1">
-          <!-- Image -->
-          <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden cursor-pointer">
-            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-gray-700 rounded-md shadow-sm z-10">
-              {{ product.category }}
-            </span>
-            <img [src]="product.imageUrl" [alt]="product.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-            <!-- Quick Add Overlay -->
-            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-               <button class="w-full bg-white text-gray-900 py-2 rounded-xl font-medium text-sm hover:bg-gray-100 transition-colors shadow-sm">Xem chi tiết</button>
-            </div>
-          </div>
-          
-          <!-- Info -->
-          <div class="p-4 flex flex-col flex-1">
-            <h3 class="font-bold text-gray-900 leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors cursor-pointer">
-              {{ product.title }}
-            </h3>
-            <p class="text-xs text-gray-500 mb-3 line-clamp-1 flex-1">{{ product.author }}</p>
-            
-            <div class="flex items-end justify-between mb-4">
-              <div>
-                <p class="text-lg font-bold text-primary">{{ product.price | number:'1.0-0' }} đ</p>
-                <p class="text-[10px] text-gray-400 italic">(chưa bao gồm VAT)</p>
-              </div>
-              @if (product.stock < 10) {
-                <p class="text-[10px] font-medium text-warning bg-orange-50 px-2 py-1 rounded-md">Chỉ còn {{product.stock}}</p>
-              }
-            </div>
-
-            <!-- Action -->
-            <div class="flex items-center space-x-2 mt-auto">
-              <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
-                <button class="px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">-</button>
-                <input type="number" value="1" class="w-10 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900">
-                <button class="px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">+</button>
-              </div>
-              <button (click)="addToCart(product)" class="flex-1 bg-primary text-white py-2 rounded-xl font-medium text-sm hover:bg-primary-hover transition-colors shadow-sm hover:shadow active:scale-95">
-                Thêm vào giỏ
-              </button>
-            </div>
-          </div>
-        </div>
+    <div class="flex justify-between items-center mb-6 gap-4">
+      <p class="text-sm text-gray-500">
+        @if (loading) {
+          Đang tải sản phẩm...
+        } @else {
+          Hiển thị <span class="font-semibold text-gray-900">{{ products.length }}</span> sản phẩm
+        }
+      </p>
+      @if (keyword) {
+        <p class="text-sm text-gray-500 truncate">Từ khóa: <span class="font-semibold text-gray-900">{{ keyword }}</span></p>
       }
     </div>
 
-    <!-- Pagination -->
-    <div class="mt-12 flex justify-center">
-      <nav class="flex items-center space-x-1">
-        <button class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-        </button>
-        <button class="w-10 h-10 rounded-lg bg-primary text-white font-medium shadow-sm">1</button>
-        <button class="w-10 h-10 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition-colors">2</button>
-        <button class="w-10 h-10 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition-colors">3</button>
-        <span class="px-2 text-gray-400">...</span>
-        <button class="w-10 h-10 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition-colors">15</button>
-        <button class="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-        </button>
-      </nav>
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-100 text-danger rounded-lg p-4 mb-6 text-sm">
+        {{ errorMessage }}
+      </div>
+    }
+
+    @if (!loading && products.length === 0) {
+      <div class="bg-white border border-gray-100 rounded-lg p-12 text-center">
+        <h3 class="font-semibold text-gray-900 mb-1">Không tìm thấy sản phẩm</h3>
+        <p class="text-sm text-gray-500">Thử đổi từ khóa hoặc bộ lọc.</p>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      @for (product of products; track product.productID) {
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col h-full">
+          <a [routerLink]="['/product', product.productID]" class="relative aspect-[3/4] bg-gray-100 overflow-hidden block">
+            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-gray-700 rounded-md shadow-sm z-10">
+              {{ mediaTypeLabel(product.mediaType) }}
+            </span>
+            <img [src]="productImage(product)" [alt]="product.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+          </a>
+
+          <div class="p-4 flex flex-col flex-1">
+            <a [routerLink]="['/product', product.productID]" class="font-bold text-gray-900 leading-tight mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+              {{ product.title }}
+            </a>
+            <p class="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">{{ product.description || product.category }}</p>
+
+            <div class="flex items-end justify-between mb-4">
+              <div>
+                <p class="text-lg font-bold text-primary">{{ productPrice(product) | number:'1.0-0' }} đ</p>
+                <p class="text-[10px] text-gray-400 italic">(chưa bao gồm VAT)</p>
+              </div>
+              @if (product.quantityInStock < 10) {
+                <p class="text-[10px] font-medium text-warning bg-orange-50 px-2 py-1 rounded-md">Còn {{ product.quantityInStock }}</p>
+              }
+            </div>
+
+            <button
+              (click)="addToCart(product)"
+              [disabled]="product.quantityInStock <= 0"
+              class="w-full bg-primary text-white py-2 rounded-lg font-medium text-sm hover:bg-primary-hover transition-colors shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {{ product.quantityInStock > 0 ? 'Thêm vào giỏ' : 'Hết hàng' }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
   </div>
 </div>

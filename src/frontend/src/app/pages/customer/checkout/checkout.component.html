@@ -1,91 +1,98 @@
 <div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
-  
-  <!-- Delivery Information Form -->
   <div class="flex-1">
     <div class="flex items-center space-x-2 mb-2">
       <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Thông tin giao hàng</h1>
     </div>
-    <p class="text-gray-500 text-sm mb-8">Vui lòng cung cấp thông tin giao hàng để hoàn tất đơn đặt hàng. Hãy đảm bảo mọi thông tin đều chính xác để tránh chậm trễ khi giao.</p>
-    
-    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mb-6">
+    <p class="text-gray-500 text-sm mb-8">Nhập thông tin nhận hàng để đặt hàng và kiểm tra tồn kho lần cuối.</p>
+
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-100 text-danger rounded-lg p-4 mb-6 text-sm">
+        <p class="font-semibold mb-2">{{ errorMessage }}</p>
+        @if (stockIssues.length) {
+          <ul class="space-y-1">
+            @for (issue of stockIssues; track issue.productId) {
+              <li>
+                {{ stockIssueTitle(issue) }}: yêu cầu {{ issue.requestedQuantity }},
+                hiện có {{ issue.availableQuantity }}.
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-8 mb-6">
       <h2 class="text-lg font-bold text-gray-900 mb-6">Chi tiết giao hàng</h2>
-      
-      <form class="space-y-6">
+
+      <form class="space-y-6" #checkoutForm="ngForm" (ngSubmit)="continueToPayment()">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên người nhận <span class="text-danger">*</span></label>
-          <input type="text" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-danger">*</span></label>
+          <input type="email" name="email" [(ngModel)]="deliveryInfo.email" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="email@example.com" required>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-danger">*</span></label>
-          <input type="tel" value="987654321" class="block w-full px-4 py-3 bg-red-50 border border-danger text-danger rounded-xl text-sm focus:ring-danger focus:border-danger transition-colors" placeholder="Ví dụ: 0987654321" required>
-          <p class="mt-2 text-xs text-danger flex items-center">
-            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-            Số điện thoại phải bắt đầu bằng số 0.
-          </p>
+          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: 0987654321" required>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Tỉnh / Thành phố <span class="text-danger">*</span></label>
-          <select class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900" required>
-            <option value="" disabled selected>Chọn Tỉnh/Thành phố</option>
-            <option value="HN">Hà Nội</option>
-            <option value="HCM">Hồ Chí Minh</option>
-            <option value="DN">Đà Nẵng</option>
+          <select name="province" [(ngModel)]="deliveryInfo.province" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900" required>
+            <option value="" disabled>Chọn Tỉnh/Thành phố</option>
+            <option value="Hà Nội">Hà Nội</option>
+            <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+            <option value="Đà Nẵng">Đà Nẵng</option>
           </select>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết <span class="text-danger">*</span></label>
-          <textarea rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Số nhà, tên đường, phường/xã, quận/huyện" required></textarea>
+          <textarea name="address" [(ngModel)]="deliveryInfo.address" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Số nhà, tên đường, phường/xã, quận/huyện" required></textarea>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú giao hàng <span class="text-gray-400 font-normal">(Tùy chọn)</span></label>
-          <textarea rows="2" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao"></textarea>
+          <textarea name="deliveryNotes" [(ngModel)]="deliveryInfo.deliveryNotes" rows="2" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <a routerLink="/cart" class="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center transition-colors">
+            ← Quay lại giỏ hàng
+          </a>
+          <button
+            type="submit"
+            [disabled]="checkoutForm.invalid || submitting || cartItems.length === 0"
+            class="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {{ submitting ? 'Đang đặt hàng...' : 'Đặt hàng' }}
+          </button>
         </div>
       </form>
     </div>
-    
-    <div class="flex items-center justify-between">
-      <a routerLink="/cart" class="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center transition-colors">
-        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-        Quay lại giỏ hàng
-      </a>
-      <button (click)="continueToPayment()" class="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95">
-        Tiếp tục thanh toán
-      </button>
-    </div>
   </div>
 
-  <!-- Order Summary Sidebar -->
   <div class="lg:w-80 flex-shrink-0">
-    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-24">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sticky top-24">
       <h2 class="text-lg font-bold text-gray-900 mb-6">Tóm tắt đơn hàng</h2>
-      
-      <!-- Mini Cart Items -->
+
       <div class="space-y-4 mb-6">
-        <div class="flex space-x-3">
-          <div class="w-12 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-            <img src="https://placehold.co/100x130/e2e8f0/475569?text=Book" alt="Thumb" class="w-full h-full object-cover">
+        @for (item of cartItems; track item.id) {
+          <div class="flex space-x-3">
+            <div class="w-12 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+              <img [src]="item.imageUrl" [alt]="item.title" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-xs font-bold text-gray-900 line-clamp-2 mb-1">{{ item.title }}</h4>
+              <p class="text-[10px] text-gray-500">SL: {{ item.quantity }}</p>
+              <p class="text-xs font-semibold text-gray-900 mt-1">{{ itemTotal(item) | number:'1.0-0' }} VND</p>
+            </div>
           </div>
-          <div class="flex-1">
-            <h4 class="text-xs font-bold text-gray-900 line-clamp-2 mb-1">Mũ nồi xanh Việt Nam - Người đi gieo hạt hòa bình</h4>
-            <p class="text-[10px] text-gray-500">SL: 1</p>
-            <p class="text-xs font-semibold text-gray-900 mt-1">108.000 VND</p>
-          </div>
-        </div>
-        
-        <div class="flex space-x-3">
-          <div class="w-12 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-            <img src="https://placehold.co/100x130/e2e8f0/475569?text=Mai" alt="Thumb" class="w-full h-full object-cover">
-          </div>
-          <div class="flex-1">
-            <h4 class="text-xs font-bold text-gray-900 line-clamp-2 mb-1">Mai</h4>
-            <p class="text-[10px] text-gray-500">SL: 1</p>
-            <p class="text-xs font-semibold text-gray-900 mt-1">95.000 VND</p>
-          </div>
-        </div>
+        }
       </div>
 
       <div class="border-t border-gray-100 pt-4 mb-4">
@@ -95,23 +102,16 @@
             <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} VND</span>
           </div>
           <div class="flex justify-between text-gray-600">
+            <span>VAT (10%)</span>
+            <span class="font-medium text-gray-900">{{ vat | number:'1.0-0' }} VND</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
             <span>Phí vận chuyển</span>
             <span class="font-medium text-gray-900">{{ shippingFee | number:'1.0-0' }} VND</span>
           </div>
         </div>
       </div>
-      
-      <!-- Info Banner -->
-      <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start space-x-2 mb-4">
-        <svg class="w-4 h-4 text-primary flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <p class="text-[10px] text-gray-600 leading-relaxed">Đơn hàng trên 100.000 VND được hỗ trợ phí vận chuyển tối đa 25.000 VND.</p>
-      </div>
 
-      <div class="flex justify-between text-sm text-gray-600 mb-6">
-        <span>VAT (10%)</span>
-        <span class="font-medium text-gray-900">{{ vat | number:'1.0-0' }} VND</span>
-      </div>
-      
       <div class="border-t border-gray-100 pt-4">
         <div class="flex justify-between items-center">
           <span class="font-semibold text-gray-900">Tổng thanh toán</span>
