@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CheckCartStockDto } from './dto/check-cart-stock.dto';
 import { PlaceOrderDto } from './dto/place-order.dto';
+import { ShippingFeeDto } from './dto/shipping-fee.dto';
 import { CartService } from './services/cart.service';
 import { OrderService } from './services/order.service';
 
@@ -35,6 +36,11 @@ export class OrderController {
   @Post('cart/check-stock')
   async checkCartStock(@Body() dto: CheckCartStockDto) {
     return this.cartService.checkCartStock(dto.cartItems);
+  }
+
+  @Post('shipping-fee')
+  async calculateShippingFee(@Body() dto: ShippingFeeDto) {
+    return this.orderService.calculateShippingFee(dto.cartItems, dto.province);
   }
 
   @Post()

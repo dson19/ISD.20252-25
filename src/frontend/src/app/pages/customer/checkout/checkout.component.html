@@ -1,9 +1,9 @@
 <div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
   <div class="flex-1">
     <div class="flex items-center space-x-2 mb-2">
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Thông tin giao hàng</h1>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Thong tin giao hang</h1>
     </div>
-    <p class="text-gray-500 text-sm mb-8">Nhập thông tin nhận hàng để đặt hàng và kiểm tra tồn kho lần cuối.</p>
+    <p class="text-gray-500 text-sm mb-8">Nhap thong tin nhan hang de tao don hang va hoa don tam thoi.</p>
 
     @if (errorMessage) {
       <div class="bg-red-50 border border-red-100 text-danger rounded-lg p-4 mb-6 text-sm">
@@ -12,8 +12,8 @@
           <ul class="space-y-1">
             @for (issue of stockIssues; track issue.productId) {
               <li>
-                {{ stockIssueTitle(issue) }}: yêu cầu {{ issue.requestedQuantity }},
-                hiện có {{ issue.availableQuantity }}.
+                {{ stockIssueTitle(issue) }}: yeu cau {{ issue.requestedQuantity }},
+                hien co {{ issue.availableQuantity }}.
               </li>
             }
           </ul>
@@ -22,12 +22,12 @@
     }
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-8 mb-6">
-      <h2 class="text-lg font-bold text-gray-900 mb-6">Chi tiết giao hàng</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-6">Chi tiet giao hang</h2>
 
       <form class="space-y-6" #checkoutForm="ngForm" (ngSubmit)="continueToPayment()">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên người nhận <span class="text-danger">*</span></label>
-          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: Nguyễn Minh Anh" required>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Ho va ten nguoi nhan <span class="text-danger">*</span></label>
+          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: Nguyen Minh Anh" required>
         </div>
 
         <div>
@@ -36,40 +36,40 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-danger">*</span></label>
-          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: 0987654321" required>
+          <label class="block text-sm font-medium text-gray-700 mb-1">So dien thoai <span class="text-danger">*</span></label>
+          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: 0987654321" required>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tỉnh / Thành phố <span class="text-danger">*</span></label>
-          <select name="province" [(ngModel)]="deliveryInfo.province" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900" required>
-            <option value="" disabled>Chọn Tỉnh/Thành phố</option>
-            <option value="Hà Nội">Hà Nội</option>
-            <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-            <option value="Đà Nẵng">Đà Nẵng</option>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tinh / Thanh pho <span class="text-danger">*</span></label>
+          <select name="province" [(ngModel)]="deliveryInfo.province" (ngModelChange)="calculateShippingFee()" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900" required>
+            <option value="" disabled>Chon Tinh/Thanh pho</option>
+            <option value="Ha Noi">Ha Noi</option>
+            <option value="Ho Chi Minh">Ho Chi Minh</option>
+            <option value="Da Nang">Da Nang</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết <span class="text-danger">*</span></label>
-          <textarea name="address" [(ngModel)]="deliveryInfo.address" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Số nhà, tên đường, phường/xã, quận/huyện" required></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Dia chi chi tiet <span class="text-danger">*</span></label>
+          <textarea name="address" [(ngModel)]="deliveryInfo.address" (ngModelChange)="calculateShippingFee()" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="So nha, ten duong, phuong/xa, quan/huyen" required></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú giao hàng <span class="text-gray-400 font-normal">(Tùy chọn)</span></label>
-          <textarea name="deliveryNotes" [(ngModel)]="deliveryInfo.deliveryNotes" rows="2" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chu giao hang <span class="text-gray-400 font-normal">(Tuy chon)</span></label>
+          <textarea name="deliveryNotes" [(ngModel)]="deliveryInfo.deliveryNotes" rows="2" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: Giao gio hanh chinh, goi truoc khi giao"></textarea>
         </div>
 
         <div class="flex items-center justify-between">
           <a routerLink="/cart" class="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center transition-colors">
-            ← Quay lại giỏ hàng
+            Quay lai gio hang
           </a>
           <button
             type="submit"
-            [disabled]="checkoutForm.invalid || submitting || cartItems.length === 0"
+            [disabled]="checkoutForm.invalid || submitting || calculatingShipping || cartItems.length === 0"
             class="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {{ submitting ? 'Đang đặt hàng...' : 'Đặt hàng' }}
+            {{ submitting ? 'Dang tao don hang...' : 'Xac nhan dat hang' }}
           </button>
         </div>
       </form>
@@ -78,7 +78,7 @@
 
   <div class="lg:w-80 flex-shrink-0">
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sticky top-24">
-      <h2 class="text-lg font-bold text-gray-900 mb-6">Tóm tắt đơn hàng</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-6">Tom tat don hang</h2>
 
       <div class="space-y-4 mb-6">
         @for (item of cartItems; track item.id) {
@@ -98,7 +98,7 @@
       <div class="border-t border-gray-100 pt-4 mb-4">
         <div class="space-y-3 text-sm">
           <div class="flex justify-between text-gray-600">
-            <span>Tạm tính</span>
+            <span>Tam tinh</span>
             <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} VND</span>
           </div>
           <div class="flex justify-between text-gray-600">
@@ -106,15 +106,20 @@
             <span class="font-medium text-gray-900">{{ vat | number:'1.0-0' }} VND</span>
           </div>
           <div class="flex justify-between text-gray-600">
-            <span>Phí vận chuyển</span>
-            <span class="font-medium text-gray-900">{{ shippingFee | number:'1.0-0' }} VND</span>
+            <span>Phi van chuyen</span>
+            <span class="font-medium text-gray-900">
+              {{ calculatingShipping ? 'Dang tinh...' : ((shippingFee | number:'1.0-0') + ' VND') }}
+            </span>
           </div>
+          @if (shippingError) {
+            <div class="text-xs text-danger">{{ shippingError }}</div>
+          }
         </div>
       </div>
 
       <div class="border-t border-gray-100 pt-4">
         <div class="flex justify-between items-center">
-          <span class="font-semibold text-gray-900">Tổng thanh toán</span>
+          <span class="font-semibold text-gray-900">Tong thanh toan</span>
           <span class="text-xl font-bold text-primary">{{ total | number:'1.0-0' }} VND</span>
         </div>
       </div>

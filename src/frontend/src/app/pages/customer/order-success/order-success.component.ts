@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-order-success',
@@ -9,8 +9,21 @@ import { RouterLink } from '@angular/router';
   templateUrl: './order-success.component.html'
 })
 export class OrderSuccessComponent {
-  orderId = '#AIMS-2024-VN2481';
-  transactionId = 'TXN-2024-VN2481';
-  orderDate = '24/10/2024 • 14:32';
-  total = 258300;
+  orderId = '#AIMS';
+  transactionId = '-';
+  orderDate = new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date());
+  total = 0;
+
+  constructor(private readonly route: ActivatedRoute) {
+    const query = this.route.snapshot.queryParamMap;
+    const orderId = query.get('orderId');
+    const amount = Number(query.get('amount'));
+
+    this.orderId = orderId ? `#AIMS-${orderId}` : this.orderId;
+    this.transactionId = query.get('transactionId') || this.transactionId;
+    this.total = Number.isFinite(amount) ? amount : this.total;
+  }
 }

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource, EntityManager, In } from 'typeorm';
 import { Product } from '../../product/entities/product.entity';
 import { CartItemDto } from '../dto/cart-item.dto';
 import { DeliveryInfoDto } from '../dto/delivery-info.dto';
@@ -144,6 +144,42 @@ export class OrderService {
 
       return this.findOrderOrFail(manager, order.orderID);
     });
+  }
+
+  async calculateShippingFee(cartItems: CartItemDto[], province: string) {
+    const mergedItems = this.mergeDuplicateItems(cartItems);
+    const productIds = mergedItems.map((item) => item.productId);
+    const products = await this.dataSource.manager.find(Product, {
+      where: { productID: In(productIds) },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new BadRequestException('Some products are not available');
+    }
+
+    const subtotal = this.roundMoney(
+      mergedItems.reduce((sum, item) => {
+        const product = products.find((candidate) => candidate.productID === item.productId);
+        return sum + Number(product?.currentPrice ?? 0) * item.quantity;
+      }, 0),
+    );
+    const totalWeight = mergedItems.reduce((sum, item) => {
+      const product = products.find((candidate) => candidate.productID === item.productId);
+      return sum + Number(product?.weight ?? 0) * item.quantity;
+    }, 0);
+    const shippingFee = this.shippingCalculatorService.calculateShippingFee(
+      province,
+      totalWeight,
+      subtotal,
+    );
+    const tax = this.roundMoney(subtotal * 0.1);
+
+    return {
+      subtotal,
+      tax,
+      shippingFee,
+      totalPayment: this.roundMoney(subtotal + tax + shippingFee),
+    };
   }
 
   async getOrderDetail(orderId: number): Promise<Order> {

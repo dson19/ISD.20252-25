@@ -29,8 +29,39 @@ export interface StockCheckResponse {
 
 export interface OrderResponse {
   orderID: number;
-  totalAmount: number | string;
+  totalPayment: number | string;
+  subTotal: number | string;
+  tax: number | string;
+  shippingFee: number | string;
   status: string;
+  orderItems?: OrderItemResponse[];
+  deliveryInfo?: DeliveryInfo;
+  invoice?: InvoiceResponse;
+}
+
+export interface OrderItemResponse {
+  quantity: number;
+  unitPrice: number | string;
+  product?: {
+    productID: number;
+    title: string;
+    currentPrice: number | string;
+    imageUrl?: string | null;
+  };
+}
+
+export interface InvoiceResponse {
+  totalExcludeVAT: number | string;
+  totalIncludeVAT: number | string;
+  shippingFee: number | string;
+  totalPayment: number | string;
+}
+
+export interface ShippingFeeResponse {
+  subtotal: number;
+  tax: number;
+  shippingFee: number;
+  totalPayment: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -54,5 +85,19 @@ export class OrderService {
       })),
       deliveryInfo,
     });
+  }
+
+  calculateShippingFee(cartItems: CartItem[], province: string): Observable<ShippingFeeResponse> {
+    return this.http.post<ShippingFeeResponse>(`${API_BASE_URL}/orders/shipping-fee`, {
+      province,
+      cartItems: cartItems.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      })),
+    });
+  }
+
+  getOrderDetail(orderId: number): Observable<OrderResponse> {
+    return this.http.get<OrderResponse>(`${API_BASE_URL}/orders/${orderId}`);
   }
 }
