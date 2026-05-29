@@ -10,7 +10,7 @@ export class PaymentService {
   constructor(
     private readonly http: HttpClient,
     @Inject(API_BASE_URL) private readonly baseUrl: string
-  ) {}
+  ) { }
 
   createOrder(orderId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/paypal/order/create`, {

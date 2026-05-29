@@ -1,8 +1,9 @@
-import { Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { CartItem, CartService } from '../../../services/cart.service';
 import { OrderService, StockIssue } from '../../../services/order.service';
 
@@ -12,7 +13,7 @@ import { OrderService, StockIssue } from '../../../services/order.service';
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './cart.component.html'
 })
-export class CartComponent implements OnDestroy {
+export class CartComponent implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
   checkingStock = false;
   stockCheckError = '';
@@ -20,11 +21,15 @@ export class CartComponent implements OnDestroy {
 
   private readonly subscriptions = new Subscription();
   private activeStockCheck: Subscription | null = null;
+  private destroyed = false;
 
   constructor(
     private readonly cartService: CartService,
     private readonly orderService: OrderService,
-  ) {
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit(): void {
     this.cartItems = this.cartService.getCartItems();
     this.subscriptions.add(
       this.cartService.items$.subscribe((items) => {
@@ -35,6 +40,7 @@ export class CartComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.subscriptions.unsubscribe();
     this.activeStockCheck?.unsubscribe();
   }
@@ -82,22 +88,36 @@ export class CartComponent implements OnDestroy {
     if (this.cartItems.length === 0) {
       this.checkingStock = false;
       this.stockIssuesByProductId.clear();
+      this.refreshView();
       return;
     }
 
     this.checkingStock = true;
-    this.activeStockCheck = this.orderService.checkCartStock(this.cartItems).subscribe({
-      next: (result) => {
-        this.stockIssuesByProductId = new Map(
-          result.issues.map((issue) => [issue.productId, issue]),
-        );
-        this.checkingStock = false;
-      },
-      error: () => {
-        this.stockIssuesByProductId.clear();
-        this.stockCheckError = 'Không thể kiểm tra tồn kho. Vui lòng thử lại sau.';
-        this.checkingStock = false;
-      },
-    });
+    this.refreshView();
+    this.activeStockCheck = this.orderService
+      .checkCartStock(this.cartItems)
+      .pipe(
+        finalize(() => {
+          this.checkingStock = false;
+          this.refreshView();
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          this.stockIssuesByProductId = new Map(
+            result.issues.map((issue) => [issue.productId, issue]),
+          );
+        },
+        error: () => {
+          this.stockIssuesByProductId.clear();
+          this.stockCheckError = 'Không thể kiểm tra tồn kho. Vui lòng thử lại sau.';
+        },
+      });
+  }
+
+  private refreshView(): void {
+    if (!this.destroyed) {
+      this.cdr.detectChanges();
+    }
   }
 }

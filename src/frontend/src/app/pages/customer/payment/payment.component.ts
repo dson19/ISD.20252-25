@@ -15,7 +15,7 @@ export class PaymentComponent implements OnInit {
   paymentMethod = signal<'QR' | 'CARD'>('QR');
   qrTimeLeft = signal<string>('09:59');
   orderId = signal<number | null>(null);
-  
+
   loading = signal<boolean>(false);
   statusMessage = signal<string>('');
   orderLoaded = signal<boolean>(false);
@@ -24,7 +24,7 @@ export class PaymentComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private paymentService: PaymentService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -35,7 +35,7 @@ export class PaymentComponent implements OnInit {
 
       if (orderIdParam) {
         this.orderId.set(Number(orderIdParam));
-        
+
         this.paymentService.getOrderDetail(this.orderId()!).subscribe({
           next: (order) => {
             this.totalAmount.set(Number(order.totalPayment));
@@ -65,7 +65,7 @@ export class PaymentComponent implements OnInit {
       if (paypalToken && success === 'true' && this.orderId()) {
         this.loading.set(true);
         this.statusMessage.set('Đang xác thực giao dịch PayPal, vui lòng không đóng trình duyệt...');
-        
+
         this.paymentService.captureOrder(paypalToken, this.orderId()!).subscribe({
           next: () => {
             // Xóa sạch giỏ hàng trong localStorage

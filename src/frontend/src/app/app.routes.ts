@@ -22,6 +22,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/customer/checkout/checkout.component').then(m => m.CheckoutComponent)
       },
       {
+        path: 'invoice',
+        loadComponent: () => import('./pages/customer/invoice/invoice.component').then(m => m.InvoiceComponent)
+      },
+      {
         path: 'payment',
         loadComponent: () => import('./pages/customer/payment/payment.component').then(m => m.PaymentComponent)
       },

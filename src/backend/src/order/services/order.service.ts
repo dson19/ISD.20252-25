@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource, EntityManager, In } from 'typeorm';
 import { Product } from '../../product/entities/product.entity';
 import { CartItemDto } from '../dto/cart-item.dto';
 import { DeliveryInfoDto } from '../dto/delivery-info.dto';
@@ -25,7 +25,7 @@ export class OrderService {
     private readonly dataSource: DataSource,
     private readonly cartService: CartService,
     private readonly shippingCalculatorService: ShippingCalculatorService,
-  ) {}
+  ) { }
 
   async placeOrder(cartItems: CartItemDto[], deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
     const stockCheck = await this.cartService.checkCartStock(cartItems);
@@ -146,6 +146,42 @@ export class OrderService {
     });
   }
 
+  async calculateShippingFee(cartItems: CartItemDto[], province: string) {
+    const mergedItems = this.mergeDuplicateItems(cartItems);
+    const productIds = mergedItems.map((item) => item.productId);
+    const products = await this.dataSource.manager.find(Product, {
+      where: { productID: In(productIds) },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new BadRequestException('Some products are not available');
+    }
+
+    const subtotal = this.roundMoney(
+      mergedItems.reduce((sum, item) => {
+        const product = products.find((candidate) => candidate.productID === item.productId);
+        return sum + Number(product?.currentPrice ?? 0) * item.quantity;
+      }, 0),
+    );
+    const totalWeight = mergedItems.reduce((sum, item) => {
+      const product = products.find((candidate) => candidate.productID === item.productId);
+      return sum + Number(product?.weight ?? 0) * item.quantity;
+    }, 0);
+    const shippingFee = this.shippingCalculatorService.calculateShippingFee(
+      province,
+      totalWeight,
+      subtotal,
+    );
+    const tax = this.roundMoney(subtotal * 0.1);
+
+    return {
+      subtotal,
+      tax,
+      shippingFee,
+      totalPayment: this.roundMoney(subtotal + tax + shippingFee),
+    };
+  }
+
   async getOrderDetail(orderId: number): Promise<any> {
     const order = await this.findOrderOrFail(this.dataSource.manager, orderId);
     const txs = await this.dataSource.manager.query(
@@ -157,6 +193,51 @@ export class OrderService {
       ...order,
       paymentMethod
     };
+  }
+
+  async updateDeliveryInfo(orderId: number, deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
+    return this.dataSource.transaction(async (manager) => {
+      const order = await this.findOrderOrFail(manager, orderId);
+      if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
+        throw new BadRequestException(`Order ${orderId} cannot update delivery info from status ${order.status}`);
+      }
+
+      const subtotal = this.roundMoney(Number(order.subTotal));
+      const tax = this.roundMoney(Number(order.tax));
+      const totalWeight = (order.orderItems ?? []).reduce((sum, item) => {
+        return sum + Number(item.product?.weight ?? 0) * item.quantity;
+      }, 0);
+      const shippingFee = this.shippingCalculatorService.calculateShippingFee(
+        deliveryInfoDto.province,
+        totalWeight,
+        subtotal,
+      );
+      const totalPayment = this.roundMoney(subtotal + tax + shippingFee);
+
+      order.shippingFee = shippingFee;
+      order.totalPayment = totalPayment;
+      await manager.save(Order, order);
+
+      const deliveryInfo = order.deliveryInfo ?? manager.create(DeliveryInfo, { order });
+      Object.assign(deliveryInfo, {
+        ...deliveryInfoDto,
+        deliveryNotes: deliveryInfoDto.deliveryNotes,
+        order,
+      });
+      await manager.save(DeliveryInfo, deliveryInfo);
+
+      const invoice = order.invoice ?? manager.create(Invoice, { order });
+      Object.assign(invoice, {
+        totalExcludeVAT: subtotal,
+        totalIncludeVAT: this.roundMoney(subtotal + tax),
+        shippingFee,
+        totalPayment,
+        order,
+      });
+      await manager.save(Invoice, invoice);
+
+      return this.findOrderOrFail(manager, orderId);
+    });
   }
 
   async approveOrder(orderId: number): Promise<Order> {
