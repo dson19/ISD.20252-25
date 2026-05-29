@@ -40,12 +40,27 @@ export const routes: Routes = [
     ]
   },
   {
-    path: 'admin/login',
+    path: 'login',
     loadComponent: () => import('./pages/admin/login/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'admin',
     loadComponent: () => import('./layout/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    children: [
+      {
+        path: 'users',
+        loadComponent: () => import('./pages/admin/users/users.component').then(m => m.UsersComponent)
+      },
+      {
+        path: '',
+        redirectTo: 'users',
+        pathMatch: 'full'
+      }
+    ]
+  },
+  {
+    path: 'pm',
+    loadComponent: () => import('./layout/pm-layout/pm-layout.component').then(m => m.PmLayoutComponent),
     children: [
       {
         path: 'orders',
@@ -54,10 +69,6 @@ export const routes: Routes = [
       {
         path: 'products',
         loadComponent: () => import('./pages/admin/products/products.component').then(m => m.ProductsComponent)
-      },
-      {
-        path: 'users',
-        loadComponent: () => import('./pages/admin/users/users.component').then(m => m.UsersComponent)
       },
       {
         path: 'logs',

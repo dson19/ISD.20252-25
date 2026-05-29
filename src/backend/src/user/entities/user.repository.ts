@@ -11,13 +11,26 @@ export class UserRepository {
   }
 
   async findById(id: number): Promise<User | null> {
-    return this.repository.findOneBy({ userID: id });
+    return this.repository.findOne({
+      where: { userID: id },
+      relations: ['roles']
+    });
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.repository.findOne({
       where: { email },
-      select: ['userID', 'email', 'passwordHash', 'fullName', 'role', 'status'],
+      relations: ['roles'],
+      select: {
+        userID: true,
+        email: true,
+        passwordHash: true,
+        fullName: true,
+        status: true,
+        phoneNumber: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
   }
 
@@ -26,6 +39,8 @@ export class UserRepository {
   }
 
   async findAll(): Promise<User[]> {
-    return this.repository.find();
+    return this.repository.find({
+      relations: ['roles']
+    });
   }
 }

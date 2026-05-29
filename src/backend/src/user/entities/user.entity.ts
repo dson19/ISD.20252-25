@@ -3,8 +3,11 @@ import {
   PrimaryGeneratedColumn, 
   Column, 
   CreateDateColumn, 
-  UpdateDateColumn 
+  UpdateDateColumn,
+  ManyToMany,
+  JoinTable
 } from 'typeorm';
+import { Role } from './role.entity';
 
 export enum UserRole {
   ADMIN = 'ADMIN', 
@@ -29,12 +32,13 @@ export class User {
   @Column({ name: 'phone_number', type: 'varchar', length: 20, nullable: true })
   phoneNumber: string;
 
-  @Column({
-    type: 'varchar',
-    length: 50,
-    default: UserRole.STAFF 
+  @ManyToMany(() => Role, (role) => role.users, { cascade: true })
+  @JoinTable({
+    name: 'users_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'userID' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'roleID' }
   })
-  role: UserRole; 
+  roles: Role[];
 
   @Column({ type: 'varchar', length: 20, default: 'ACTIVE' })
   status: string; // ACTIVE, DEACTIVATED
