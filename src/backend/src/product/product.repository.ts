@@ -42,7 +42,13 @@ export class ProductRepository {
     mediaTypes?: string[],
     status?: string,
   ): Promise<Product[]> {
-    const query = this.repository.createQueryBuilder('product');
+    const query = this.repository
+      .createQueryBuilder('product')
+      .leftJoin('books', 'book', 'book.product_id = product.product_id')
+      .leftJoin('cds', 'cd', 'cd.product_id = product.product_id')
+      .leftJoin('cd_tracks', 'cd_track', 'cd_track.product_id = product.product_id')
+      .leftJoin('dvds', 'dvd', 'dvd.product_id = product.product_id')
+      .leftJoin('newspapers', 'newspaper', 'newspaper.product_id = product.product_id');
     
     if (status) {
       if (status.toUpperCase() !== 'ALL') {
@@ -54,10 +60,30 @@ export class ProductRepository {
       query.where('product.status = :status', { status: 'ACTIVE' });
     }
 
-    if (keyword) {
-      query.andWhere('product.title ILIKE :keyword', {
-        keyword: `%${keyword}%`,
-      });
+    const normalizedKeyword = keyword?.trim();
+    if (normalizedKeyword) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('product.title ILIKE :keyword')
+            .orWhere('product.category ILIKE :keyword')
+            .orWhere('product.description ILIKE :keyword')
+            .orWhere('product.barcode ILIKE :keyword')
+            .orWhere('book.authors ILIKE :keyword')
+            .orWhere('book.publisher ILIKE :keyword')
+            .orWhere('book.genre ILIKE :keyword')
+            .orWhere('cd.artists ILIKE :keyword')
+            .orWhere('cd.record_label ILIKE :keyword')
+            .orWhere('cd.genre ILIKE :keyword')
+            .orWhere('cd_track.title ILIKE :keyword')
+            .orWhere('dvd.director ILIKE :keyword')
+            .orWhere('dvd.studio ILIKE :keyword')
+            .orWhere('dvd.genre ILIKE :keyword')
+            .orWhere('newspaper.publisher ILIKE :keyword')
+            .orWhere('newspaper.editor_in_chief ILIKE :keyword')
+            .orWhere('newspaper.sections ILIKE :keyword');
+        }),
+        { keyword: `%${normalizedKeyword}%` },
+      );
     }
     if (category) {
       const categoryAliases = this.getCategoryAliases(category);
@@ -87,7 +113,7 @@ export class ProductRepository {
       query.andWhere('product.current_price <= :maxPrice', { maxPrice });
     }
 
-    return query.orderBy('product.title', 'ASC').getMany();
+    return query.distinct(true).orderBy('product.title', 'ASC').getMany();
   }
 
   async findRandomActive(limit: number): Promise<Product[]> {

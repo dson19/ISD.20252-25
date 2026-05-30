@@ -1,7 +1,8 @@
 import { Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CartService } from '../../services/cart.service';
 
 @Component({
@@ -15,6 +16,8 @@ export class CustomerLayoutComponent implements OnDestroy {
   searchKeyword = '';
 
   private readonly cartSubscription: Subscription;
+  private readonly searchKeywordChange$ = new Subject<string>();
+  private readonly searchSubscription: Subscription;
 
   constructor(
     private readonly cartService: CartService,
@@ -24,10 +27,21 @@ export class CustomerLayoutComponent implements OnDestroy {
     this.cartSubscription = this.cartService.items$.subscribe(() => {
       this.cartItemCount = this.cartService.itemCount;
     });
+    this.searchSubscription = this.searchKeywordChange$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+      )
+      .subscribe(() => this.searchProducts());
   }
 
   ngOnDestroy(): void {
     this.cartSubscription.unsubscribe();
+    this.searchSubscription.unsubscribe();
+  }
+
+  onSearchKeywordChange(value: string): void {
+    this.searchKeywordChange$.next(value.trim());
   }
 
   searchProducts(): void {

@@ -15,6 +15,43 @@ import { DeliveryInfo, OrderResponse, OrderService, StockIssue } from '../../../
   templateUrl: './checkout.component.html'
 })
 export class CheckoutComponent implements OnInit, OnDestroy {
+  readonly provinces = [
+    'Hà Nội',
+    'Huế',
+    'Hải Phòng',
+    'Đà Nẵng',
+    'TP. Hồ Chí Minh',
+    'Cần Thơ',
+    'Tuyên Quang',
+    'Lào Cai',
+    'Thái Nguyên',
+    'Phú Thọ',
+    'Bắc Ninh',
+    'Hưng Yên',
+    'Ninh Bình',
+    'Quảng Trị',
+    'Quảng Ngãi',
+    'Gia Lai',
+    'Khánh Hòa',
+    'Lâm Đồng',
+    'Đắk Lắk',
+    'Đồng Nai',
+    'Tây Ninh',
+    'Vĩnh Long',
+    'Đồng Tháp',
+    'Cà Mau',
+    'An Giang',
+    'Cao Bằng',
+    'Điện Biên',
+    'Hà Tĩnh',
+    'Lai Châu',
+    'Lạng Sơn',
+    'Nghệ An',
+    'Quảng Ninh',
+    'Thanh Hóa',
+    'Sơn La',
+  ];
+
   cartItems: CartItem[] = [];
   editOrderId: number | null = null;
   shippingFee = 35000;
@@ -24,6 +61,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   errorMessage = '';
   shippingError = '';
   stockIssues: StockIssue[] = [];
+  provinceSearch = '';
+  provinceOptionsOpen = false;
 
   deliveryInfo: DeliveryInfo = {
     receiverName: '',
@@ -84,6 +123,53 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   get total(): number {
     return this.subtotal + this.vat + this.shippingFee;
+  }
+
+  get filteredProvinces(): string[] {
+    const normalizedSearch = this.normalizeProvince(this.provinceSearch);
+    if (!normalizedSearch) {
+      return this.provinces;
+    }
+
+    return this.provinces.filter((province) =>
+      this.normalizeProvince(province).includes(normalizedSearch),
+    );
+  }
+
+  get provinceValid(): boolean {
+    return this.provinces.includes(this.deliveryInfo.province);
+  }
+
+  onProvinceSearchChange(value: string): void {
+    this.provinceSearch = value;
+    const matchingProvince = this.findProvince(value);
+    this.deliveryInfo.province = matchingProvince ?? '';
+
+    if (matchingProvince) {
+      this.calculateShippingFee();
+    } else {
+      this.activeShippingRequest?.unsubscribe();
+      this.calculatingShipping = false;
+      this.shippingError = '';
+    }
+  }
+
+  openProvinceOptions(): void {
+    this.provinceOptionsOpen = true;
+  }
+
+  closeProvinceOptions(): void {
+    setTimeout(() => {
+      this.provinceOptionsOpen = false;
+      this.refreshView();
+    }, 120);
+  }
+
+  selectProvince(province: string): void {
+    this.provinceSearch = province;
+    this.deliveryInfo.province = province;
+    this.provinceOptionsOpen = false;
+    this.calculateShippingFee();
   }
 
   calculateShippingFee(): void {
@@ -196,6 +282,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       address: order.deliveryInfo?.address ?? '',
       deliveryNotes: order.deliveryInfo?.deliveryNotes ?? '',
     };
+    this.provinceSearch = this.deliveryInfo.province;
     this.shippingFee = Number(order.invoice?.shippingFee ?? order.shippingFee ?? 0);
     this.cartItems = (order.orderItems ?? []).map((item) => ({
       id: item.product?.productID ?? 0,
@@ -206,6 +293,24 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       mediaType: item.product?.mediaType ?? 'PRODUCT',
       quantityInStock: item.product?.quantityInStock ?? item.quantity,
     }));
+  }
+
+  private findProvince(value: string): string | undefined {
+    const normalizedValue = this.normalizeProvince(value);
+    return this.provinces.find(
+      (province) => this.normalizeProvince(province) === normalizedValue,
+    );
+  }
+
+  private normalizeProvince(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase()
+      .replace(/[.\s]+/g, ' ')
+      .trim();
   }
 
   private refreshView(): void {

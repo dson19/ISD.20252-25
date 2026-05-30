@@ -56,7 +56,7 @@
                   min="1"
                   [value]="item.quantity"
                   (change)="updateQuantity(item, $any($event.target).valueAsNumber)"
-                  class="w-16 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900"
+                  class="no-number-spinner w-16 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900"
                 >
                 <button (click)="increaseQuantity(item)" class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">+</button>
               </div>
@@ -80,7 +80,7 @@
 
       <div class="space-y-4 mb-6 text-sm">
         <div class="flex justify-between text-gray-600">
-          <span>priceExcludedVAT</span>
+          <span>Giá (chưa bao gồm VAT)</span>
           <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} đ</span>
         </div>
         <div class="flex justify-between text-gray-600">
