@@ -315,7 +315,7 @@ export class OrderService {
       .leftJoinAndSelect('order.deliveryInfo', 'deliveryInfo')
       .leftJoinAndSelect('order.invoice', 'invoice')
       .where('order.status IN (:...statuses)', { statuses: ['PENDING', 'PENDING_PROCESSING'] })
-      .orderBy("CASE WHEN order.status = 'PENDING_PROCESSING' THEN 0 ELSE 1 END", 'ASC')
+      .orderBy('order.status', 'DESC')
       .addOrderBy('order.createdAt', 'ASC')
       .skip((safePage - 1) * safeLimit)
       .take(safeLimit);
