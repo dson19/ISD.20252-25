@@ -13,8 +13,10 @@ import { Product, ProductService } from '../../../services/product.service';
   templateUrl: './product-detail.component.html'
 })
 export class ProductDetailComponent implements OnInit, OnDestroy {
+  readonly descriptionPreviewLength = 260;
   product: Product | null = null;
   selectedQuantity = 1;
+  descriptionExpanded = false;
   loading = true;
   errorMessage = '';
   toastMessage = '';
@@ -43,6 +45,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.productService.getProductById(productId).subscribe({
         next: (product) => {
           this.product = product;
+          this.descriptionExpanded = false;
           this.loading = false;
           this.refreshView();
         },
@@ -68,29 +71,36 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const quantity = Math.max(1, Math.floor(this.selectedQuantity));
+    const quantity = this.normalizedQuantity();
     this.cartService.addToCart(this.product, quantity);
     this.showToast(`Đã thêm ${quantity} sản phẩm vào giỏ hàng.`);
   }
 
-  get quantityInvalid(): boolean {
-    if (!this.product) {
-      return true;
-    }
+  decreaseQuantity(): void {
+    this.selectedQuantity = Math.max(1, this.normalizedQuantity() - 1);
+  }
 
+  increaseQuantity(): void {
+    this.selectedQuantity = this.normalizedQuantity() + 1;
+  }
+
+  updateQuantity(value: number): void {
+    this.selectedQuantity = value;
+  }
+
+  toggleDescription(): void {
+    this.descriptionExpanded = !this.descriptionExpanded;
+  }
+
+  get quantityInvalid(): boolean {
     return (
       !Number.isFinite(this.selectedQuantity) ||
       this.selectedQuantity < 1 ||
-      Math.floor(this.selectedQuantity) !== this.selectedQuantity ||
-      this.selectedQuantity > this.product.quantityInStock
+      Math.floor(this.selectedQuantity) !== this.selectedQuantity
     );
   }
 
   get quantityErrorMessage(): string {
-    if (!this.product) {
-      return '';
-    }
-
     if (!Number.isFinite(this.selectedQuantity) || this.selectedQuantity < 1) {
       return 'Số lượng phải lớn hơn hoặc bằng 1.';
     }
@@ -99,15 +109,36 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       return 'Số lượng phải là số nguyên.';
     }
 
-    if (this.selectedQuantity > this.product.quantityInStock) {
-      return `Số lượng yêu cầu vượt quá tồn kho. Hiện chỉ còn ${this.product.quantityInStock} sản phẩm.`;
+    return '';
+  }
+
+  get productDescription(): string {
+    return this.product?.description?.trim() || 'Chưa có mô tả.';
+  }
+
+  get shouldCollapseDescription(): boolean {
+    return this.productDescription.length > this.descriptionPreviewLength;
+  }
+
+  get visibleDescription(): string {
+    if (!this.shouldCollapseDescription || this.descriptionExpanded) {
+      return this.productDescription;
     }
 
-    return '';
+    return `${this.productDescription.slice(0, this.descriptionPreviewLength).trimEnd()}...`;
   }
 
   productPrice(): number {
     return Number(this.product?.currentPrice ?? 0);
+  }
+
+  originalPrice(): number {
+    return Number(this.product?.originalPrice ?? 0);
+  }
+
+  hasOriginalPrice(): boolean {
+    const originalPrice = this.originalPrice();
+    return Number.isFinite(originalPrice) && originalPrice > this.productPrice();
   }
 
   productImage(): string {
@@ -145,6 +176,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  private normalizedQuantity(): number {
+    return Math.max(1, Math.floor(Number(this.selectedQuantity) || 1));
   }
 
   private showToast(message: string): void {

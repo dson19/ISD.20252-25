@@ -34,7 +34,7 @@ export class CartService {
     if (existing) {
       nextItems = currentItems.map((item) =>
         item.id === productId
-          ? { ...item, quantity: Math.min(item.quantity + requestedQuantity, maxQuantity) }
+          ? { ...item, quantity: item.quantity + requestedQuantity, quantityInStock: maxQuantity }
           : item,
       );
     } else {
@@ -45,7 +45,7 @@ export class CartService {
           title: product.title,
           price: Number(product.currentPrice),
           imageUrl: product.imageUrl || 'https://placehold.co/300x400/e2e8f0/475569?text=AIMS',
-          quantity: Math.min(requestedQuantity, maxQuantity),
+          quantity: requestedQuantity,
           mediaType: product.mediaType,
           quantityInStock: maxQuantity,
         },

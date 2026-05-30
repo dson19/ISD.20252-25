@@ -49,6 +49,7 @@ export class ShippingCalculatorService {
       'hanoi',
       'hn',
       'tp hcm',
+      'tp ho chi minh',
       'tphcm',
       'ho chi minh',
       'ho chi minh city',

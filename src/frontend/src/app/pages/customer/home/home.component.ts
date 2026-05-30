@@ -39,6 +39,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     { label: 'Trên 1,000,000', minPrice: 1000000 },
   ];
 
+  readonly batchSize = 20;
   products: Product[] = [];
   selectedCategories = new Set<string>();
   selectedPriceIndex: number | null = null;
@@ -46,6 +47,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   loading = false;
   errorMessage = '';
   toastMessage = '';
+  visibleProductCount = this.batchSize;
+  quantities: Record<number, number> = {};
 
   private readonly subscriptions = new Subscription();
   private productsSubscription: Subscription | null = null;
@@ -62,7 +65,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.subscriptions.add(
       this.route.queryParamMap.subscribe((params) => {
-        this.keyword = params.get('keyword') ?? '';
+        this.keyword = (params.get('keyword') ?? '').trim();
         this.loadProducts();
       }),
     );
@@ -98,12 +101,59 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   addToCart(product: Product): void {
-    this.cartService.addToCart(product, 1);
-    this.showToast(`Đã thêm "${product.title}" vào giỏ hàng.`);
+    const quantity = this.getProductQuantity(product);
+    this.cartService.addToCart(product, quantity);
+    this.showToast(`Đã thêm ${quantity} "${product.title}" vào giỏ hàng.`);
+  }
+
+  get visibleProducts(): Product[] {
+    return this.products.slice(0, this.visibleProductCount);
+  }
+
+  get displayedProductCount(): number {
+    return Math.min(this.visibleProductCount, this.products.length);
+  }
+
+  get hasMoreProducts(): boolean {
+    return this.visibleProductCount < this.products.length;
+  }
+
+  loadMoreProducts(): void {
+    this.visibleProductCount += this.batchSize;
+  }
+
+  getProductQuantity(product: Product): number {
+    return this.quantities[product.productID] ?? 1;
+  }
+
+  decreaseQuantity(product: Product): void {
+    this.setProductQuantity(product, this.getProductQuantity(product) - 1);
+  }
+
+  increaseQuantity(product: Product): void {
+    this.setProductQuantity(product, this.getProductQuantity(product) + 1);
+  }
+
+  updateQuantity(product: Product, value: number): void {
+    this.setProductQuantity(product, value);
+  }
+
+  setProductQuantity(product: Product, value: number): void {
+    const normalized = Number.isFinite(value) ? Math.floor(value) : 1;
+    this.quantities[product.productID] = Math.max(1, normalized);
   }
 
   productPrice(product: Product): number {
     return Number(product.currentPrice);
+  }
+
+  originalPrice(product: Product): number {
+    return Number(product.originalPrice);
+  }
+
+  hasOriginalPrice(product: Product): boolean {
+    const originalPrice = this.originalPrice(product);
+    return Number.isFinite(originalPrice) && originalPrice > this.productPrice(product);
   }
 
   productImage(product: Product): string {
@@ -124,15 +174,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.productsSubscription?.unsubscribe();
     this.loading = true;
     this.errorMessage = '';
+    this.visibleProductCount = this.batchSize;
     const selectedCategories = Array.from(this.selectedCategories);
     const params = this.buildSearchParams(selectedCategories);
-    const hasSearchParams = Boolean(
-      params.keyword || params.minPrice !== undefined || params.maxPrice !== undefined || selectedCategories.length,
-    );
-
-    const request$ = !hasSearchParams
-      ? this.productService.getRandomProducts()
-      : this.productService.searchProducts(params);
+    const request$ = this.productService.searchProducts(params);
 
     this.productsSubscription = request$
       .pipe(
@@ -146,7 +191,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe((products) => {
-        this.products = products;
+        this.products = this.shuffleProducts(products);
+        this.syncQuantities(products);
         this.refreshView();
       });
   }
@@ -156,11 +202,31 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.selectedPriceIndex === null ? undefined : this.priceFilters[this.selectedPriceIndex];
 
     return {
-      keyword: this.keyword,
+      keyword: this.keyword.trim(),
       mediaTypes: mediaTypes.length ? mediaTypes : undefined,
       minPrice: selectedPrice?.minPrice,
       maxPrice: selectedPrice?.maxPrice,
     };
+  }
+
+  private syncQuantities(products: Product[]): void {
+    const nextQuantities: Record<number, number> = {};
+    for (const product of products) {
+      nextQuantities[product.productID] = this.quantities[product.productID] ?? 1;
+    }
+    this.quantities = nextQuantities;
+  }
+
+  private shuffleProducts(products: Product[]): Product[] {
+    const shuffledProducts = [...products];
+    for (let index = shuffledProducts.length - 1; index > 0; index--) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [shuffledProducts[index], shuffledProducts[randomIndex]] = [
+        shuffledProducts[randomIndex],
+        shuffledProducts[index],
+      ];
+    }
+    return shuffledProducts;
   }
 
   private showToast(message: string): void {

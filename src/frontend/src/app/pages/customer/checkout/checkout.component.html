@@ -42,14 +42,35 @@
           <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: 0987654321" required>
         </div>
 
-        <div>
+        <div class="relative">
           <label class="block text-sm font-medium text-gray-700 mb-1">Tinh / Thanh pho <span class="text-danger">*</span></label>
-          <select name="province" [(ngModel)]="deliveryInfo.province" (ngModelChange)="calculateShippingFee()" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900" required>
-            <option value="" disabled>Chon Tinh/Thanh pho</option>
-            <option value="Ha Noi">Ha Noi</option>
-            <option value="Ho Chi Minh">Ho Chi Minh</option>
-            <option value="Da Nang">Da Nang</option>
-          </select>
+          <input
+            type="text"
+            name="provinceSearch"
+            [(ngModel)]="provinceSearch"
+            (ngModelChange)="onProvinceSearchChange($event)"
+            (focus)="openProvinceOptions()"
+            (blur)="closeProvinceOptions()"
+            class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900"
+            placeholder="Tìm tỉnh/thành phố"
+            autocomplete="off"
+            required
+          >
+          @if (provinceOptionsOpen) {
+            <div class="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+              @for (province of filteredProvinces; track province) {
+                <button
+                  type="button"
+                  (mousedown)="selectProvince(province)"
+                  class="block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  {{ province }}
+                </button>
+              } @empty {
+                <div class="px-4 py-3 text-sm text-gray-500">Không tìm thấy tỉnh/thành phố phù hợp.</div>
+              }
+            </div>
+          }
         </div>
 
         <div>
@@ -72,7 +93,7 @@
           </a>
           <button
             type="submit"
-            [disabled]="checkoutForm.invalid || loadingOrder || submitting || calculatingShipping || cartItems.length === 0"
+            [disabled]="checkoutForm.invalid || !provinceValid || loadingOrder || submitting || calculatingShipping || cartItems.length === 0"
             class="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {{ submitting ? (editOrderId ? 'Dang cap nhat...' : 'Dang tao don hang...') : (editOrderId ? 'Cap nhat hoa don' : 'Xac nhan dat hang') }}

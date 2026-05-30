@@ -62,7 +62,7 @@
         @if (loading) {
           Đang tải sản phẩm...
         } @else {
-          Hiển thị <span class="font-semibold text-gray-900">{{ products.length }}</span> sản phẩm
+          Hiển thị <span class="font-semibold text-gray-900">{{ displayedProductCount }}</span> sản phẩm
         }
       </p>
       @if (keyword) {
@@ -79,12 +79,18 @@
     @if (!loading && products.length === 0) {
       <div class="bg-white border border-gray-100 rounded-lg p-12 text-center">
         <h3 class="font-semibold text-gray-900 mb-1">Không tìm thấy sản phẩm</h3>
-        <p class="text-sm text-gray-500">Thử đổi từ khóa hoặc bộ lọc.</p>
+        <p class="text-sm text-gray-500">
+          @if (keyword) {
+            Không có kết quả phù hợp với từ khóa "{{ keyword }}" và bộ lọc hiện tại.
+          } @else {
+            Thử đổi từ khóa hoặc bộ lọc.
+          }
+        </p>
       </div>
     }
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      @for (product of products; track product.productID) {
+      @for (product of visibleProducts; track product.productID) {
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col h-full">
           <a [routerLink]="['/product', product.productID]" class="relative aspect-[3/4] bg-gray-100 overflow-hidden block">
             <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-gray-700 rounded-md shadow-sm z-10">
@@ -99,14 +105,38 @@
             </a>
             <p class="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">{{ product.description || product.category }}</p>
 
-            <div class="flex items-end justify-between mb-4">
-              <div>
-                <p class="text-lg font-bold text-primary">{{ productPrice(product) | number:'1.0-0' }} đ</p>
-                <p class="text-[10px] text-gray-400 italic">(chưa bao gồm VAT)</p>
-              </div>
-              @if (product.quantityInStock < 10) {
-                <p class="text-[10px] font-medium text-warning bg-orange-50 px-2 py-1 rounded-md">Còn {{ product.quantityInStock }}</p>
+            <div class="mb-4">
+              <p class="text-[11px] font-medium text-gray-500">Giá bán</p>
+              <p class="text-lg font-bold text-primary">{{ productPrice(product) | number:'1.0-0' }} đ</p>
+              @if (hasOriginalPrice(product)) {
+                <p class="text-xs text-gray-500">
+                  Giá gốc <span class="line-through">{{ originalPrice(product) | number:'1.0-0' }} đ</span>
+                </p>
               }
+              <p class="text-[10px] text-gray-400 italic">(chưa bao gồm VAT)</p>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm h-9">
+                <button
+                  type="button"
+                  (click)="decreaseQuantity(product)"
+                  [disabled]="getProductQuantity(product) <= 1"
+                  class="w-9 h-9 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors disabled:text-gray-300 disabled:cursor-not-allowed"
+                >-</button>
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="getProductQuantity(product)"
+                  (ngModelChange)="updateQuantity(product, $event)"
+                  class="no-number-spinner w-12 h-9 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900"
+                >
+                <button
+                  type="button"
+                  (click)="increaseQuantity(product)"
+                  class="w-9 h-9 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                >+</button>
+              </div>
             </div>
 
             <button
@@ -120,5 +150,17 @@
         </div>
       }
     </div>
+
+    @if (hasMoreProducts) {
+      <div class="flex justify-center mt-8">
+        <button
+          type="button"
+          (click)="loadMoreProducts()"
+          class="border border-gray-200 bg-white text-gray-700 px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+        >
+          Xem thêm
+        </button>
+      </div>
+    }
   </div>
 </div>
