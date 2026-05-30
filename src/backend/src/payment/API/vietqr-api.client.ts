@@ -71,6 +71,7 @@ export class VietqrApiClient {
     });
 
     const data: any = await response.json().catch(() => ({}));
+    console.log('VietQR generateQrCode response raw:', JSON.stringify(data));
     if (!response.ok || data.status === 'FAILED') {
       throw new BadRequestException(`VietQR QR generation failed: ${data.message || response.statusText}`);
     }
@@ -110,12 +111,15 @@ export class VietqrApiClient {
   }
 
   private mapGenerateQrResponse(data: any): GenerateVietqrCodeResponse {
+    // If the response is nested (e.g. data: { code: "00", desc: "...", data: { qrCode: "...", qrLink: "..." } })
+    // we extract the inner data object.
+    const root = data.data && typeof data.data === 'object' ? data.data : data;
     return {
-      qrCode: data.qrCode ?? null,
-      qrLink: data.qrLink ?? null,
-      transactionId: data.transactionId ?? null,
-      transactionRefId: data.transactionRefId ?? null,
-      orderId: data.orderId ?? null,
+      qrCode: root.qrCode ?? root.qrDataURL ?? null,
+      qrLink: root.qrLink ?? root.qrDataURL ?? null,
+      transactionId: root.transactionId ?? root.transactionID ?? null,
+      transactionRefId: root.transactionRefId ?? root.transactionRefID ?? null,
+      orderId: root.orderId ?? root.orderID ?? null,
     };
   }
 }
