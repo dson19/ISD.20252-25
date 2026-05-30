@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
@@ -20,10 +20,17 @@ export class PaymentComponent implements OnInit {
   statusMessage = signal<string>('');
   orderLoaded = signal<boolean>(false);
 
+  // Custom Alert properties
+  isAlertModalOpen = false;
+  alertTitle = '';
+  alertMessage = '';
+  alertType: 'success' | 'error' | 'warning' | 'info' = 'info';
+
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-    private paymentService: PaymentService
+    private readonly router: Router,
+    private readonly route: ActivatedRoute,
+    private readonly paymentService: PaymentService,
+    private readonly cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -97,7 +104,7 @@ export class PaymentComponent implements OnInit {
   confirmPayment() {
     const currentOrderId = this.orderId();
     if (!currentOrderId) {
-      alert('Không tìm thấy ID đơn hàng hợp lệ!');
+      this.showAlert('Lỗi đơn hàng', 'Không tìm thấy ID đơn hàng hợp lệ!', 'error');
       return;
     }
 
@@ -115,14 +122,33 @@ export class PaymentComponent implements OnInit {
             window.location.href = res.approveUrl;
           } else {
             this.loading.set(false);
-            alert('Không nhận được link thanh toán từ PayPal.');
+            this.showAlert('Lỗi PayPal', 'Không nhận được link thanh toán từ PayPal.', 'error');
           }
         },
         error: (err) => {
           this.loading.set(false);
-          alert(err.error?.message || 'Lỗi khi kết nối với cổng thanh toán PayPal.');
+          this.showAlert(
+            'Lỗi kết nối',
+            err.error?.message || 'Lỗi khi kết nối với cổng thanh toán PayPal.',
+            'error'
+          );
         }
       });
     }
   }
+
+  // Helper Methods for Custom Alert
+  showAlert(title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
+    this.alertTitle = title;
+    this.alertMessage = message;
+    this.alertType = type;
+    this.isAlertModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeAlert() {
+    this.isAlertModalOpen = false;
+    this.cdr.detectChanges();
+  }
 }
+

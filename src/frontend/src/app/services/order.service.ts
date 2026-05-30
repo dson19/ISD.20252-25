@@ -108,4 +108,28 @@ export class OrderService {
   getOrderDetail(orderId: number): Observable<OrderResponse> {
     return this.http.get<OrderResponse>(`${this.baseUrl}/api/orders/${orderId}`);
   }
+
+  getPendingOrders(page: number, limit: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/orders/pending?page=${page}&limit=${limit}`);
+  }
+
+  getVietqrRefunds(page: number, limit: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/orders/vietqr-refunds?page=${page}&limit=${limit}`);
+  }
+
+  confirmVietqrRefund(orderId: number): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/orders/${orderId}/confirm-vietqr-refund`, {});
+  }
+
+  approveOrder(orderId: number): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/orders/${orderId}/approve`, {});
+  }
+
+  rejectOrder(orderId: number): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/orders/${orderId}/reject`, {});
+  }
+
+  cancelOrder(orderId: number): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/orders/${orderId}/cancel`, {});
+  }
 }

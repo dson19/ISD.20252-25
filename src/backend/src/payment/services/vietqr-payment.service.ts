@@ -146,6 +146,9 @@ export class VietqrPaymentService {
         'PENDING',
         'SUCCESS',
       );
+      await this.orderRepository.update(vietqrTransaction.orderId, {
+        status: 'PENDING_PROCESSING',
+      });
     }
 
     return {

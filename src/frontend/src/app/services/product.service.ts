@@ -73,6 +73,7 @@ export interface ProductSearchParams {
   mediaTypes?: string[];
   minPrice?: number;
   maxPrice?: number;
+  status?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -103,11 +104,41 @@ export class ProductService {
     if (params.maxPrice !== undefined) {
       httpParams = httpParams.set('maxPrice', params.maxPrice);
     }
+    if (params.status) {
+      httpParams = httpParams.set('status', params.status);
+    }
 
     return this.http.get<Product[]>(`${this.baseUrl}/api/products`, { params: httpParams });
   }
 
   getProductById(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.baseUrl}/api/products/${id}`);
+  }
+
+  createProduct(dto: any): Observable<Product> {
+    return this.http.post<Product>(`${this.baseUrl}/api/products`, dto);
+  }
+
+  updateProduct(id: number, dto: any): Observable<Product> {
+    return this.http.patch<Product>(`${this.baseUrl}/api/products/${id}`, dto);
+  }
+
+  adjustStock(id: number, quantityDelta: number, reason: string): Observable<Product> {
+    return this.http.patch<Product>(`${this.baseUrl}/api/products/${id}/stock`, {
+      quantityDelta,
+      reason
+    });
+  }
+
+  deleteProducts(ids: number[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/products/batch-delete`, { ids });
+  }
+
+  deactivateProducts(ids: number[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/products/batch-deactivate`, { ids });
+  }
+
+  getAuditLogs(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/products/audit-logs`);
   }
 }

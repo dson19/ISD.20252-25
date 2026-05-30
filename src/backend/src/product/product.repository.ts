@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Between, Brackets, DataSource, In, Repository } from 'typeorm';
+import { Between, Brackets, DataSource, In, Repository, Not } from 'typeorm';
 import { ProductLog } from './entities/product-audit-log.entity';
 import { Product } from './entities/product.entity';
 
@@ -14,7 +14,9 @@ export class ProductRepository {
   }
 
   async findById(id: number): Promise<Product | null> {
-    return this.repository.findOneBy({ productID: id });
+    return this.repository.findOne({
+      where: { productID: id, status: Not('DELETED') }
+    });
   }
 
   async getAvailableStock(id: number): Promise<number> {
@@ -27,7 +29,9 @@ export class ProductRepository {
       return [];
     }
 
-    return this.repository.findBy({ productID: In(ids) });
+    return this.repository.find({
+      where: { productID: In(ids), status: Not('DELETED') }
+    });
   }
 
   async searchProducts(
@@ -36,9 +40,19 @@ export class ProductRepository {
     minPrice?: number,
     maxPrice?: number,
     mediaTypes?: string[],
+    status?: string,
   ): Promise<Product[]> {
     const query = this.repository.createQueryBuilder('product');
-    query.where('product.status = :status', { status: 'ACTIVE' });
+    
+    if (status) {
+      if (status.toUpperCase() !== 'ALL') {
+        query.where('product.status = :status', { status: status.toUpperCase() });
+      } else {
+        query.where('product.status != :status', { status: 'DELETED' });
+      }
+    } else {
+      query.where('product.status = :status', { status: 'ACTIVE' });
+    }
 
     if (keyword) {
       query.andWhere('product.title ILIKE :keyword', {

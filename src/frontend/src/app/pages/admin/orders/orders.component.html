@@ -1,57 +1,128 @@
-<div class="p-8">
-  <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900 tracking-tight mb-2">Danh sách đơn hàng chờ xử lý</h1>
-    <p class="text-sm text-gray-500">Quản lý và theo dõi các đơn đặt hàng từ khách hàng.</p>
-  </div>
-
-  <!-- PayPal Refund Utility -->
-  <div class="mb-8 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 max-w-xl">
-    <h2 class="text-base font-bold text-gray-900 mb-2 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-6a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2z" /></svg>
-      Hoàn tiền Giao dịch PayPal (Admin)
-    </h2>
-    <p class="text-xs text-gray-500 mb-4 leading-relaxed">
-      Nhập mã đơn hàng hệ thống (ví dụ: 4) đã được thanh toán thành công qua PayPal để thực hiện hoàn trả tiền về thẻ/tài khoản PayPal của khách hàng.
-    </p>
-    <div class="flex gap-3">
-      <div class="flex-1">
-        <input type="number" [(ngModel)]="refundOrderId" class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-primary focus:border-primary transition-all" placeholder="Nhập ID đơn hàng (ví dụ: 4)..." [disabled]="refundLoading()">
+<div class="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+    <div class="space-y-1">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
+          Bán hàng & Vận đơn
+        </span>
       </div>
-      <button (click)="executeRefund()" [disabled]="refundLoading() || !refundOrderId()" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-        @if (refundLoading()) {
-          <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-          Đang hoàn tiền...
-        } @else {
-          Hoàn tiền
-        }
-      </button>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Danh sách đơn hàng</h1>
+      <p class="text-sm text-gray-500">Quản lý, theo dõi các đơn đặt hàng và xử lý đối soát cổng thanh toán.</p>
     </div>
   </div>
 
+  <!-- Dashboard Metrics Panel -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Card 1: Tổng đơn hàng -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-75">
+      <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TỔNG ĐƠN HÀNG</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ totalOrdersCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 2: Chờ xử lý -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100">
+      <div class="p-3.5 bg-amber-50 text-amber-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">CHỜ XỬ LÝ</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ pendingOrdersCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 3: Đã thanh toán -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-150">
+      <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐÃ THANH TOÁN</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ paidOrdersCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 4: Đang xử lý / Đang giao -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-200">
+      <div class="p-3.5 bg-blue-50 text-blue-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9h4l3 3v5h-2M1 5h12v12H1V5z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐANG GIAO HÀNG</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ processingOrdersCount }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 max-w-md">
+    <button 
+      (click)="setTab('pending')" 
+      [ngClass]="activeTab === 'pending' ? 'bg-primary text-white shadow-md' : 'text-gray-500 hover:text-gray-700'"
+      class="flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold transition-all duration-250 flex items-center justify-center space-x-2 cursor-pointer focus:outline-none"
+    >
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <span>Đơn hàng chờ xử lý</span>
+    </button>
+    <button 
+      (click)="setTab('refund')" 
+      [ngClass]="activeTab === 'refund' ? 'bg-rose-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'"
+      class="flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold transition-all duration-250 flex items-center justify-center space-x-2 cursor-pointer focus:outline-none"
+    >
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Yêu cầu hoàn tiền VietQR</span>
+    </button>
+  </div>
+
+  <!-- Main Grid Workspace -->
   <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
     <!-- Toolbar -->
-    <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div class="flex-1 max-w-md relative">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+    <div class="p-6 border-b border-gray-100 bg-gray-50/40 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="flex-1 max-w-lg relative w-full">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <svg class="h-4.5 w-4.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
-        <input type="text" class="block w-full pl-10 pr-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:ring-primary focus:border-primary shadow-sm" placeholder="Tìm theo tên hoặc mã đơn...">
+        <input 
+          type="text" 
+          class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all" 
+          placeholder="Tìm theo tên khách hàng hoặc mã đơn..."
+        />
       </div>
       
-      <div class="flex items-center space-x-3">
-        <select class="block py-2.5 pl-3 pr-10 text-sm border-gray-300 bg-white rounded-xl focus:ring-primary focus:border-primary shadow-sm">
+      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+        <select class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all">
           <option>Lọc theo ngày: Hôm nay</option>
           <option>Tuần này</option>
           <option>Tháng này</option>
         </select>
         
-        <select class="block py-2.5 pl-3 pr-10 text-sm border-gray-300 bg-white rounded-xl focus:ring-primary focus:border-primary shadow-sm">
+        <select class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all">
           <option>Phương thức: Tất cả</option>
-          <option>VISA</option>
-          <option>QR Code</option>
+          <option>PayPal</option>
+          <option>VietQR</option>
         </select>
 
-        <button class="bg-primary text-white px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-primary-hover shadow-sm transition-colors">
+        <button class="bg-primary text-white px-5 py-3 rounded-2xl font-extrabold text-sm hover:bg-primary-hover shadow-md shadow-blue-500/10 transition-all cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200">
           Áp dụng bộ lọc
         </button>
       </div>
@@ -61,66 +132,119 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            <th class="p-4 pl-6">Mã Đơn</th>
-            <th class="p-4">Khách Hàng</th>
-            <th class="p-4 text-right">Tổng Tiền</th>
-            <th class="p-4">Thanh Toán</th>
-            <th class="p-4">Ngày Tạo</th>
-            <th class="p-4">Trạng Thái</th>
-            <th class="p-4 pr-6 text-right">Thao Tác</th>
+          <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+            <th class="p-5 pl-8 w-44">MÃ ĐƠN HÀNG</th>
+            <th class="p-5">KHÁCH HÀNG</th>
+            <th class="p-5 text-right w-44">TỔNG TIỀN</th>
+            <th class="p-5 w-44">THANH TOÁN</th>
+            <th class="p-5 w-44">NGÀY TẠO</th>
+            <th class="p-5 text-center w-36">TRẠNG THÁI</th>
+            <th class="p-5 text-center w-40">THAO TÁC</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          @for (order of orders; track order.id) {
-            <tr class="hover:bg-gray-50/80 transition-colors group">
-              <td class="p-4 pl-6">
-                <a href="#" class="text-sm font-bold text-primary hover:underline">{{ order.id }}</a>
+          @if (orders.length === 0 && !isLoading) {
+            <tr>
+              <td colspan="7" class="p-8 text-center text-sm font-semibold text-gray-400">
+                Không có đơn hàng nào cần hiển thị.
               </td>
-              <td class="p-4">
+            </tr>
+          }
+          @if (isLoading) {
+            <tr>
+              <td colspan="7" class="p-8 text-center text-sm font-semibold text-primary flex items-center justify-center space-x-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                <span>Đang tải đơn hàng...</span>
+              </td>
+            </tr>
+          }
+          @for (order of orders; track order.orderID) {
+            <tr class="hover:bg-gray-50/40 transition-colors group">
+              <!-- Order ID -->
+              <td class="p-5 pl-8 whitespace-nowrap">
+                <span (click)="viewDetails(order.orderID)" class="text-xs font-mono font-black text-primary bg-blue-50/50 hover:bg-blue-100/50 border border-primary/10 px-2.5 py-1 rounded-xl shadow-inner cursor-pointer transition-all">
+                  #{{ order.orderID }}
+                </span>
+              </td>
+              <!-- Customer -->
+              <td class="p-5">
+                @if (order.deliveryInfo) {
+                  <div class="flex items-center">
+                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 text-primary flex items-center justify-center font-extrabold text-sm mr-3 shadow-inner border border-primary/10">
+                      {{ order.deliveryInfo.receiverName.substring(0,2).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-extrabold text-gray-900 group-hover:text-primary transition-colors block leading-snug">{{ order.deliveryInfo.receiverName }}</p>
+                      <p class="text-[11px] font-mono text-gray-400 font-semibold block mt-0.5">{{ order.deliveryInfo.phoneNumber }}</p>
+                    </div>
+                  </div>
+                }
+              </td>
+              <!-- Total -->
+              <td class="p-5 text-right font-mono font-black text-sm text-gray-900">
+                {{ order.totalPayment | number:'1.0-0' }} đ
+              </td>
+              <!-- Payment Method -->
+              <td class="p-5 text-sm font-bold text-gray-600">
                 <div class="flex items-center">
-                  <div class="h-8 w-8 rounded-full bg-blue-100 text-primary flex items-center justify-center font-bold text-xs mr-3">
-                    {{ order.customer.substring(0,2).toUpperCase() }}
-                  </div>
-                  <div>
-                    <p class="text-sm font-semibold text-gray-900">{{ order.customer }}</p>
-                    <p class="text-xs text-gray-500">{{ order.phone }}</p>
-                  </div>
+                  <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  @if (order.paymentMethod === 'VIETQR') {
+                    <span class="text-xs font-extrabold text-indigo-650 bg-indigo-50/50 px-2 py-0.5 rounded border border-indigo-100">VietQR</span>
+                  }
+                  @if (order.paymentMethod === 'PAYPAL') {
+                    <span class="text-xs font-extrabold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded border border-blue-100">PayPal</span>
+                  }
+                  @if (!order.paymentMethod) {
+                    <span class="text-xs font-bold text-gray-400">Chưa thanh toán</span>
+                  }
                 </div>
               </td>
-              <td class="p-4 text-right text-sm font-semibold text-gray-900">
-                {{ order.total | number:'1.0-0' }} đ
+              <!-- Creation Date -->
+              <td class="p-5 text-xs font-mono font-bold text-gray-400">
+                {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}
               </td>
-              <td class="p-4 text-sm text-gray-600">
-                <div class="flex items-center">
-                  <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                  {{ order.paymentMethod }}
-                </div>
-              </td>
-              <td class="p-4 text-sm text-gray-500">
-                {{ order.date }}
-              </td>
-              <td class="p-4">
+              <!-- Status -->
+              <td class="p-5 text-center">
                 @if (order.status === 'PENDING') {
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-orange-100 text-orange-800">
+                  <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span>
                     Chờ xử lý
                   </span>
                 }
-                @if (order.status === 'PAID') {
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-800">
+                @if (order.status === 'PENDING_PROCESSING') {
+                  <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse"></span>
                     Đã thanh toán
                   </span>
                 }
-                @if (order.status === 'PROCESSING') {
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-primary">
+                @if (order.status === 'APPROVED' || order.status === 'PROCESSING') {
+                  <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-primary bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5 animate-pulse"></span>
                     Đang giao hàng
                   </span>
                 }
+                @if (order.status === 'REFUND_PENDING') {
+                  <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5 animate-bounce"></span>
+                    Chờ hoàn tiền
+                  </span>
+                }
+                @if (order.status === 'REFUNDED') {
+                  <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>
+                    Đã hoàn tiền
+                  </span>
+                }
               </td>
-              <td class="p-4 pr-6 text-right">
-                <button class="text-sm font-medium text-primary hover:text-primary-hover flex items-center justify-end w-full group-hover:underline">
+              <!-- Actions -->
+              <td class="p-5 text-center">
+                <button (click)="viewDetails(order.orderID)" class="px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-primary hover:text-white bg-blue-50 hover:bg-primary border border-blue-100 rounded-xl transition-all shadow-sm focus:outline-none flex items-center justify-center mx-auto hover:-translate-y-0.5 active:scale-95 duration-200 cursor-pointer">
                   Xem chi tiết
-                  <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                  <svg class="w-3 h-3 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </td>
             </tr>
@@ -130,20 +254,320 @@
     </div>
 
     <!-- Pagination -->
-    <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-      <p class="text-xs text-gray-500">Hiển thị <span class="font-bold text-gray-900">1-3</span> trên <span class="font-bold text-gray-900">24</span> đơn hàng</p>
-      <div class="flex items-center space-x-1">
-        <button class="p-1.5 rounded-md text-gray-400 hover:bg-gray-200 transition-colors">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+    <div class="p-6 border-t border-gray-100 bg-gray-50/40 flex flex-col lg:flex-row items-center justify-between gap-4">
+      <p class="text-xs text-gray-500 font-bold">
+        Hiển thị <span class="font-extrabold text-gray-900">{{ orders.length }}</span> trên <span class="font-extrabold text-gray-900">{{ totalItems }}</span> đơn hàng
+      </p>
+      
+      <div class="flex items-center space-x-2 bg-white p-1 rounded-2xl border border-gray-150 shadow-sm">
+        <button 
+          [disabled]="currentPage === 1" 
+          (click)="goToPage(currentPage - 1)"
+          [ngClass]="currentPage === 1 ? 'text-gray-300 bg-gray-50/50 cursor-not-allowed border-transparent' : 'text-gray-600 hover:text-primary border-gray-200 cursor-pointer hover:bg-gray-50'"
+          class="w-9 h-9 rounded-xl border flex items-center justify-center focus:outline-none transition-all"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
-        <button class="w-8 h-8 rounded-md bg-white border border-gray-300 text-sm font-medium text-primary shadow-sm">1</button>
-        <button class="w-8 h-8 rounded-md hover:bg-gray-200 text-sm font-medium text-gray-600 transition-colors">2</button>
-        <button class="w-8 h-8 rounded-md hover:bg-gray-200 text-sm font-medium text-gray-600 transition-colors">3</button>
-        <button class="p-1.5 rounded-md text-gray-400 hover:bg-gray-200 transition-colors">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        <span class="text-xs font-bold px-3 text-gray-700">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
+        <button 
+          [disabled]="currentPage >= totalPages" 
+          (click)="goToPage(currentPage + 1)"
+          [ngClass]="currentPage >= totalPages ? 'text-gray-300 bg-gray-50/50 cursor-not-allowed border-transparent' : 'text-gray-600 hover:text-primary border-gray-200 cursor-pointer hover:bg-gray-50'"
+          class="w-9 h-9 rounded-xl border flex items-center justify-center focus:outline-none transition-all"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>
-
   </div>
+
+  <!-- Order Detail Modal -->
+  @if (isDetailModalOpen && selectedOrder) {
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-2xl w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <!-- Modal Header -->
+        <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <div>
+            <h3 class="text-lg font-extrabold text-gray-900">Chi tiết đơn hàng #{{ selectedOrder.orderID }}</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Ngày đặt: {{ selectedOrder.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <button (click)="closeDetailModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Content (Scrollable) -->
+        <div class="p-6 overflow-y-auto space-y-6 flex-1 text-left">
+          <!-- Customer & Shipping Info -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Thông tin người nhận</h4>
+              <p class="text-sm font-extrabold text-gray-900">{{ selectedOrder.deliveryInfo?.receiverName }}</p>
+              <p class="text-xs text-gray-600 mt-1">SĐT: {{ selectedOrder.deliveryInfo?.phoneNumber }}</p>
+              <p class="text-xs text-gray-600">Email: {{ selectedOrder.deliveryInfo?.email }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Địa chỉ giao hàng</h4>
+              <p class="text-xs text-gray-700 font-semibold leading-relaxed">{{ selectedOrder.deliveryInfo?.address }}</p>
+              <p class="text-xs text-gray-700 font-bold mt-1">Tỉnh/Thành phố: {{ selectedOrder.deliveryInfo?.province }}</p>
+              @if (selectedOrder.deliveryInfo?.deliveryNotes) {
+                <p class="text-xs text-amber-600 font-semibold mt-1">
+                  Ghi chú: {{ selectedOrder.deliveryInfo.deliveryNotes }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- Items List -->
+          <div>
+            <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-3">Danh sách sản phẩm</h4>
+            <div class="border border-gray-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                    <th class="p-3 pl-4">Sản phẩm</th>
+                    <th class="p-3 text-center w-20">SL</th>
+                    <th class="p-3 text-right w-28">Đơn giá</th>
+                    <th class="p-3 text-right w-28 pr-4">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  @for (item of selectedOrder.orderItems; track item.orderItemID) {
+                    <tr class="text-xs font-semibold text-gray-700">
+                      <td class="p-3 pl-4">
+                         <div class="flex items-center">
+                           @if (item.product?.imageUrl) {
+                             <img 
+                               [src]="item.product.imageUrl" 
+                               class="w-10 h-10 object-cover rounded-lg border border-gray-100 mr-2.5 shadow-sm"
+                             />
+                           }
+                           <span class="font-extrabold text-gray-900">{{ item.product?.title || 'Sản phẩm không khả dụng' }}</span>
+                         </div>
+                      </td>
+                      <td class="p-3 text-center font-mono font-bold">{{ item.quantity }}</td>
+                      <td class="p-3 text-right font-mono">{{ item.unitPrice | number:'1.0-0' }} đ</td>
+                      <td class="p-3 text-right font-mono font-extrabold text-gray-900 pr-4">{{ (item.quantity * item.unitPrice) | number:'1.0-0' }} đ</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Financial Summary & Payment Info -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+            <div>
+              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Thanh toán & Trạng thái</h4>
+              <div class="space-y-1.5 text-xs">
+                <p class="font-semibold text-gray-700">
+                  Phương thức: 
+                  @if (selectedOrder.paymentMethod === 'VIETQR') {
+                    <span class="font-bold text-gray-900">VietQR Bank Transfer</span>
+                  }
+                  @if (selectedOrder.paymentMethod === 'PAYPAL') {
+                    <span class="font-bold text-gray-900">PayPal Checkout</span>
+                  }
+                  @if (!selectedOrder.paymentMethod) {
+                    <span class="font-bold text-gray-400">Chưa thanh toán</span>
+                  }
+                </p>
+                <p class="font-semibold text-gray-700 flex items-center">
+                  Trạng thái: 
+                  <span class="ml-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                        [ngClass]="{
+                          'text-orange-700 bg-orange-50': selectedOrder.status === 'PENDING',
+                          'text-emerald-700 bg-emerald-50': selectedOrder.status === 'PENDING_PROCESSING',
+                          'text-blue-700 bg-blue-50': selectedOrder.status === 'APPROVED' || selectedOrder.status === 'PROCESSING',
+                          'text-rose-700 bg-rose-50': selectedOrder.status === 'REFUND_PENDING',
+                          'text-gray-500 bg-gray-100': ['REFUNDED', 'REJECTED', 'CANCELLED'].includes(selectedOrder.status)
+                        }">
+                    {{ selectedOrder.status }}
+                  </span>
+                </p>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50/75 p-4 rounded-2xl border border-gray-100 space-y-2 text-xs font-semibold text-gray-600">
+              <div class="flex justify-between">
+                <span>Tiền hàng gốc:</span>
+                <span class="font-mono text-gray-900">{{ selectedOrder.subTotal | number:'1.0-0' }} đ</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Thuế (VAT 10%):</span>
+                <span class="font-mono text-gray-900">{{ selectedOrder.tax | number:'1.0-0' }} đ</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Phí vận chuyển:</span>
+                <span class="font-mono text-gray-900">{{ selectedOrder.shippingFee | number:'1.0-0' }} đ</span>
+              </div>
+              <div class="flex justify-between pt-2 border-t border-gray-250 text-sm font-black text-gray-900">
+                <span>Tổng thanh toán:</span>
+                <span class="font-mono text-primary">{{ selectedOrder.totalPayment | number:'1.0-0' }} đ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer / Action Buttons -->
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end space-x-3">
+          <button 
+            (click)="closeDetailModal()" 
+            class="px-5 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+          >
+            Đóng
+          </button>
+
+          <!-- Actions for Pending/Processing status -->
+          @if (selectedOrder.status === 'PENDING' || selectedOrder.status === 'PENDING_PROCESSING') {
+            <button 
+              (click)="cancelOrder(selectedOrder.orderID)"
+              class="px-5 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-sm rounded-xl border border-rose-150 transition-colors focus:outline-none cursor-pointer"
+            >
+              Hủy đơn
+            </button>
+            <button 
+              (click)="rejectOrder(selectedOrder.orderID)"
+              class="px-5 py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-sm rounded-xl border border-amber-150 transition-colors focus:outline-none cursor-pointer"
+            >
+              Từ chối
+            </button>
+            <button 
+              (click)="approveOrder(selectedOrder.orderID)"
+              class="px-5 py-3 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-md transition-colors focus:outline-none cursor-pointer"
+            >
+              Duyệt đơn
+            </button>
+          }
+
+          <!-- Actions for VietQR pending refund status -->
+          @if (selectedOrder.status === 'REFUND_PENDING' && selectedOrder.paymentMethod === 'VIETQR') {
+            <button 
+              (click)="confirmVietqrRefund(selectedOrder.orderID)"
+              class="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl shadow-md transition-colors focus:outline-none cursor-pointer"
+            >
+              Xác nhận đã hoàn tiền VietQR
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Custom Confirmation Modal -->
+  @if (isConfirmModalOpen) {
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div class="p-6 text-center">
+          <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+               [ngClass]="{
+                 'bg-red-50 text-danger': confirmType === 'danger',
+                 'bg-amber-50 text-amber-500': confirmType === 'warning',
+                 'bg-blue-50 text-primary': confirmType === 'info'
+               }">
+            @if (confirmType === 'danger') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            }
+            @if (confirmType === 'warning') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            }
+            @if (confirmType === 'info') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          </div>
+          
+          <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ confirmTitle }}</h3>
+          <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-6">{{ confirmMessage }}</p>
+          
+          <div class="flex items-center justify-center space-x-3">
+            <button
+              (click)="closeConfirm()"
+              class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-2xl hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              (click)="triggerConfirmAction()"
+              [ngClass]="{
+                'bg-red-600 hover:bg-red-700 text-white': confirmType === 'danger',
+                'bg-amber-500 hover:bg-amber-600 text-white': confirmType === 'warning',
+                'bg-primary hover:bg-primary-hover text-white': confirmType === 'info'
+              }"
+              class="flex-1 px-4 py-3 font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Custom Alert / Message Modal -->
+  @if (isAlertModalOpen) {
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div class="p-6 text-center">
+          <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+               [ngClass]="{
+                 'bg-green-50 text-success': alertType === 'success',
+                 'bg-red-50 text-danger': alertType === 'error',
+                 'bg-amber-50 text-amber-500': alertType === 'warning',
+                 'bg-blue-50 text-primary': alertType === 'info'
+               }">
+            @if (alertType === 'success') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            }
+            @if (alertType === 'error') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            }
+            @if (alertType === 'warning') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            }
+            @if (alertType === 'info') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          </div>
+          
+          <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ alertTitle }}</h3>
+          <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-6">{{ alertMessage }}</p>
+          
+          <div class="flex items-center justify-center">
+            <button
+              (click)="closeAlert()"
+              [ngClass]="{
+                 'bg-success hover:bg-green-600': alertType === 'success',
+                 'bg-danger hover:bg-red-700': alertType === 'error',
+                 'bg-amber-500 hover:bg-amber-600': alertType === 'warning',
+                 'bg-primary hover:bg-primary-hover': alertType === 'info'
+              }"
+              class="w-full py-3 text-white font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

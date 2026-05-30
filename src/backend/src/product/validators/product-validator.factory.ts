@@ -53,6 +53,13 @@ abstract class BaseProductValidator implements ProductValidator {
       throw new BadRequestException('mediaType cannot be changed');
     }
 
+    if (
+      dto.originalPrice !== undefined &&
+      Number(dto.originalPrice) !== Number(existing.originalPrice)
+    ) {
+      throw new BadRequestException('originalPrice cannot be changed');
+    }
+
     validatePartialCommonProductFields(dto);
     validatePriceRange(
       dto.originalPrice ?? Number(existing.originalPrice),

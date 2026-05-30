@@ -1,59 +1,157 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ProductService } from '../../../services/product.service';
+import { FormsModule } from '@angular/forms';
 
-interface Log {
-  id: string;
-  time: string;
-  barcode: string;
-  title: string;
-  action: string;
-  actor: string;
-  details: string;
+interface ProductLog {
+  logID: number;
+  actionType: 'CREATE' | 'UPDATE' | 'DELETE' | 'DEACTIVATE' | 'STOCK_ADJUST' | string;
+  changedFields: any;
+  performedBy: string;
+  reason?: string | null;
+  createdAt: string;
+  product?: {
+    productID: number;
+    title: string;
+    barcode: string;
+    mediaType: string;
+  } | null;
 }
 
 @Component({
   selector: 'app-logs',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './logs.component.html'
 })
-export class LogsComponent {
-  logs: Log[] = [
-    {
-      id: 'L1',
-      time: '2024-10-24 14:32:01',
-      barcode: 'BK-VN2024-01',
-      title: 'Mũ nồi xanh Việt Nam - Người...',
-      action: 'Đã cập nhật',
-      actor: 'Admin N.M.A',
-      details: 'Giá: 135.000 -> 108.000'
-    },
-    {
-      id: 'L2',
-      time: '2024-10-24 11:15:44',
-      barcode: 'DVD-VN2024-02',
-      title: 'Mai',
-      action: 'Đã tạo',
-      actor: 'Hệ thống',
-      details: 'Thêm mới vào kho, Tồn ban đầu: 12'
-    },
-    {
-      id: 'L3',
-      time: '2024-10-23 09:05:12',
-      barcode: 'NP-VN2024-04',
-      title: 'Tuổi Trẻ E-Paper 2024 Arc...',
-      action: 'Đã xóa',
-      actor: 'Admin N.M.A',
-      details: 'Bản ghi bị xóa do ngừng phân phối'
-    },
-    {
-      id: 'L4',
-      time: '2024-10-22 16:45:00',
-      barcode: 'BK-VN2024-01',
-      title: 'Mũ nồi xanh Việt Nam',
-      action: 'Đã cập nhật',
-      actor: 'Kho vận',
-      details: 'Tồn kho: 18 -> 24'
+export class LogsComponent implements OnInit {
+  logs: ProductLog[] = [];
+  filteredLogs: ProductLog[] = [];
+  isLoading = false;
+
+  // Search & Filters
+  searchQuery = '';
+  actionFilter = '';
+  timeFilter = 'ALL'; // ALL, 24H, 7D
+
+  // JSON Diff Modal
+  isDiffModalOpen = false;
+  selectedLogForDiff: ProductLog | null = null;
+  parsedBeforeFields: any = null;
+  parsedAfterFields: any = null;
+
+  constructor(
+    private readonly productService: ProductService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit() {
+    this.fetchLogs();
+  }
+
+  fetchLogs() {
+    this.isLoading = true;
+    this.productService.getAuditLogs().subscribe({
+      next: (data) => {
+        this.logs = data;
+        this.applyFilter();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error fetching audit logs:', err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  applyFilter() {
+    const now = new Date().getTime();
+    this.filteredLogs = this.logs.filter((log) => {
+      const barcode = log.product?.barcode || '';
+      const title = log.product?.title || '';
+      const actor = log.performedBy || '';
+      const action = log.actionType || '';
+
+      const matchesSearch =
+        barcode.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        actor.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        action.toLowerCase().includes(this.searchQuery.toLowerCase());
+
+      const matchesAction = !this.actionFilter || log.actionType === this.actionFilter;
+
+      // Time filtering logic
+      let matchesTime = true;
+      const logTime = new Date(log.createdAt).getTime();
+      if (this.timeFilter === '24H') {
+        matchesTime = now - logTime <= 24 * 60 * 60 * 1000;
+      } else if (this.timeFilter === '7D') {
+        matchesTime = now - logTime <= 7 * 24 * 60 * 60 * 1000;
+      }
+
+      return matchesSearch && matchesAction && matchesTime;
+    });
+  }
+
+  openDiffModal(log: ProductLog) {
+    this.selectedLogForDiff = log;
+    this.parsedBeforeFields = null;
+    this.parsedAfterFields = null;
+
+    try {
+      const changes = typeof log.changedFields === 'string' ? JSON.parse(log.changedFields) : log.changedFields;
+      if (changes) {
+        if (changes.before) {
+          this.parsedBeforeFields = changes.before;
+        }
+        if (changes.after) {
+          this.parsedAfterFields = changes.after;
+        } else if (!changes.before) {
+          // If no explicit before/after block, the changes root represents the final values
+          this.parsedAfterFields = changes;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing changed fields:', e);
     }
-  ];
+
+    this.isDiffModalOpen = true;
+  }
+
+  closeDiffModal() {
+    this.isDiffModalOpen = false;
+    this.selectedLogForDiff = null;
+    this.parsedBeforeFields = null;
+    this.parsedAfterFields = null;
+  }
+
+  // Helper method to extract objects as arrays for easy HTML looping
+  getObjectKeysAndValues(obj: any): { key: string; value: any }[] {
+    if (!obj || typeof obj !== 'object') return [];
+    return Object.keys(obj)
+      .filter(key => key !== 'product' && key !== 'book' && key !== 'cd' && key !== 'dvd' && key !== 'newspaper') // Strip duplicates
+      .map(key => ({
+        key,
+        value: typeof obj[key] === 'object' ? JSON.stringify(obj[key]) : obj[key]
+      }));
+  }
+
+  // Dashboard statistics getters
+  get totalLogsCount(): number {
+    return this.filteredLogs.length;
+  }
+
+  get createLogsCount(): number {
+    return this.filteredLogs.filter(l => l.actionType === 'CREATE').length;
+  }
+
+  get stockLogsCount(): number {
+    return this.filteredLogs.filter(l => l.actionType === 'STOCK_ADJUST').length;
+  }
+
+  get deleteLogsCount(): number {
+    return this.filteredLogs.filter(l => l.actionType === 'DELETE' || l.actionType === 'DEACTIVATE').length;
+  }
 }
