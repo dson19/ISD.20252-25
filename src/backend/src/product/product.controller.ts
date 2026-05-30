@@ -99,6 +99,16 @@ export class ProductController {
     return this.productService.deleteProducts(dto, this.requireManager(managerId));
   }
 
+  @Post('batch-deactivate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
+  async batchDeactivateProducts(
+    @Body() dto: BatchDeleteProductsDto,
+    @Headers('x-manager-id') managerId?: string,
+  ) {
+    return this.productService.deactivateProducts(dto, this.requireManager(managerId));
+  }
+
   @Patch(':id/stock')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PRODUCT_MANAGER')

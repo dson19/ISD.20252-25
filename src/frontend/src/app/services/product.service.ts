@@ -134,6 +134,10 @@ export class ProductService {
     return this.http.post<any>(`${this.baseUrl}/api/products/batch-delete`, { ids });
   }
 
+  deactivateProducts(ids: number[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/products/batch-deactivate`, { ids });
+  }
+
   getAuditLogs(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/products/audit-logs`);
   }

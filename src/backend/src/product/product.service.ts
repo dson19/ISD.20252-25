@@ -226,7 +226,7 @@ export class ProductService {
             });
             output.push({ id, status: 'DEACTIVATED_ORDERED' });
           } else {
-            // Nếu chưa có đơn hàng nào, tiến hành xóa cứng an toàn khỏi hệ thống
+            // Nếu chưa có đơn hàng nào, tiến hành xóa mềm bằng cách cập nhật trạng thái thành DELETED
             await this.writeAuditLog(manager, {
               product,
               actionType: 'DELETE',
@@ -237,10 +237,71 @@ export class ProductService {
               },
               performedBy: managerId,
             });
-            await productRepo.delete(id);
+            await productRepo.update(id, { status: 'DELETED' });
             output.push({ id, status: 'DELETED' });
           }
         }
+      }
+
+      return output;
+    });
+
+    return { results };
+  }
+
+  async deactivateProducts(dto: BatchDeleteProductsDto, managerId: string) {
+    const uniqueIds = [...new Set(dto.ids)];
+    if (uniqueIds.length !== dto.ids.length) {
+      throw new BadRequestException('ids must be unique');
+    }
+
+    if (uniqueIds.length > 10) {
+      throw new BadRequestException('Cannot deactivate more than 10 products once');
+    }
+
+    const existingProducts =
+      await this.productRepository.findProductsByIds(uniqueIds);
+    const existingCount = existingProducts.length;
+    const { start, end } = this.getTodayRange();
+    const currentDeleteActions =
+      await this.productRepository.countManagerDeleteActions(
+        managerId,
+        start,
+        end,
+      );
+
+    if (currentDeleteActions + existingCount > 20) {
+      throw new BadRequestException(
+        'Manager delete quota exceeded: maximum 20 products per day',
+      );
+    }
+
+    const results = await this.dataSource.transaction(async (manager) => {
+      const productRepo = manager.getRepository(Product);
+      const productsById = new Map(
+        existingProducts.map((product) => [product.productID, product]),
+      );
+      const output: { id: number; status: DeleteResultStatus }[] = [];
+
+      for (const id of uniqueIds) {
+        const product = productsById.get(id);
+        if (!product) {
+          output.push({ id, status: 'NOT_FOUND' });
+          continue;
+        }
+
+        await productRepo.update(id, { status: 'DEACTIVATED' });
+        await this.writeAuditLog(manager, {
+          product,
+          actionType: 'DEACTIVATE',
+          changedFields: {
+            productID: id,
+            quantityInStock: product.quantityInStock,
+            status: 'DEACTIVATED',
+          },
+          performedBy: managerId,
+        });
+        output.push({ id, status: 'DEACTIVATED' });
       }
 
       return output;

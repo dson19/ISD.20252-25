@@ -64,6 +64,16 @@ export class OrderController {
     return this.orderService.getPendingOrders(page, limit);
   }
 
+  @Get('vietqr-refunds')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
+  async getVietqrRefunds(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
+  ) {
+    return this.orderService.getVietqrRefundRequests(page, limit);
+  }
+
   @Get(':orderId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PRODUCT_MANAGER')
@@ -100,5 +110,12 @@ export class OrderController {
   @Roles('PRODUCT_MANAGER')
   async cancelOrder(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.cancelOrder(orderId);
+  }
+
+  @Post(':orderId/confirm-vietqr-refund')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
+  async confirmVietqrRefund(@Param('orderId', ParseIntPipe) orderId: number) {
+    return this.orderService.confirmVietqrRefund(orderId);
   }
 }

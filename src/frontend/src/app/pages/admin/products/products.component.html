@@ -24,6 +24,20 @@
       </button>
 
       <button
+        (click)="deactivateSelectedProducts()"
+        [disabled]="getSelectedCount() === 0"
+        class="flex-1 md:flex-none border px-5 py-3 rounded-2xl font-extrabold text-sm flex items-center justify-center transition-all duration-200 focus:outline-none shadow-sm"
+        [ngClass]="getSelectedCount() === 0 
+          ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-60' 
+          : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600 cursor-pointer'"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        Ngừng bán @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
+      </button>
+
+      <button
         (click)="deleteSelectedProducts()"
         [disabled]="getSelectedCount() === 0"
         class="flex-1 md:flex-none border px-5 py-3 rounded-2xl font-extrabold text-sm flex items-center justify-center transition-all duration-200 focus:outline-none shadow-sm"
@@ -34,13 +48,13 @@
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        Xóa / Ngừng bán @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
+        Xóa @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
       </button>
     </div>
   </div>
 
   <!-- Dashboard Metrics Panel (Mới) -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
     <!-- Card 1: Tổng đầu sản phẩm -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
@@ -64,19 +78,6 @@
       <div>
         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐANG BÁN HÀNG</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ activeProductsCount }}</p>
-      </div>
-    </div>
-
-    <!-- Card 3: Đã hết hàng -->
-    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
-      <div class="p-3.5 bg-rose-50 text-rose-600 rounded-2xl">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐẠ HẾT HÀNG</p>
-        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ outOfStockCount }}</p>
       </div>
     </div>
 
@@ -112,6 +113,9 @@
           class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all"
           placeholder="Tìm theo tiêu đề, tác giả hoặc mã vạch..."
         />
+        <div class="mt-2 text-[11px] text-gray-400 font-bold uppercase tracking-wider pl-1">
+          Hiển thị {{ products.length }} sản phẩm trên {{ totalDatabaseProductsCount }} sản phẩm
+        </div>
       </div>
       
       <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
@@ -425,7 +429,8 @@
                   <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái bán</label>
                   <select
                     [(ngModel)]="productForm.status"
-                    class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800"
+                    [disabled]="isEditMode"
+                    class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
                     <option value="DEACTIVATED">Ngừng hoạt động (DEACTIVATED)</option>
@@ -725,31 +730,78 @@
             </div>
           </div>
 
+          <!-- Nhập/Xuất Selector Tabs -->
+          <div class="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-2xl">
+            <button
+              type="button"
+              (click)="stockActionType = 'IMPORT'; onStockActionTypeChange()"
+              [ngClass]="stockActionType === 'IMPORT' 
+                ? 'bg-white text-emerald-600 shadow-sm font-extrabold' 
+                : 'text-gray-500 hover:text-gray-800 font-bold'"
+              class="py-2.5 rounded-xl text-xs flex items-center justify-center transition-all focus:outline-none cursor-pointer"
+            >
+              📥 Nhập kho (Cộng)
+            </button>
+            <button
+              type="button"
+              (click)="stockActionType = 'EXPORT'; onStockActionTypeChange()"
+              [ngClass]="stockActionType === 'EXPORT' 
+                ? 'bg-white text-rose-600 shadow-sm font-extrabold' 
+                : 'text-gray-500 hover:text-gray-800 font-bold'"
+              class="py-2.5 rounded-xl text-xs flex items-center justify-center transition-all focus:outline-none cursor-pointer"
+            >
+              📤 Xuất kho (Trừ)
+            </button>
+          </div>
+
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Số lượng điều chỉnh (Nhập số +/-)</label>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Số lượng điều chỉnh (Nhập số dương)</label>
             <input
               type="number"
+              min="1"
               [(ngModel)]="stockDelta"
               class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-base font-extrabold focus:ring-primary focus:border-primary text-center"
-              placeholder="Ví dụ: +10 để nhập, -5 để xuất..."
+              placeholder="Ví dụ: 5, 10..."
             />
             <div class="flex justify-between items-center mt-1 text-[10px] text-gray-400 font-bold uppercase">
               <span>TỒN KHO MỚI SAU KHI ÁP DỤNG:</span>
-              <span [ngClass]="{'text-success': selectedProductForStock.quantityInStock + stockDelta > 0, 'text-danger': selectedProductForStock.quantityInStock + stockDelta === 0}">
-                {{ selectedProductForStock.quantityInStock + stockDelta }}
+              <span [ngClass]="{'text-success': getNewStock() > 0, 'text-danger': getNewStock() === 0}">
+                {{ getNewStock() }}
               </span>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lý do thay đổi tồn kho <span class="text-danger">*</span></label>
-            <textarea
-              [(ngModel)]="stockReason"
-              rows="3"
-              class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-xs focus:ring-primary focus:border-primary placeholder-gray-400 font-medium"
-              placeholder="Ví dụ: Nhập kho thêm từ NXB Kim Đồng, giảm kho do phát hiện đĩa CD trầy xước..."
-            ></textarea>
+            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lý do điều chỉnh <span class="text-danger">*</span></label>
+            <select
+              [(ngModel)]="selectedPredefinedReason"
+              class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-xs focus:ring-primary focus:border-primary font-bold text-gray-700 cursor-pointer transition-all"
+            >
+              @if (stockActionType === 'IMPORT') {
+                <option value="Nhập thêm hàng từ nhà cung cấp">Nhập thêm hàng từ nhà cung cấp</option>
+                <option value="Hàng hoàn trả từ khách hàng">Hàng hoàn trả từ khách hàng</option>
+                <option value="Điều chỉnh tăng sau khi kiểm kê">Điều chỉnh tăng sau khi kiểm kê</option>
+                <option value="Khác">Lý do khác...</option>
+              } @else {
+                <option value="Hàng hóa bị hư hỏng / lỗi">Hàng hóa bị hư hỏng / lỗi</option>
+                <option value="Thất thoát / Mất mát hàng">Thất thoát / Mất mát hàng</option>
+                <option value="Xuất làm hàng mẫu / tặng kèm">Xuất làm hàng mẫu / tặng kèm</option>
+                <option value="Khác">Lý do khác...</option>
+              }
+            </select>
           </div>
+
+          @if (selectedPredefinedReason === 'Khác') {
+            <div class="animate-in slide-in-from-top-2 duration-200">
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lý do cụ thể khác <span class="text-danger">*</span></label>
+              <textarea
+                [(ngModel)]="customStockReason"
+                rows="3"
+                class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-xs focus:ring-primary focus:border-primary placeholder-gray-400 font-medium"
+                placeholder="Nhập lý do chi tiết..."
+              ></textarea>
+            </div>
+          }
         </div>
 
         <!-- Footer -->

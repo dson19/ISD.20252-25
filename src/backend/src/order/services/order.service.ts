@@ -259,7 +259,20 @@ export class OrderService {
       }
 
       await this.restoreReservedStock(manager, order);
-      order.status = 'REJECTED';
+
+      // Check payment method
+      const txs = await manager.query(
+        'SELECT method FROM payment_transactions WHERE order_id = $1 AND status = $2 LIMIT 1',
+        [orderId, 'SUCCESS']
+      );
+      const paymentMethod = txs.length > 0 ? txs[0].method : null;
+
+      if (order.status === 'PENDING_PROCESSING' && paymentMethod === 'VIETQR') {
+        order.status = 'REFUND_PENDING';
+      } else {
+        order.status = 'REJECTED';
+      }
+
       await manager.save(Order, order);
       return this.findOrderOrFail(manager, orderId);
     });
@@ -273,7 +286,20 @@ export class OrderService {
       }
 
       await this.restoreReservedStock(manager, order);
-      order.status = 'CANCELLED';
+
+      // Check payment method
+      const txs = await manager.query(
+        'SELECT method FROM payment_transactions WHERE order_id = $1 AND status = $2 LIMIT 1',
+        [orderId, 'SUCCESS']
+      );
+      const paymentMethod = txs.length > 0 ? txs[0].method : null;
+
+      if (order.status === 'PENDING_PROCESSING' && paymentMethod === 'VIETQR') {
+        order.status = 'REFUND_PENDING';
+      } else {
+        order.status = 'CANCELLED';
+      }
+
       await manager.save(Order, order);
       return this.findOrderOrFail(manager, orderId);
     });
@@ -282,21 +308,127 @@ export class OrderService {
   async getPendingOrders(page = 1, limit = this.defaultPendingPageSize) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), this.defaultPendingPageSize);
-    const [items, total] = await this.dataSource.getRepository(Order).findAndCount({
-      where: { status: 'PENDING' },
-      relations: ['orderItems', 'deliveryInfo', 'invoice'],
-      order: { createdAt: 'ASC' },
-      skip: (safePage - 1) * safeLimit,
-      take: safeLimit,
-    });
+
+    const query = this.dataSource.getRepository(Order).createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderItems', 'orderItems')
+      .leftJoinAndSelect('orderItems.product', 'product')
+      .leftJoinAndSelect('order.deliveryInfo', 'deliveryInfo')
+      .leftJoinAndSelect('order.invoice', 'invoice')
+      .where('order.status IN (:...statuses)', { statuses: ['PENDING', 'PENDING_PROCESSING'] })
+      .orderBy("CASE WHEN order.status = 'PENDING_PROCESSING' THEN 0 ELSE 1 END", 'ASC')
+      .addOrderBy('order.createdAt', 'ASC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit);
+
+    const [items, total] = await query.getManyAndCount();
+
+    // Fetch paymentMethod for each order
+    const orderIds = items.map(o => o.orderID);
+    let paymentMethodsMap: Record<number, string> = {};
+    if (orderIds.length > 0) {
+      const txs = await this.dataSource.manager.query(
+        'SELECT order_id, method FROM payment_transactions WHERE order_id = ANY($1) AND status = $2',
+        [orderIds, 'SUCCESS']
+      );
+      for (const tx of txs) {
+        paymentMethodsMap[tx.order_id] = tx.method;
+      }
+    }
+
+    const itemsWithMethod = items.map(item => ({
+      ...item,
+      paymentMethod: paymentMethodsMap[item.orderID] || null,
+    }));
 
     return {
-      items,
+      items: itemsWithMethod,
       total,
       page: safePage,
       limit: safeLimit,
       totalPages: Math.ceil(total / safeLimit),
     };
+  }
+
+  async getVietqrRefundRequests(page = 1, limit = 30) {
+    const safePage = Math.max(page, 1);
+    const safeLimit = Math.min(Math.max(limit, 1), 30);
+
+    const [items, total] = await this.dataSource.getRepository(Order)
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderItems', 'orderItems')
+      .leftJoinAndSelect('orderItems.product', 'product')
+      .leftJoinAndSelect('order.deliveryInfo', 'deliveryInfo')
+      .leftJoinAndSelect('order.invoice', 'invoice')
+      .where('order.status = :status', { status: 'REFUND_PENDING' })
+      .orderBy('order.createdAt', 'ASC')
+      .skip((safePage - 1) * safeLimit)
+      .take(safeLimit)
+      .getManyAndCount();
+
+    // Fetch paymentMethod for each order
+    const orderIds = items.map(o => o.orderID);
+    let paymentMethodsMap: Record<number, string> = {};
+    if (orderIds.length > 0) {
+      const txs = await this.dataSource.manager.query(
+        'SELECT order_id, method FROM payment_transactions WHERE order_id = ANY($1) AND status = $2',
+        [orderIds, 'SUCCESS']
+      );
+      for (const tx of txs) {
+        paymentMethodsMap[tx.order_id] = tx.method;
+      }
+    }
+
+    const itemsWithMethod = items.map(item => ({
+      ...item,
+      paymentMethod: paymentMethodsMap[item.orderID] || 'VIETQR',
+    }));
+
+    return {
+      items: itemsWithMethod,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
+    };
+  }
+
+  async confirmVietqrRefund(orderId: number): Promise<Order> {
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager.findOne(Order, {
+        where: { orderID: orderId },
+        relations: ['orderItems', 'deliveryInfo', 'invoice'],
+      });
+      if (!order) {
+        throw new NotFoundException(`Order #${orderId} not found`);
+      }
+      if (order.status !== 'REFUND_PENDING') {
+        throw new BadRequestException(`Order #${orderId} is in status ${order.status}, not REFUND_PENDING`);
+      }
+
+      // Check if there is a SUCCESS VietQR transaction
+      const tx = await manager.query(
+        'SELECT transaction_id FROM payment_transactions WHERE order_id = $1 AND method = $2 AND status = $3 LIMIT 1',
+        [orderId, 'VIETQR', 'SUCCESS']
+      );
+
+      if (tx.length === 0) {
+        throw new BadRequestException(`Order #${orderId} does not have a successful VietQR transaction to refund`);
+      }
+
+      const transactionId = tx[0].transaction_id;
+
+      // Update payment transaction status to REFUNDED
+      await manager.query(
+        'UPDATE payment_transactions SET status = $1 WHERE transaction_id = $2',
+        ['REFUNDED', transactionId]
+      );
+
+      // Update order status to REFUNDED
+      order.status = 'REFUNDED';
+      await manager.save(Order, order);
+
+      return order;
+    });
   }
 
   private async restoreReservedStock(manager: EntityManager, order: Order): Promise<void> {

@@ -12,6 +12,7 @@ import { ProductService, Product, ProductSearchParams } from '../../../services/
 export class ProductsComponent implements OnInit {
   products: Product[] = [];
   isLoading = false;
+  totalDatabaseProductsCount = 0;
 
   // Pagination
   currentPage = 1;
@@ -33,8 +34,11 @@ export class ProductsComponent implements OnInit {
 
   // Stock Adjustment State
   selectedProductForStock: Product | null = null;
-  stockDelta = 0;
+  stockDelta = 1;
   stockReason = '';
+  stockActionType: 'IMPORT' | 'EXPORT' = 'IMPORT';
+  selectedPredefinedReason = 'Nhập thêm hàng từ nhà cung cấp';
+  customStockReason = '';
 
   // Form State
   isEditMode = false;
@@ -181,6 +185,19 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit() {
     this.fetchProducts();
+    this.fetchTotalProductsCount();
+  }
+
+  fetchTotalProductsCount() {
+    this.productService.searchProducts({ status: 'ALL' }).subscribe({
+      next: (data) => {
+        this.totalDatabaseProductsCount = data.length;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Lỗi khi lấy tổng số sản phẩm:', err);
+      }
+    });
   }
 
   fetchProducts() {
@@ -246,15 +263,11 @@ export class ProductsComponent implements OnInit {
 
   // Dashboard Metrics Getters
   get totalProductsCount(): number {
-    return this.products.length;
+    return this.totalDatabaseProductsCount;
   }
 
   get activeProductsCount(): number {
     return this.products.filter((p) => p.status === 'ACTIVE').length;
-  }
-
-  get outOfStockCount(): number {
-    return this.products.filter((p) => p.quantityInStock === 0).length;
   }
 
   get deactivatedCount(): number {
@@ -344,7 +357,10 @@ export class ProductsComponent implements OnInit {
   // Stock Adjustment Methods
   openStockModal(product: Product) {
     this.selectedProductForStock = product;
-    this.stockDelta = 0;
+    this.stockDelta = 1;
+    this.stockActionType = 'IMPORT';
+    this.selectedPredefinedReason = 'Nhập thêm hàng từ nhà cung cấp';
+    this.customStockReason = '';
     this.stockReason = '';
     this.isStockModalOpen = true;
   }
@@ -354,35 +370,54 @@ export class ProductsComponent implements OnInit {
     this.selectedProductForStock = null;
   }
 
+  onStockActionTypeChange() {
+    if (this.stockActionType === 'IMPORT') {
+      this.selectedPredefinedReason = 'Nhập thêm hàng từ nhà cung cấp';
+    } else {
+      this.selectedPredefinedReason = 'Hàng hóa bị hư hỏng / lỗi';
+    }
+  }
+
+  getNewStock(): number {
+    if (!this.selectedProductForStock) return 0;
+    const actualDelta = this.stockActionType === 'IMPORT' ? this.stockDelta : -this.stockDelta;
+    return Math.max(0, this.selectedProductForStock.quantityInStock + actualDelta);
+  }
+
   saveStockAdjustment() {
     if (!this.selectedProductForStock) return;
     
-    if (this.stockDelta === 0) {
-      this.showAlert('Thông báo', 'Vui lòng nhập số lượng điều chỉnh khác 0', 'warning');
+    if (this.stockDelta <= 0 || !Number.isInteger(this.stockDelta)) {
+      this.showAlert('Thông báo', 'Vui lòng nhập số lượng hợp lệ (> 0)', 'warning');
       return;
     }
 
-    const finalStock = this.selectedProductForStock.quantityInStock + this.stockDelta;
-    if (finalStock < 0) {
+    const actualDelta = this.stockActionType === 'IMPORT' ? this.stockDelta : -this.stockDelta;
+    if (this.stockActionType === 'EXPORT' && this.stockDelta > this.selectedProductForStock.quantityInStock) {
       this.showAlert(
-        'Lỗi tồn kho',
-        `Điều chỉnh kho không thể làm tồn kho bị âm (Tồn kho hiện tại: ${this.selectedProductForStock.quantityInStock})`,
-        'error'
+        'Vượt quá số lượng tồn kho',
+        `Không thể xuất kho vượt quá số lượng hàng hiện có trong kho (Tồn kho hiện tại: ${this.selectedProductForStock.quantityInStock} sản phẩm).`,
+        'warning'
       );
       return;
     }
 
-    if (!this.stockReason.trim()) {
-      this.showAlert('Thiếu thông tin', 'Vui lòng ghi rõ lý do điều chỉnh kho', 'warning');
+    const actualReason = this.selectedPredefinedReason === 'Khác' 
+      ? this.customStockReason.trim() 
+      : this.selectedPredefinedReason;
+
+    if (!actualReason) {
+      this.showAlert('Thiếu thông tin', 'Vui lòng chọn hoặc nhập lý do điều chỉnh kho', 'warning');
       return;
     }
 
     this.productService
-      .adjustStock(this.selectedProductForStock.productID, this.stockDelta, this.stockReason)
+      .adjustStock(this.selectedProductForStock.productID, actualDelta, actualReason)
       .subscribe({
         next: (updatedProduct) => {
           this.closeStockModal();
           this.fetchProducts();
+          this.fetchTotalProductsCount();
         },
         error: (err) => {
           this.showAlert('Lỗi điều chỉnh', err.error?.message || 'Không thể điều chỉnh tồn kho', 'error');
@@ -706,6 +741,7 @@ export class ProductsComponent implements OnInit {
         next: (res) => {
           this.closeProductModal();
           this.fetchProducts();
+          this.fetchTotalProductsCount();
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Không thể cập nhật sản phẩm';
@@ -716,6 +752,7 @@ export class ProductsComponent implements OnInit {
         next: (res) => {
           this.closeProductModal();
           this.fetchProducts();
+          this.fetchTotalProductsCount();
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Không thể tạo sản phẩm';
@@ -740,8 +777,8 @@ export class ProductsComponent implements OnInit {
     }
 
     this.showConfirm(
-      'Xác nhận xử lý hàng loạt',
-      `Bạn có chắc chắn muốn thực hiện xử lý trên ${selectedIds.length} sản phẩm đã chọn hay không?\n\n(Hệ thống sẽ tự động Xóa cứng đối với sản phẩm có tồn kho bằng 0, và tự động chuyển sang trạng thái Ngừng hoạt động (Deactivate) đối với sản phẩm còn tồn kho > 0).`,
+      'Xác nhận xóa hàng loạt',
+      `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đã chọn hay không?\n\n(Lưu ý: Hệ thống sẽ tự động Xóa đối với sản phẩm có tồn kho bằng 0, và tự động chuyển sang trạng thái Ngừng hoạt động đối với sản phẩm còn tồn kho > 0).`,
       'danger',
       () => {
         this.productService.deleteProducts(selectedIds).subscribe({
@@ -750,11 +787,11 @@ export class ProductsComponent implements OnInit {
             
             res.results.forEach((item: any) => {
               if (item.status === 'DELETED') {
-                details.push(`ID ${item.id} (Hết hàng): Đã xóa cứng khỏi cơ sở dữ liệu.`);
+                details.push(`ID ${item.id} (Tồn kho = 0): Đã xóa thành công khỏi danh sách.`);
               } else if (item.status === 'DEACTIVATED_ORDERED') {
                 details.push(`ID ${item.id} (Đã có đơn hàng): Tự động chuyển thành NGỪNG HOẠT ĐỘNG để bảo toàn lịch sử giao dịch.`);
               } else if (item.status === 'DEACTIVATED') {
-                details.push(`ID ${item.id} (Còn hàng): Đã chuyển thành NGỪNG HOẠT ĐỘNG.`);
+                details.push(`ID ${item.id} (Tồn kho > 0): Tự động chuyển thành NGỪNG HOẠT ĐỘNG.`);
               } else {
                 details.push(`ID ${item.id}: Không tìm thấy sản phẩm.`);
               }
@@ -762,15 +799,66 @@ export class ProductsComponent implements OnInit {
 
             this.showAlert(
               'Thao tác thành công',
-              `Đã hoàn thành xử lý hàng loạt cho ${selectedIds.length} sản phẩm đã chọn:`,
+              `Đã hoàn thành xử lý xóa cho ${selectedIds.length} sản phẩm đã chọn:`,
               'success',
               details
             );
             
             this.fetchProducts();
+            this.fetchTotalProductsCount();
           },
           error: (err) => {
-            this.showAlert('Lỗi thực thi', err.error?.message || 'Không thể xóa hàng loạt sản phẩm', 'error');
+            this.showAlert('Lỗi thực thi', err.error?.message || 'Không thể xóa sản phẩm', 'error');
+          }
+        });
+      }
+    );
+  }
+
+  deactivateSelectedProducts() {
+    const selectedIds = Object.keys(this.selectedProducts)
+      .filter((id) => this.selectedProducts[+id])
+      .map((id) => +id);
+
+    if (selectedIds.length === 0) {
+      this.showAlert('Yêu cầu chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để ngừng bán', 'warning');
+      return;
+    }
+
+    if (selectedIds.length > 10) {
+      this.showAlert('Vượt giới hạn', 'Hệ thống giới hạn ngừng bán tối đa 10 sản phẩm trong một lần xử lý hàng loạt', 'warning');
+      return;
+    }
+
+    this.showConfirm(
+      'Xác nhận ngừng bán hàng loạt',
+      `Bạn có chắc chắn muốn ngừng bán ${selectedIds.length} sản phẩm đã chọn hay không?`,
+      'warning',
+      () => {
+        this.productService.deactivateProducts(selectedIds).subscribe({
+          next: (res) => {
+            const details: string[] = [];
+            
+            res.results.forEach((item: any) => {
+              if (item.status === 'DEACTIVATED') {
+                details.push(`ID ${item.id}: Đã ngừng bán thành công.`);
+              } else {
+                details.push(`ID ${item.id}: Không tìm thấy sản phẩm.`);
+              }
+            });
+
+            this.showAlert(
+              'Thao tác thành công',
+              `Đã hoàn thành ngừng bán cho ${selectedIds.length} sản phẩm đã chọn:`,
+              'success',
+              details
+            );
+            
+            this.fetchProducts();
+            this.fetchTotalProductsCount();
+          },
+          error: (err) => {
+            this.showAlert('Lỗi thực thi', err.error?.message || 'Không thể ngừng bán sản phẩm', 'error');
           }
         });
       }
