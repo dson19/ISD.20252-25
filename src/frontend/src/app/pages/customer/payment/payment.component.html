@@ -58,7 +58,14 @@
       @if (paymentMethod() === 'QR') {
       <div class="text-center">
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 inline-block mb-4">
-          <img src="https://placehold.co/200x200/ffffff/000000?text=QR+Code" alt="VietQR" class="w-48 h-48">
+          @if (qrLink() || qrCode()) {
+            <img [src]="qrLink() || qrCode()" alt="VietQR" class="w-48 h-48 mx-auto object-contain">
+          } @else {
+            <div class="w-48 h-48 flex flex-col items-center justify-center bg-gray-50 rounded-xl mx-auto border border-dashed border-gray-200">
+              <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mb-2"></div>
+              <span class="text-xs text-gray-400">Đang tạo mã QR...</span>
+            </div>
+          }
           <p class="mt-3 font-bold text-gray-800 text-sm">Quét mã để thanh toán</p>
           <p class="text-xs text-gray-500">Mở ứng dụng ngân hàng để quét mã VietQR</p>
         </div>
@@ -98,16 +105,16 @@
       </div>
 
       @if (paymentMethod() === 'QR') {
-      <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-8 space-y-3 text-sm">
+      <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-8 space-y-3 text-sm animate-fade-in">
         <div class="flex justify-between border-b border-blue-100 pb-2">
           <span class="text-gray-500">Ngân hàng</span>
-          <span class="font-bold text-gray-900">Vietcombank</span>
+          <span class="font-bold text-gray-900">{{ bankCode() }}</span>
         </div>
         <div class="flex justify-between items-center border-b border-blue-100 pb-2">
           <span class="text-gray-500">Số tài khoản</span>
           <div class="flex items-center">
-            <span class="font-bold text-gray-900 mr-2">0123456789</span>
-            <button class="text-primary hover:text-primary-hover"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+            <span class="font-bold text-gray-900 mr-2">{{ bankAccount() }}</span>
+            <button (click)="copyToClipboard(bankAccount())" class="text-primary hover:text-primary-hover focus:outline-none cursor-pointer" title="Sao chép số tài khoản"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -116,13 +123,13 @@
         </div>
         <div class="flex justify-between pb-2 border-b border-blue-100">
           <span class="text-gray-500">Chủ tài khoản</span>
-          <span class="font-bold text-gray-900">AIMS DIGITAL ARCHIVE</span>
+          <span class="font-bold text-gray-900">{{ bankAccountName() }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Nội dung</span>
           <div class="flex items-center">
-            <span class="font-bold text-gray-900 mr-2">AIMS VN2481</span>
-            <button class="text-primary hover:text-primary-hover"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+            <span class="font-bold text-gray-900 mr-2">{{ paymentContent() }}</span>
+            <button (click)="copyToClipboard(paymentContent())" class="text-primary hover:text-primary-hover focus:outline-none cursor-pointer" title="Sao chép nội dung chuyển khoản"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -133,11 +140,14 @@
 
       <div class="flex gap-4">
         <button
-          class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm">
+          (click)="paymentId() ? checkPaymentStatus(paymentId()!, true) : null"
+          [disabled]="isExpired() || !paymentId()"
+          class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
           Kiểm tra
         </button>
         <button (click)="confirmPayment()"
-          class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+          [disabled]="isExpired() || !paymentId()"
+          class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
           Xác nhận
         </button>
       </div>

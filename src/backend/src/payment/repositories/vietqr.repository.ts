@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, MoreThan, Repository } from 'typeorm';
 import { VietqrTransaction } from '../entities/vietqr-transaction.entity';
 import { PaymentTransaction } from '../entities/payment-transaction.entity';
 
@@ -60,6 +60,18 @@ export class VietqrRepository {
   async findByPaymentTransactionId(paymentTransactionId: number): Promise<VietqrTransaction | null> {
     return await this.vietqrRepository.findOne({
       where: { paymentTransaction: { transactionID: paymentTransactionId } },
+      relations: ['paymentTransaction'],
+    });
+  }
+
+  async findPendingByOrderAndAmount(orderId: number, amount: number): Promise<VietqrTransaction | null> {
+    return await this.vietqrRepository.findOne({
+      where: {
+        orderId,
+        amount,
+        status: 'PENDING',
+        expiredAt: MoreThan(new Date()),
+      },
       relations: ['paymentTransaction'],
     });
   }

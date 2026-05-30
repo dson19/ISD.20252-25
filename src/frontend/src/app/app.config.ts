@@ -14,6 +14,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    { provide: API_BASE_URL, useValue: 'http://localhost:3000' }
+    { provide: API_BASE_URL, useValue: 'https://isd-20252-25.onrender.com' }
   ]
 };

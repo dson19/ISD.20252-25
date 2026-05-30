@@ -20,6 +20,9 @@ export interface VietqrPaymentResponse {
   qrLink: string | null;
   expiredAt: Date;
   status: 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
+  bankCode?: string;
+  bankAccount?: string;
+  bankAccountName?: string;
 }
 
 export interface VietqrCallbackResult {
@@ -57,6 +60,12 @@ export class VietqrPaymentService {
     });
     if (!order) {
       throw new NotFoundException(`Order with ID ${dto.orderId} not found`);
+    }
+
+    // Check if there is an existing pending, non-expired VietQR transaction for this order and amount
+    const existingPending = await this.vietqrRepository.findPendingByOrderAndAmount(dto.orderId, dto.amount);
+    if (existingPending) {
+      return this.toPaymentResponse(existingPending, existingPending.paymentTransaction.transactionID);
     }
 
     const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, dto.amount, 'VIETQR');
@@ -263,6 +272,9 @@ export class VietqrPaymentService {
       qrLink: vietqrTransaction.qrLink,
       expiredAt: vietqrTransaction.expiredAt,
       status: vietqrTransaction.status,
+      bankCode: process.env.VIETQR_BANK_CODE ?? '',
+      bankAccount: process.env.VIETQR_BANK_ACCOUNT ?? '',
+      bankAccountName: process.env.VIETQR_BANK_ACCOUNT_NAME ?? '',
     };
   }
 }

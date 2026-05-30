@@ -37,4 +37,16 @@ export class PaymentService {
   cancelOrder(orderId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/orders/${orderId}/cancel`, {});
   }
+
+  createVietqrPayment(orderId: number, amount: number, content: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/vietqr/payments`, {
+      orderId,
+      amount,
+      content
+    });
+  }
+
+  getVietqrPaymentStatus(paymentId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/vietqr/payments/${paymentId}/status`);
+  }
 }

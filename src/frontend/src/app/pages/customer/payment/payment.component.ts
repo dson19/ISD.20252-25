@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
@@ -10,7 +10,7 @@ import { PaymentService } from '../../../services/payment.service';
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './payment.component.html'
 })
-export class PaymentComponent implements OnInit {
+export class PaymentComponent implements OnInit, OnDestroy {
   totalAmount = signal<number>(0);
   paymentMethod = signal<'QR' | 'CARD'>('QR');
   qrTimeLeft = signal<string>('09:59');
@@ -20,11 +20,24 @@ export class PaymentComponent implements OnInit {
   statusMessage = signal<string>('');
   orderLoaded = signal<boolean>(false);
 
+  // VietQR Dynamic Properties
+  qrCode = signal<string | null>(null);
+  qrLink = signal<string | null>(null);
+  bankCode = signal<string>('');
+  bankAccount = signal<string>('');
+  bankAccountName = signal<string>('');
+  paymentContent = signal<string>('');
+  paymentId = signal<number | null>(null);
+  isExpired = signal<boolean>(false);
+
   // Custom Alert properties
   isAlertModalOpen = false;
   alertTitle = '';
   alertMessage = '';
   alertType: 'success' | 'error' | 'warning' | 'info' = 'info';
+
+  private timerSubscription: any;
+  private pollingSubscription: any;
 
   constructor(
     private readonly router: Router,
@@ -47,6 +60,9 @@ export class PaymentComponent implements OnInit {
           next: (order) => {
             this.totalAmount.set(Number(order.totalPayment));
             this.orderLoaded.set(true);
+            if (this.paymentMethod() === 'QR') {
+              this.loadOrCreateVietqrPayment();
+            }
           },
           error: (err) => {
             this.orderLoaded.set(true);
@@ -97,8 +113,158 @@ export class PaymentComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    this.stopStatusPolling();
+    if (this.timerSubscription) {
+      clearInterval(this.timerSubscription);
+    }
+  }
+
   selectMethod(method: 'QR' | 'CARD') {
     this.paymentMethod.set(method);
+    if (method === 'QR') {
+      this.loadOrCreateVietqrPayment();
+    } else {
+      this.stopStatusPolling();
+    }
+  }
+
+  loadOrCreateVietqrPayment() {
+    const orderId = this.orderId();
+    const amount = this.totalAmount();
+    if (!orderId || amount <= 0) {
+      return;
+    }
+
+    // If we already have a loaded valid paymentId, don't recreate it
+    if (this.paymentId() && !this.isExpired()) {
+      this.startStatusPolling(this.paymentId()!);
+      return;
+    }
+
+    this.loading.set(true);
+    this.statusMessage.set('Đang tạo mã thanh toán VietQR...');
+    
+    const content = `AIMS ${orderId}`;
+
+    this.paymentService.createVietqrPayment(orderId, amount, content).subscribe({
+      next: (res) => {
+        this.loading.set(false);
+        this.paymentId.set(res.paymentId);
+        
+        // Ensure base64 prefix if not present (sometimes APIs return raw base64 or complete data:image...)
+        let qr = res.qrCode;
+        if (qr && !qr.startsWith('data:') && !qr.startsWith('http')) {
+          qr = 'data:image/png;base64,' + qr;
+        }
+        this.qrCode.set(qr);
+        this.qrLink.set(res.qrLink);
+        this.paymentContent.set(res.paymentContent);
+        this.bankCode.set(res.bankCode || 'Vietcombank');
+        this.bankAccount.set(res.bankAccount || '0123456789');
+        this.bankAccountName.set(res.bankAccountName || 'AIMS DIGITAL ARCHIVE');
+        
+        this.startQrTimer(new Date(res.expiredAt));
+        this.startStatusPolling(res.paymentId);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.showAlert('Lỗi VietQR', err.error?.message || 'Không thể tạo mã QR thanh toán.', 'error');
+      }
+    });
+  }
+
+  startQrTimer(expiredAt: Date) {
+    if (this.timerSubscription) {
+      clearInterval(this.timerSubscription);
+    }
+
+    const targetTime = expiredAt.getTime();
+    this.isExpired.set(false);
+
+    this.timerSubscription = setInterval(() => {
+      const now = Date.now();
+      const diff = targetTime - now;
+
+      if (diff <= 0) {
+        this.qrTimeLeft.set('00:00');
+        this.isExpired.set(true);
+        clearInterval(this.timerSubscription);
+        this.stopStatusPolling();
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      
+      const minStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
+      const secStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
+
+      this.qrTimeLeft.set(`${minStr}:${secStr}`);
+    }, 1000);
+  }
+
+  startStatusPolling(paymentId: number) {
+    if (this.pollingSubscription) {
+      clearInterval(this.pollingSubscription);
+    }
+
+    // Immediate check, then check every 5 seconds
+    this.checkPaymentStatus(paymentId, false);
+    this.pollingSubscription = setInterval(() => {
+      this.checkPaymentStatus(paymentId, false);
+    }, 5000);
+  }
+
+  stopStatusPolling() {
+    if (this.pollingSubscription) {
+      clearInterval(this.pollingSubscription);
+      this.pollingSubscription = null;
+    }
+  }
+
+  checkPaymentStatus(paymentId: number, showLoading = true) {
+    if (showLoading) {
+      this.loading.set(true);
+      this.statusMessage.set('Đang kiểm tra trạng thái thanh toán...');
+    }
+
+    this.paymentService.getVietqrPaymentStatus(paymentId).subscribe({
+      next: (res) => {
+        if (showLoading) {
+          this.loading.set(false);
+        }
+
+        if (res.status === 'PAID') {
+          this.stopStatusPolling();
+          if (this.timerSubscription) {
+            clearInterval(this.timerSubscription);
+          }
+          localStorage.removeItem('aims_cart');
+          this.router.navigate(['/payment-result'], {
+            queryParams: { success: 'true', orderId: this.orderId() }
+          });
+        } else if (res.status === 'EXPIRED' || res.status === 'FAILED') {
+          this.stopStatusPolling();
+          if (this.timerSubscription) {
+            clearInterval(this.timerSubscription);
+          }
+          this.isExpired.set(true);
+          this.qrTimeLeft.set('00:00');
+          if (showLoading) {
+            this.showAlert('Thanh toán thất bại', 'Giao dịch đã hết hạn hoặc bị lỗi.', 'error');
+          }
+        } else if (showLoading) {
+          this.showAlert('Thông báo', 'Hệ thống chưa nhận được khoản thanh toán của bạn. Vui lòng thử lại sau ít giây.', 'info');
+        }
+      },
+      error: (err) => {
+        if (showLoading) {
+          this.loading.set(false);
+          this.showAlert('Lỗi kết nối', 'Không thể kiểm tra trạng thái thanh toán lúc này.', 'error');
+        }
+      }
+    });
   }
 
   confirmPayment() {
@@ -109,9 +275,12 @@ export class PaymentComponent implements OnInit {
     }
 
     if (this.paymentMethod() === 'QR') {
-      this.router.navigate(['/payment-result'], {
-        queryParams: { success: 'true', orderId: currentOrderId }
-      });
+      const pId = this.paymentId();
+      if (pId) {
+        this.checkPaymentStatus(pId, true);
+      } else {
+        this.showAlert('Lỗi', 'Không tìm thấy thông tin giao dịch VietQR.', 'error');
+      }
     } else {
       this.loading.set(true);
       this.statusMessage.set('Đang chuẩn bị giao dịch PayPal...');
@@ -135,6 +304,14 @@ export class PaymentComponent implements OnInit {
         }
       });
     }
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      this.showAlert('Đã sao chép', `Đã sao chép "${text}" vào bộ nhớ tạm.`, 'success');
+    }).catch(err => {
+      console.error('Không thể sao chép:', err);
+    });
   }
 
   // Helper Methods for Custom Alert
