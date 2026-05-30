@@ -44,6 +44,7 @@ export class ProductsComponent implements OnInit {
   isEditMode = false;
   editingProductId: number | null = null;
   errorMessage = '';
+  loadingProductId: number | null = null;
 
   // Custom alert & confirm states
   isConfirmModalOpen = false;
@@ -363,11 +364,13 @@ export class ProductsComponent implements OnInit {
     this.customStockReason = '';
     this.stockReason = '';
     this.isStockModalOpen = true;
+    this.cdr.detectChanges();
   }
 
   closeStockModal() {
     this.isStockModalOpen = false;
     this.selectedProductForStock = null;
+    this.cdr.detectChanges();
   }
 
   onStockActionTypeChange() {
@@ -478,12 +481,17 @@ export class ProductsComponent implements OnInit {
     };
     
     this.isProductModalOpen = true;
+    this.cdr.detectChanges();
   }
 
   openEditModal(product: Product) {
+    if (this.loadingProductId !== null) return;
+    
     this.isEditMode = true;
     this.editingProductId = product.productID;
     this.errorMessage = '';
+    this.loadingProductId = product.productID;
+    this.cdr.detectChanges();
 
     this.productService.getProductById(product.productID).subscribe({
       next: (fullProduct) => {
@@ -539,8 +547,12 @@ export class ProductsComponent implements OnInit {
         }
 
         this.isProductModalOpen = true;
+        this.loadingProductId = null;
+        this.cdr.detectChanges();
       },
       error: (err) => {
+        this.loadingProductId = null;
+        this.cdr.detectChanges();
         this.showAlert('Lỗi tải dữ liệu', err.error?.message || 'Không thể tải chi tiết sản phẩm', 'error');
       }
     });
@@ -549,6 +561,7 @@ export class ProductsComponent implements OnInit {
   closeProductModal() {
     this.isProductModalOpen = false;
     this.errorMessage = '';
+    this.cdr.detectChanges();
   }
 
   // CD Dynamic track listing operations
