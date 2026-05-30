@@ -152,13 +152,19 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.paymentId.set(res.paymentId);
         
-        // Ensure base64 prefix if not present (sometimes APIs return raw base64 or complete data:image...)
+        // Ensure base64 prefix or construct QR image generator URL if raw EMVCo string is returned
         let qr = res.qrCode;
-        if (qr && !qr.startsWith('data:') && !qr.startsWith('http')) {
-          qr = 'data:image/png;base64,' + qr;
+        if (qr) {
+          if (qr.startsWith('000201')) {
+            // Raw EMVCo QR code string - generate image using qrserver API
+            qr = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qr)}`;
+          } else if (!qr.startsWith('data:') && !qr.startsWith('http')) {
+            qr = 'data:image/png;base64,' + qr;
+          }
         }
         this.qrCode.set(qr);
-        this.qrLink.set(res.qrLink);
+        // Clear qrLink so that frontend does not attempt to bind the iframe/webpage checkout URL to image src
+        this.qrLink.set(null);
         this.paymentContent.set(res.paymentContent);
         this.bankCode.set(res.bankCode || 'Vietcombank');
         this.bankAccount.set(res.bankAccount || '0123456789');
