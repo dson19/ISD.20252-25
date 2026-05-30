@@ -15,6 +15,8 @@ export class CustomerLayoutComponent implements OnDestroy {
   searchKeyword = '';
 
   private readonly cartSubscription: Subscription;
+  private searchDebounceTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private lastSubmittedKeyword = '';
 
   constructor(
     private readonly cartService: CartService,
@@ -28,12 +30,32 @@ export class CustomerLayoutComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.cartSubscription.unsubscribe();
+    if (this.searchDebounceTimeoutId) {
+      clearTimeout(this.searchDebounceTimeoutId);
+    }
+  }
+
+  onSearchKeywordChange(keyword: string): void {
+    this.searchKeyword = keyword;
+    if (this.searchDebounceTimeoutId) {
+      clearTimeout(this.searchDebounceTimeoutId);
+    }
+
+    this.searchDebounceTimeoutId = setTimeout(() => {
+      this.searchProducts();
+    }, 300);
   }
 
   searchProducts(): void {
     const keyword = this.searchKeyword.trim();
+    if (keyword === this.lastSubmittedKeyword) {
+      return;
+    }
+
+    this.lastSubmittedKeyword = keyword;
     this.router.navigate(['/'], {
       queryParams: keyword ? { keyword } : {},
+      replaceUrl: true,
     });
   }
 }

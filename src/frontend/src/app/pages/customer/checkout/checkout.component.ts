@@ -17,6 +17,7 @@ export class CheckoutComponent implements OnDestroy {
   cartItems: CartItem[] = [];
   shippingFee = 35000;
   submitting = false;
+  checkingStock = false;
   errorMessage = '';
   stockIssues: StockIssue[] = [];
 
@@ -30,6 +31,7 @@ export class CheckoutComponent implements OnDestroy {
   };
 
   private readonly cartSubscription: Subscription;
+  private activeSubmitSubscription: Subscription | null = null;
 
   constructor(
     private readonly router: Router,
@@ -39,11 +41,13 @@ export class CheckoutComponent implements OnDestroy {
     this.cartItems = this.cartService.getCartItems();
     this.cartSubscription = this.cartService.items$.subscribe((items) => {
       this.cartItems = items;
+      this.stockIssues = [];
     });
   }
 
   ngOnDestroy(): void {
     this.cartSubscription.unsubscribe();
+    this.activeSubmitSubscription?.unsubscribe();
   }
 
   get subtotal(): number {
@@ -65,22 +69,27 @@ export class CheckoutComponent implements OnDestroy {
     }
 
     this.submitting = true;
+    this.checkingStock = true;
     this.errorMessage = '';
     this.stockIssues = [];
 
-    this.orderService.placeOrder(this.cartItems, this.deliveryInfo).subscribe({
-      next: () => {
-        this.cartService.clearCart();
-        this.submitting = false;
-        this.router.navigate(['/payment']);
+    this.activeSubmitSubscription?.unsubscribe();
+    this.activeSubmitSubscription = this.orderService.checkCartStock(this.cartItems).subscribe({
+      next: (stockCheck) => {
+        this.checkingStock = false;
+        if (!stockCheck.available) {
+          this.submitting = false;
+          this.stockIssues = stockCheck.issues;
+          this.errorMessage = 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.';
+          return;
+        }
+
+        this.submitOrder();
       },
-      error: (error: HttpErrorResponse) => {
+      error: () => {
+        this.checkingStock = false;
         this.submitting = false;
-        this.errorMessage =
-          error.status === 400
-            ? 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.'
-            : 'Không thể đặt hàng. Hãy kiểm tra backend API và thử lại.';
-        this.stockIssues = this.extractStockIssues(error);
+        this.errorMessage = 'Không thể kiểm tra tồn kho. Vui lòng thử lại sau.';
       },
     });
   }
@@ -91,6 +100,26 @@ export class CheckoutComponent implements OnDestroy {
 
   stockIssueTitle(issue: StockIssue): string {
     return this.cartItems.find((item) => item.id === issue.productId)?.title ?? `Sản phẩm #${issue.productId}`;
+  }
+
+  private submitOrder(): void {
+    this.activeSubmitSubscription = this.orderService.placeOrder(this.cartItems, this.deliveryInfo).subscribe({
+      next: () => {
+        this.cartService.clearCart();
+        this.submitting = false;
+        this.checkingStock = false;
+        this.router.navigate(['/payment']);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.submitting = false;
+        this.checkingStock = false;
+        this.errorMessage =
+          error.status === 400
+            ? 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.'
+            : 'Không thể đặt hàng. Hãy kiểm tra backend API và thử lại.';
+        this.stockIssues = this.extractStockIssues(error);
+      },
+    });
   }
 
   private extractStockIssues(error: HttpErrorResponse): StockIssue[] {

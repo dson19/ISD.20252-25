@@ -25,6 +25,8 @@ interface PriceFilter {
   templateUrl: './home.component.html'
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  readonly productsPageSize = 20;
+
   categories: CategoryFilter[] = [
     { label: 'Sách', value: 'BOOK' },
     { label: 'CD', value: 'CD' },
@@ -40,6 +42,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   products: Product[] = [];
+  visibleProductCount = this.productsPageSize;
+  productQuantities: Record<number, number> = {};
   selectedCategories = new Set<string>();
   selectedPriceIndex: number | null = null;
   keyword = '';
@@ -98,8 +102,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   addToCart(product: Product): void {
-    this.cartService.addToCart(product, 1);
-    this.showToast(`Đã thêm "${product.title}" vào giỏ hàng.`);
+    if (product.quantityInStock <= 0) {
+      return;
+    }
+
+    const quantity = this.quantityFor(product);
+    this.cartService.addToCart(product, quantity);
+    this.showToast(`Đã thêm ${quantity} sản phẩm "${product.title}" vào giỏ hàng.`);
   }
 
   productPrice(product: Product): number {
@@ -120,19 +129,49 @@ export class HomeComponent implements OnInit, OnDestroy {
     return labels[mediaType] ?? mediaType;
   }
 
+  quantityFor(product: Product): number {
+    const selectedQuantity = this.productQuantities[product.productID] ?? 1;
+    return this.clampProductQuantity(product, selectedQuantity);
+  }
+
+  updateProductQuantity(product: Product, quantity: number | null): void {
+    this.productQuantities[product.productID] = this.clampProductQuantity(product, Number(quantity));
+  }
+
+  increaseProductQuantity(product: Product): void {
+    this.updateProductQuantity(product, this.quantityFor(product) + 1);
+  }
+
+  decreaseProductQuantity(product: Product): void {
+    this.updateProductQuantity(product, this.quantityFor(product) - 1);
+  }
+
+  get visibleProducts(): Product[] {
+    return this.products.slice(0, this.visibleProductCount);
+  }
+
+  get visibleProductsCount(): number {
+    return Math.min(this.visibleProductCount, this.products.length);
+  }
+
+  get canShowMoreProducts(): boolean {
+    return this.visibleProductsCount < this.products.length;
+  }
+
+  showMoreProducts(): void {
+    this.visibleProductCount = Math.min(
+      this.visibleProductCount + this.productsPageSize,
+      this.products.length,
+    );
+  }
+
   private loadProducts(): void {
     this.productsSubscription?.unsubscribe();
     this.loading = true;
     this.errorMessage = '';
     const selectedCategories = Array.from(this.selectedCategories);
     const params = this.buildSearchParams(selectedCategories);
-    const hasSearchParams = Boolean(
-      params.keyword || params.minPrice !== undefined || params.maxPrice !== undefined || selectedCategories.length,
-    );
-
-    const request$ = !hasSearchParams
-      ? this.productService.getRandomProducts()
-      : this.productService.searchProducts(params);
+    const request$ = this.productService.searchProducts(params);
 
     this.productsSubscription = request$
       .pipe(
@@ -147,6 +186,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       )
       .subscribe((products) => {
         this.products = products;
+        this.reconcileProductQuantities();
+        this.visibleProductCount = this.productsPageSize;
         this.refreshView();
       });
   }
@@ -178,5 +219,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!this.destroyed) {
       this.cdr.detectChanges();
     }
+  }
+
+  private clampProductQuantity(product: Product, quantity: number): number {
+    const safeQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : 1;
+    const maxQuantity = Math.max(1, product.quantityInStock);
+    return Math.min(Math.max(1, safeQuantity), maxQuantity);
+  }
+
+  private reconcileProductQuantities(): void {
+    const nextQuantities: Record<number, number> = {};
+    for (const product of this.products) {
+      nextQuantities[product.productID] = this.quantityFor(product);
+    }
+    this.productQuantities = nextQuantities;
   }
 }

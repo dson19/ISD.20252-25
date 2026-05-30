@@ -34,9 +34,10 @@
             <div class="flex justify-between items-start mb-2 gap-4">
               <div>
                 <a [routerLink]="['/product', item.id]" class="font-bold text-gray-900 text-lg leading-tight mb-1 hover:text-primary">{{ item.title }}</a>
-                <p class="text-sm text-gray-500">Tồn kho trong cart: {{ item.quantityInStock }}</p>
+                <p class="text-sm text-gray-500">Tồn kho: {{ item.quantityInStock }}</p>
               </div>
               <div class="text-right whitespace-nowrap">
+                <p class="text-xs text-gray-500">Giá bán</p>
                 <p class="font-bold text-gray-900">{{ item.price | number:'1.0-0' }} đ</p>
                 <p class="text-xs text-gray-500">Tổng: {{ itemTotal(item) | number:'1.0-0' }} đ</p>
               </div>
@@ -50,15 +51,29 @@
 
             <div class="flex items-center justify-between mt-auto">
               <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                <button (click)="decreaseQuantity(item)" class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">-</button>
+                <button
+                  type="button"
+                  (click)="decreaseQuantity(item)"
+                  [disabled]="item.quantity <= 1"
+                  class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors disabled:text-gray-300 disabled:cursor-not-allowed"
+                >
+                  -
+                </button>
                 <input
                   type="number"
                   min="1"
                   [value]="item.quantity"
                   (change)="updateQuantity(item, $any($event.target).valueAsNumber)"
-                  class="w-16 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900"
+                  class="no-number-spinner w-16 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0 text-gray-900"
                 >
-                <button (click)="increaseQuantity(item)" class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">+</button>
+                <button
+                  type="button"
+                  (click)="increaseQuantity(item)"
+                  [disabled]="item.quantity >= item.quantityInStock"
+                  class="px-3 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors disabled:text-gray-300 disabled:cursor-not-allowed"
+                >
+                  +
+                </button>
               </div>
 
               <button (click)="removeItem(item)" class="text-gray-400 hover:text-danger text-sm flex items-center group transition-colors">
@@ -80,7 +95,7 @@
 
       <div class="space-y-4 mb-6 text-sm">
         <div class="flex justify-between text-gray-600">
-          <span>priceExcludedVAT</span>
+          <span>Tạm tính</span>
           <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} đ</span>
         </div>
         <div class="flex justify-between text-gray-600">

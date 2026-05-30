@@ -15,6 +15,8 @@ import { Product, ProductService } from '../../../services/product.service';
 export class ProductDetailComponent implements OnInit, OnDestroy {
   product: Product | null = null;
   selectedQuantity = 1;
+  showFullDescription = false;
+  showAllTracks = false;
   loading = true;
   errorMessage = '';
   toastMessage = '';
@@ -43,6 +45,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.productService.getProductById(productId).subscribe({
         next: (product) => {
           this.product = product;
+          this.selectedQuantity = this.clampQuantity(this.selectedQuantity);
           this.loading = false;
           this.refreshView();
         },
@@ -64,13 +67,45 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   addToCart(): void {
-    if (!this.product || this.quantityInvalid) {
+    if (!this.product || this.isOutOfStock || this.quantityInvalid) {
       return;
     }
 
-    const quantity = Math.max(1, Math.floor(this.selectedQuantity));
+    const quantity = this.clampQuantity(this.selectedQuantity);
     this.cartService.addToCart(this.product, quantity);
     this.showToast(`Đã thêm ${quantity} sản phẩm vào giỏ hàng.`);
+  }
+
+  increaseQuantity(): void {
+    if (!this.product) {
+      return;
+    }
+
+    this.selectedQuantity = this.clampQuantity(this.selectedQuantity + 1);
+  }
+
+  decreaseQuantity(): void {
+    this.selectedQuantity = this.clampQuantity(this.selectedQuantity - 1);
+  }
+
+  setSelectedQuantity(quantity: number | null): void {
+    this.selectedQuantity = this.clampQuantity(Number(quantity));
+  }
+
+  get maxSelectableQuantity(): number {
+    return Math.max(0, Math.floor(Number(this.product?.quantityInStock ?? 0)));
+  }
+
+  get isOutOfStock(): boolean {
+    return this.maxSelectableQuantity <= 0;
+  }
+
+  get canDecreaseQuantity(): boolean {
+    return !this.isOutOfStock && this.selectedQuantity > 1;
+  }
+
+  get canIncreaseQuantity(): boolean {
+    return !this.isOutOfStock && this.selectedQuantity < this.maxSelectableQuantity;
   }
 
   get quantityInvalid(): boolean {
@@ -79,16 +114,21 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
 
     return (
+      this.isOutOfStock ||
       !Number.isFinite(this.selectedQuantity) ||
       this.selectedQuantity < 1 ||
       Math.floor(this.selectedQuantity) !== this.selectedQuantity ||
-      this.selectedQuantity > this.product.quantityInStock
+      this.selectedQuantity > this.maxSelectableQuantity
     );
   }
 
   get quantityErrorMessage(): string {
     if (!this.product) {
       return '';
+    }
+
+    if (this.isOutOfStock) {
+      return 'Sản phẩm đã hết hàng.';
     }
 
     if (!Number.isFinite(this.selectedQuantity) || this.selectedQuantity < 1) {
@@ -99,11 +139,52 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       return 'Số lượng phải là số nguyên.';
     }
 
-    if (this.selectedQuantity > this.product.quantityInStock) {
-      return `Số lượng yêu cầu vượt quá tồn kho. Hiện chỉ còn ${this.product.quantityInStock} sản phẩm.`;
+    if (this.selectedQuantity > this.maxSelectableQuantity) {
+      return `Số lượng yêu cầu vượt quá tồn kho. Hiện chỉ còn ${this.maxSelectableQuantity} sản phẩm.`;
     }
 
     return '';
+  }
+
+  get quantityLimitMessage(): string {
+    if (!this.product || this.quantityErrorMessage) {
+      return '';
+    }
+
+    if (this.maxSelectableQuantity === 1) {
+      return 'Chỉ còn 1 sản phẩm trong kho.';
+    }
+
+    if (!this.canIncreaseQuantity) {
+      return `Đã chọn tối đa ${this.maxSelectableQuantity} sản phẩm có thể mua.`;
+    }
+
+    return '';
+  }
+
+  get descriptionText(): string {
+    return this.product?.description?.trim() || 'Chưa có mô tả.';
+  }
+
+  get shouldCollapseDescription(): boolean {
+    return this.descriptionText.length > 260;
+  }
+
+  get displayedDescription(): string {
+    if (!this.shouldCollapseDescription || this.showFullDescription) {
+      return this.descriptionText;
+    }
+
+    return `${this.descriptionText.slice(0, 260).trim()}...`;
+  }
+
+  get visibleCdTracks() {
+    const tracks = this.product?.cd?.tracks ?? [];
+    return this.showAllTracks ? tracks : tracks.slice(0, 8);
+  }
+
+  get shouldCollapseTracks(): boolean {
+    return (this.product?.cd?.tracks?.length ?? 0) > 8;
   }
 
   productPrice(): number {
@@ -162,5 +243,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     if (!this.destroyed) {
       this.cdr.detectChanges();
     }
+  }
+
+  private clampQuantity(quantity: number): number {
+    const safeQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : 1;
+    const maxQuantity = Math.max(1, this.maxSelectableQuantity);
+    return Math.min(Math.max(1, safeQuantity), maxQuantity);
   }
 }

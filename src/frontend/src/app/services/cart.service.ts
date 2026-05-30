@@ -59,7 +59,9 @@ export class CartService {
     const normalizedQuantity = this.normalizeQuantity(quantity);
     this.setItems(
       this.getCartItems().map((item) =>
-        item.id === productId ? { ...item, quantity: normalizedQuantity } : item,
+        item.id === productId
+          ? { ...item, quantity: Math.min(normalizedQuantity, Math.max(1, item.quantityInStock)) }
+          : item,
       ),
     );
   }
