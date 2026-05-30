@@ -22,7 +22,7 @@ import {
 } from './validators/product-validator.factory';
 
 type ProductDetailKey = 'book' | 'cd' | 'dvd' | 'newspaper';
-type DeleteResultStatus = 'DEACTIVATED' | 'DELETED' | 'NOT_FOUND';
+type DeleteResultStatus = 'DEACTIVATED' | 'DELETED' | 'NOT_FOUND' | 'DEACTIVATED_ORDERED';
 
 const COMMON_PRODUCT_FIELDS: (keyof CreateProductDto)[] = [
   'mediaType',
@@ -63,6 +63,7 @@ export class ProductService {
     mediaTypes?: string[];
     minPrice?: number;
     maxPrice?: number;
+    status?: string;
   }): Promise<Product[]> {
     return this.productRepository.searchProducts(
       params.keyword,
@@ -70,6 +71,7 @@ export class ProductService {
       params.minPrice,
       params.maxPrice,
       params.mediaTypes,
+      params.status,
     );
   }
 
@@ -202,18 +204,42 @@ export class ProductService {
           });
           output.push({ id, status: 'DEACTIVATED' });
         } else {
-          await this.writeAuditLog(manager, {
-            product,
-            actionType: 'DELETE',
-            changedFields: {
-              productID: id,
-              title: product.title,
-              mediaType: product.mediaType,
-            },
-            performedBy: managerId,
-          });
-          await productRepo.delete(id);
-          output.push({ id, status: 'DELETED' });
+          // Kiểm tra xem sản phẩm đã từng được đặt mua (nằm trong order_items) chưa trước khi xóa
+          const countRes = await manager.query(
+            'SELECT COUNT(*) as count FROM order_items WHERE product_id = $1',
+            [id],
+          );
+          const hasOrder = Number(countRes[0]?.count) > 0;
+
+          if (hasOrder) {
+            // Nếu đã có đơn hàng, không xóa cứng mà tự động chuyển sang NGỪNG HOẠT ĐỘNG để bảo toàn dữ liệu lịch sử đặt hàng
+            await productRepo.update(id, { status: 'DEACTIVATED' });
+            await this.writeAuditLog(manager, {
+              product,
+              actionType: 'DEACTIVATE',
+              changedFields: {
+                productID: id,
+                quantityInStock: product.quantityInStock,
+                status: 'DEACTIVATED_ORDERED',
+              },
+              performedBy: managerId,
+            });
+            output.push({ id, status: 'DEACTIVATED_ORDERED' });
+          } else {
+            // Nếu chưa có đơn hàng nào, tiến hành xóa cứng an toàn khỏi hệ thống
+            await this.writeAuditLog(manager, {
+              product,
+              actionType: 'DELETE',
+              changedFields: {
+                productID: id,
+                title: product.title,
+                mediaType: product.mediaType,
+              },
+              performedBy: managerId,
+            });
+            await productRepo.delete(id);
+            output.push({ id, status: 'DELETED' });
+          }
         }
       }
 

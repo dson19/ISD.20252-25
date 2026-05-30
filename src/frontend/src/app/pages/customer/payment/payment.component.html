@@ -159,5 +159,51 @@
       </div>
     </div>
   </div>
+
+  <!-- Custom Alert / Message Modal -->
+  <div *ngIf="isAlertModalOpen" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      <div class="p-6 text-center">
+        <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+             [ngClass]="{
+               'bg-green-50 text-success': alertType === 'success',
+               'bg-red-50 text-danger': alertType === 'error',
+               'bg-amber-50 text-amber-500': alertType === 'warning',
+               'bg-blue-50 text-primary': alertType === 'info'
+             }">
+          <svg *ngIf="alertType === 'success'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <svg *ngIf="alertType === 'error'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <svg *ngIf="alertType === 'warning'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <svg *ngIf="alertType === 'info'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        
+        <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ alertTitle }}</h3>
+        <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-6">{{ alertMessage }}</p>
+        
+        <div class="flex items-center justify-center">
+          <button
+            (click)="closeAlert()"
+            [ngClass]="{
+              'bg-success hover:bg-green-600': alertType === 'success',
+              'bg-danger hover:bg-red-700': alertType === 'error',
+              'bg-amber-500 hover:bg-amber-600': alertType === 'warning',
+              'bg-primary hover:bg-primary-hover': alertType === 'info'
+            }"
+            class="w-full py-3 text-white font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+          >
+            Đồng ý
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-}
+}

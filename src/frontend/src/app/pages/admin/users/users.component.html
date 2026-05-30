@@ -1,40 +1,97 @@
-<div class="p-8 max-w-7xl mx-auto">
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-    <div>
-      <p class="text-xs font-bold text-primary uppercase tracking-wider mb-1">BẢO MẬT & QUẢN TRỊ</p>
+<div class="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+    <div class="space-y-1">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
+          Bảo mật & Quản trị
+        </span>
+      </div>
       <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý người dùng</h1>
-      <p class="text-sm text-gray-500 mt-1">Cấp quyền vai trò hệ thống, khóa/mở khóa tài khoản và thiết lập lại mật khẩu an toàn.</p>
+      <p class="text-sm text-gray-500">Cấp quyền vai trò hệ thống, khóa/mở khóa tài khoản và thiết lập lại mật khẩu an toàn.</p>
     </div>
   </div>
 
-  <!-- Main Workspace -->
-  <div class="grid grid-cols-1 gap-8">
-    <!-- Toolbar -->
-    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-      <!-- Search Input -->
-      <div class="flex-1 w-full relative">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  <!-- Dashboard Metrics Panel -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Card 1: Tổng tài khoản -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-75">
+      <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TỔNG TÀI KHOẢN</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ totalUsersCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 2: Hoạt động -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100">
+      <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">HOẠT ĐỘNG</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ activeUsersCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 3: Đã bị khóa -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-150">
+      <div class="p-3.5 bg-rose-50 text-rose-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐÃ BỊ KHÓA</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ lockedUsersCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 4: Quản trị viên -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-200">
+      <div class="p-3.5 bg-amber-50 text-amber-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">QUẢN TRỊ VIÊN</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ adminUsersCount }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid Workspace -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- Toolbar Search & Filter panel -->
+    <div class="p-6 border-b border-gray-100 bg-gray-50/40 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="flex-1 max-w-lg relative w-full">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <svg class="h-4.5 w-4.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
         <input
           type="text"
           [(ngModel)]="searchQuery"
           (ngModelChange)="applyFilter()"
-          class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-primary focus:border-primary transition-all bg-gray-50/50 focus:bg-white placeholder-gray-400"
+          class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all"
           placeholder="Tìm kiếm theo họ tên, email hoặc mã..."
         />
       </div>
 
-      <!-- Filters -->
-      <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
         <!-- Role filter -->
         <select
           [(ngModel)]="roleFilter"
           (ngModelChange)="applyFilter()"
-          class="px-4 py-3 bg-gray-50/50 hover:bg-white border border-gray-200 rounded-2xl text-sm focus:ring-primary focus:border-primary transition-all font-medium text-gray-700 cursor-pointer"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
           <option value="">Tất cả vai trò</option>
           <option value="ADMIN">ADMIN</option>
@@ -46,80 +103,98 @@
         <select
           [(ngModel)]="statusFilter"
           (ngModelChange)="applyFilter()"
-          class="px-4 py-3 bg-gray-50/50 hover:bg-white border border-gray-200 rounded-2xl text-sm focus:ring-primary focus:border-primary transition-all font-medium text-gray-700 cursor-pointer"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="ACTIVE">Hoạt động</option>
           <option value="DEACTIVATED">Đã khóa</option>
         </select>
 
+        <!-- Clear filters button -->
         <button
           *ngIf="searchQuery || roleFilter || statusFilter"
           (click)="clearFilters()"
-          class="text-xs text-primary hover:text-primary-hover font-semibold px-2 py-1 underline transition-all"
+          class="px-4 py-2.5 text-xs text-primary hover:text-primary-hover font-extrabold border border-primary/20 hover:border-primary/40 bg-primary/5 rounded-2xl transition-all cursor-pointer"
         >
-          Xóa lọc
+          Xóa bộ lọc
+        </button>
+
+        <!-- Reload button -->
+        <button
+          (click)="fetchUsers()"
+          class="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-2xl transition-all shadow-sm focus:outline-none flex items-center justify-center cursor-pointer"
+          title="Tải lại người dùng"
+        >
+          <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
         </button>
       </div>
     </div>
 
     <!-- Users Table Container -->
-    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-      <!-- Loading State -->
-      <div *ngIf="isLoading" class="p-16 flex flex-col items-center justify-center space-y-4">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p class="text-sm font-semibold text-gray-500">Đang tải danh sách người dùng...</p>
-      </div>
-
-      <!-- Empty State -->
-      <div *ngIf="!isLoading && filteredUsers.length === 0" class="p-16 text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-bold text-gray-900">Không tìm thấy người dùng</h3>
-        <p class="mt-1 text-xs text-gray-500">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.</p>
-      </div>
-
-      <!-- Table -->
-      <div *ngIf="!isLoading && filteredUsers.length > 0" class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-50/70 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-              <th class="p-5 pl-8">Mã</th>
-              <th class="p-5">Họ Và Tên</th>
-              <th class="p-5">Email</th>
-              <th class="p-5">Vai Trò</th>
-              <th class="p-5 text-center">Trạng Thái</th>
-              <th class="p-5 text-right pr-8">Thao Tác</th>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+            <th class="p-5 pl-8 w-24">MÃ</th>
+            <th class="p-5">HỌ VÀ TÊN</th>
+            <th class="p-5 w-64">EMAIL</th>
+            <th class="p-5 w-44">VAI TRÒ</th>
+            <th class="p-5 text-center w-32">TRẠNG THÁI</th>
+            <th class="p-5 text-center w-44">THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @if (isLoading) {
+            <tr>
+              <td colspan="6" class="p-16 text-center text-gray-400 font-semibold">
+                <div class="flex flex-col items-center justify-center space-y-3">
+                  <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span class="text-sm">Đang tải danh sách người dùng...</span>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
+          } @else if (filteredUsers.length === 0) {
+            <tr>
+              <td colspan="6" class="p-16 text-center text-gray-400 font-semibold">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span class="text-sm">Không tìm thấy người dùng nào khớp với bộ lọc hiện tại.</span>
+                </div>
+              </td>
+            </tr>
+          } @else {
             @for (user of filteredUsers; track user.userID) {
-              <!-- Row representation -->
               <tr 
                 (click)="toggleAuditLogs(user.userID)"
-                class="hover:bg-gray-50/50 transition-colors cursor-pointer group"
+                class="hover:bg-gray-50/40 transition-colors cursor-pointer group"
               >
                 <!-- ID -->
-                <td class="p-5 pl-8">
-                  <span class="text-xs font-mono font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">USR-{{ user.userID }}</span>
+                <td class="p-5 pl-8 whitespace-nowrap">
+                  <span class="text-xs font-mono font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-xl border border-gray-200/50 shadow-inner">USR-{{ user.userID }}</span>
                 </td>
                 
                 <!-- Name -->
                 <td class="p-5">
                   <div class="flex items-center">
-                    <div class="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm mr-3 shadow-inner">
+                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 text-primary flex items-center justify-center font-extrabold text-sm mr-3 shadow-inner border border-primary/10">
                       {{ (user.fullName || 'User').substring(0,2).toUpperCase() }}
                     </div>
-                    <div>
-                      <span class="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors block">{{ user.fullName || 'Chưa đặt tên' }}</span>
-                      <span class="text-[10px] font-mono text-gray-400 block">{{ user.phoneNumber || 'Không có số điện thoại' }}</span>
+                    <div class="min-w-0">
+                      <span class="text-sm font-extrabold text-gray-900 group-hover:text-primary transition-colors block leading-snug">{{ user.fullName || 'Chưa đặt tên' }}</span>
+                      <span class="text-[11px] font-mono text-gray-400 font-semibold block mt-0.5">{{ user.phoneNumber || 'Không có số điện thoại' }}</span>
                     </div>
                   </div>
                 </td>
                 
                 <!-- Email -->
-                <td class="p-5 text-sm font-medium text-gray-600">
+                <td class="p-5 text-sm font-bold text-gray-600 truncate">
                   {{ user.email }}
                 </td>
                 
@@ -129,11 +204,11 @@
                     @for (role of user.roles; track role.roleID) {
                       <span 
                         [ngClass]="{
-                          'bg-blue-50 text-blue-600 border-blue-100': role.name === 'ADMIN',
-                          'bg-indigo-50 text-indigo-600 border-indigo-100': role.name === 'PRODUCT_MANAGER',
-                          'bg-gray-50 text-gray-600 border-gray-100': role.name === 'STAFF'
+                          'bg-blue-50 text-blue-700 border-blue-150/60': role.name === 'ADMIN',
+                          'bg-indigo-50 text-indigo-700 border-indigo-150/60': role.name === 'PRODUCT_MANAGER',
+                          'bg-slate-50 text-slate-700 border-slate-200/60': role.name === 'STAFF'
                         }"
-                        class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border shadow-sm"
                       >
                         {{ role.name }}
                       </span>
@@ -144,44 +219,47 @@
                 <!-- Status -->
                 <td class="p-5 text-center">
                   @if (user.status === 'ACTIVE') {
-                    <span class="inline-flex items-center text-xs font-semibold text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-success mr-2"></span>
+                    <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
+                      <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse"></span>
                       Hoạt động
                     </span>
                   } @else {
-                    <span class="inline-flex items-center text-xs font-semibold text-danger bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-danger mr-2"></span>
+                    <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-danger bg-red-50 px-2.5 py-1 rounded-full border border-red-100 shadow-sm">
+                      <span class="w-1.5 h-1.5 rounded-full bg-danger mr-1.5"></span>
                       Đã khóa
                     </span>
                   }
                 </td>
 
                 <!-- Actions -->
-                <td class="p-5 text-right pr-8" (click)="$event.stopPropagation()">
-                  <div class="flex items-center justify-end space-x-2">
+                <td class="p-5 text-center" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-center space-x-2">
                     <!-- Toggle Status -->
                     <button
                       (click)="toggleUserStatus(user)"
                       [title]="user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
-                      [ngClass]="user.status === 'ACTIVE' ? 'text-gray-400 hover:text-danger hover:bg-red-50' : 'text-success hover:bg-green-50'"
-                      class="p-2 rounded-xl border border-gray-100 shadow-sm hover:shadow transition-all bg-white"
+                      [ngClass]="user.status === 'ACTIVE' ? 'text-gray-400 hover:text-danger hover:bg-red-50 hover:border-red-100' : 'text-success hover:bg-green-50 hover:border-green-100'"
+                      class="w-8 h-8 rounded-xl border border-gray-200 flex items-center justify-center transition-all bg-white shadow-sm focus:outline-none cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200"
                     >
-                      <svg *ngIf="user.status === 'ACTIVE'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <svg *ngIf="user.status !== 'ACTIVE'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                      </svg>
+                      @if (user.status === 'ACTIVE') {
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      } @else {
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        </svg>
+                      }
                     </button>
 
                     <!-- Edit Roles -->
                     <button
                       (click)="openRolesModal(user, $event)"
                       title="Cấp phát vai trò"
-                      class="p-2 text-primary hover:text-primary-hover hover:bg-blue-50 rounded-xl border border-gray-100 shadow-sm hover:shadow transition-all bg-white"
+                      class="w-8 h-8 rounded-xl border border-gray-200 text-primary hover:text-primary-hover hover:bg-blue-50 hover:border-blue-100 flex items-center justify-center transition-all bg-white shadow-sm focus:outline-none cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
                     </button>
 
@@ -189,10 +267,10 @@
                     <button
                       (click)="resetPassword(user, $event)"
                       title="Reset mật khẩu"
-                      class="p-2 text-warning hover:text-amber-600 hover:bg-amber-50 rounded-xl border border-gray-100 shadow-sm hover:shadow transition-all bg-white"
+                      class="w-8 h-8 rounded-xl border border-gray-200 text-warning hover:text-amber-600 hover:bg-amber-50 hover:border-amber-100 flex items-center justify-center transition-all bg-white shadow-sm focus:outline-none cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                       </svg>
                     </button>
 
@@ -200,11 +278,11 @@
                     <button
                       (click)="toggleAuditLogs(user.userID)"
                       [title]="expandedUserIds.has(user.userID) ? 'Ẩn lịch sử audit log' : 'Xem lịch sử audit log'"
-                      [ngClass]="{'text-primary bg-blue-50': expandedUserIds.has(user.userID)}"
-                      class="p-2 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-xl border border-gray-100 shadow-sm hover:shadow transition-all bg-white"
+                      [ngClass]="expandedUserIds.has(user.userID) ? 'text-primary bg-blue-50 border-blue-100' : 'text-gray-400 hover:text-primary hover:bg-blue-50 hover:border-blue-100'"
+                      class="w-8 h-8 rounded-xl border border-gray-200 flex items-center justify-center transition-all bg-white shadow-sm focus:outline-none cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
                     </button>
                   </div>
@@ -212,46 +290,46 @@
               </tr>
 
               <!-- Collapsible Audit Logs Sub-Panel -->
-              <tr *ngIf="expandedUserIds.has(user.userID)" class="bg-gray-50/50">
+              <tr *ngIf="expandedUserIds.has(user.userID)" class="bg-gray-50/30">
                 <td colspan="6" class="p-6 pl-12 pr-12 border-t border-b border-gray-100">
-                  <div class="bg-white rounded-2xl border border-gray-100 shadow-inner p-5">
-                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                  <div class="bg-white rounded-3xl border border-gray-100 shadow-inner p-6 animate-in fade-in duration-200">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-150 pb-3">
                       <div class="flex items-center space-x-2">
-                        <svg class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        <svg class="w-4.5 h-4.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
-                        <h4 class="text-xs font-extrabold text-gray-800 uppercase tracking-wider">Lịch sử thao tác bảo mật (Audit Logs)</h4>
+                        <h4 class="text-xs font-black text-gray-800 uppercase tracking-wider">Lịch sử thao tác bảo mật (Audit Logs)</h4>
                       </div>
-                      <span class="text-[10px] font-semibold text-gray-400">Tối đa 10 nhật ký gần đây</span>
+                      <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full uppercase tracking-wider">Tối đa 10 nhật ký</span>
                     </div>
 
                     <!-- No Audit Logs -->
-                    <div *ngIf="!user.auditLogs || user.auditLogs.length === 0" class="text-center py-4">
-                      <p class="text-xs text-gray-400 italic">Không tìm thấy bản ghi nhật ký nào cho người dùng này.</p>
+                    <div *ngIf="!user.auditLogs || user.auditLogs.length === 0" class="text-center py-6">
+                      <p class="text-xs text-gray-400 italic">Không tìm thấy bản ghi nhật ký thao tác nào cho tài khoản này.</p>
                     </div>
 
                     <!-- Audit logs list -->
                     <div *ngIf="user.auditLogs && user.auditLogs.length > 0" class="space-y-3 max-h-60 overflow-y-auto pr-1">
                       @for (log of user.auditLogs; track log.logID) {
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 hover:bg-gray-100/70 rounded-xl transition-colors border border-gray-100 gap-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 hover:bg-gray-100/50 rounded-2xl transition-all border border-gray-150 gap-2">
                           <div class="flex items-start space-x-3">
                             <span 
                               [ngClass]="{
-                                'bg-red-50 text-red-600': log.action === 'TOGGLE_STATUS' && log.description.includes('khóa'),
-                                'bg-green-50 text-green-600': log.action === 'TOGGLE_STATUS' && !log.description.includes('khóa'),
-                                'bg-blue-50 text-blue-600': log.action === 'UPDATE_ROLES',
-                                'bg-amber-50 text-amber-600': log.action === 'RESET_PASSWORD' || log.action === 'RESET_PWD'
+                                'bg-red-50 text-red-700 border-red-150/60': log.action === 'TOGGLE_STATUS' && log.description.includes('khóa'),
+                                'bg-green-50 text-green-700 border-green-150/60': log.action === 'TOGGLE_STATUS' && !log.description.includes('khóa'),
+                                'bg-blue-50 text-blue-700 border-blue-150/60': log.action === 'UPDATE_ROLES',
+                                'bg-amber-50 text-amber-700 border-amber-150/60': log.action === 'RESET_PASSWORD' || log.action === 'RESET_PWD'
                               }"
-                              class="px-2 py-0.5 rounded text-[9px] font-bold mt-0.5 uppercase shrink-0"
+                              class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shrink-0 mt-0.5 shadow-sm"
                             >
                               {{ log.action }}
                             </span>
                             <div>
-                              <p class="text-xs text-gray-700 font-semibold leading-normal">{{ log.description }}</p>
-                              <p class="text-[10px] text-gray-400 mt-0.5">Thực hiện bởi: <span class="font-bold text-gray-500">{{ log.performedBy }}</span></p>
+                              <p class="text-xs text-gray-700 font-extrabold leading-normal">{{ log.description }}</p>
+                              <p class="text-[10px] text-gray-400 mt-0.5 font-semibold">Thực hiện bởi: <span class="font-black text-gray-500 font-mono">{{ log.performedBy }}</span></p>
                             </div>
                           </div>
-                          <span class="text-[10px] text-gray-400 font-medium shrink-0 whitespace-nowrap">
+                          <span class="text-[10px] text-gray-400 font-mono font-bold shrink-0 whitespace-nowrap bg-white px-2.5 py-1 rounded-xl border border-gray-150 shadow-inner">
                             {{ log.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}
                           </span>
                         </div>
@@ -261,15 +339,15 @@
                 </td>
               </tr>
             }
-          </tbody>
-        </table>
-      </div>
+          }
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Pagination/Footer -->
-      <div *ngIf="!isLoading && filteredUsers.length > 0" class="p-5 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-xs text-gray-500 font-medium">Hiển thị <span class="font-bold text-gray-900">{{ filteredUsers.length }}</span> tài khoản được lọc</p>
-        <span class="text-[10px] font-semibold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200">Tổng tài khoản hệ thống: {{ users.length }}</span>
-      </div>
+    <!-- Pagination/Footer -->
+    <div *ngIf="!isLoading && filteredUsers.length > 0" class="p-6 border-t border-gray-100 bg-gray-50/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-xs text-gray-500 font-bold">Hiển thị <span class="font-extrabold text-gray-900">{{ filteredUsers.length }}</span> tài khoản được lọc</p>
+      <span class="text-[10px] font-extrabold text-gray-400 bg-white px-3 py-2 rounded-2xl border border-gray-200 shadow-sm uppercase tracking-wider">Tổng tài khoản hệ thống: {{ users.length }}</span>
     </div>
   </div>
 
@@ -359,6 +437,99 @@
       >
         Tôi đã sao chép mật khẩu
       </button>
+    </div>
+  </div>
+
+  <!-- Custom Confirmation Modal -->
+  <div *ngIf="isConfirmModalOpen" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      <div class="p-6 text-center">
+        <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+             [ngClass]="{
+               'bg-red-50 text-danger': confirmType === 'danger',
+               'bg-amber-50 text-amber-500': confirmType === 'warning',
+               'bg-blue-50 text-primary': confirmType === 'info'
+             }">
+          <svg *ngIf="confirmType === 'danger'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <svg *ngIf="confirmType === 'warning'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <svg *ngIf="confirmType === 'info'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        
+        <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ confirmTitle }}</h3>
+        <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-6">{{ confirmMessage }}</p>
+        
+        <div class="flex items-center justify-center space-x-3">
+          <button
+            (click)="closeConfirm()"
+            class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-2xl hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+          >
+            Hủy bỏ
+          </button>
+          <button
+            (click)="triggerConfirmAction()"
+            [ngClass]="{
+               'bg-red-600 hover:bg-red-700 text-white': confirmType === 'danger',
+               'bg-amber-500 hover:bg-amber-600 text-white': confirmType === 'warning',
+               'bg-primary hover:bg-primary-hover text-white': confirmType === 'info'
+            }"
+            class="flex-1 px-4 py-3 font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert / Message Modal -->
+  <div *ngIf="isAlertModalOpen" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      <div class="p-6 text-center">
+        <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+             [ngClass]="{
+               'bg-green-50 text-success': alertType === 'success',
+               'bg-red-50 text-danger': alertType === 'error',
+               'bg-amber-50 text-amber-500': alertType === 'warning',
+               'bg-blue-50 text-primary': alertType === 'info'
+             }">
+          <svg *ngIf="alertType === 'success'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <svg *ngIf="alertType === 'error'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <svg *ngIf="alertType === 'warning'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <svg *ngIf="alertType === 'info'" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        
+        <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ alertTitle }}</h3>
+        <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-6">{{ alertMessage }}</p>
+        
+        <div class="flex items-center justify-center">
+          <button
+            (click)="closeAlert()"
+            [ngClass]="{
+               'bg-success hover:bg-green-600': alertType === 'success',
+               'bg-danger hover:bg-red-700': alertType === 'error',
+               'bg-amber-500 hover:bg-amber-600': alertType === 'warning',
+               'bg-primary hover:bg-primary-hover': alertType === 'info'
+            }"
+            class="w-full py-3 text-white font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+          >
+            Đồng ý
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

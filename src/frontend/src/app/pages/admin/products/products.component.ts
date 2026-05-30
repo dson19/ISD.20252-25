@@ -41,6 +41,56 @@ export class ProductsComponent implements OnInit {
   editingProductId: number | null = null;
   errorMessage = '';
 
+  // Custom alert & confirm states
+  isConfirmModalOpen = false;
+  confirmTitle = '';
+  confirmMessage = '';
+  confirmType: 'danger' | 'info' | 'warning' = 'warning';
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = false;
+  alertTitle = '';
+  alertMessage = '';
+  alertType: 'success' | 'error' | 'info' | 'warning' = 'info';
+  alertDetails: string[] = [];
+
+  showConfirm(title: string, message: string, type: 'danger' | 'info' | 'warning', action: () => void) {
+    this.confirmTitle = title;
+    this.confirmMessage = message;
+    this.confirmType = type;
+    this.confirmAction = action;
+    this.isConfirmModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeConfirm() {
+    this.isConfirmModalOpen = false;
+    this.confirmAction = null;
+    this.cdr.detectChanges();
+  }
+
+  triggerConfirmAction() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirm();
+  }
+
+  showAlert(title: string, message: string, type: 'success' | 'error' | 'info' | 'warning', details: string[] = []) {
+    this.alertTitle = title;
+    this.alertMessage = message;
+    this.alertType = type;
+    this.alertDetails = details;
+    this.isAlertModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeAlert() {
+    this.isAlertModalOpen = false;
+    this.alertDetails = [];
+    this.cdr.detectChanges();
+  }
+
   // Master DTO structure matching CreateProductDto
   productForm: any = {
     mediaType: 'BOOK',
@@ -94,6 +144,41 @@ export class ProductsComponent implements OnInit {
     private readonly cdr: ChangeDetectorRef
   ) {}
 
+  formatPriceInput(value: string | number): string {
+    if (value === undefined || value === null || value === '') return '';
+    const clean = String(value).replace(/\D/g, '');
+    if (!clean) return '';
+    return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  onOriginalPriceChange(val: string) {
+    const formatted = this.formatPriceInput(val);
+    this.productForm.originalPrice = formatted;
+  }
+
+  onCurrentPriceChange(val: string) {
+    const formatted = this.formatPriceInput(val);
+    this.productForm.currentPrice = formatted;
+  }
+
+  parsePrice(val: any): number {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const clean = val.replace(/\./g, '');
+      return Number(clean) || 0;
+    }
+    return 0;
+  }
+
+  onMediaTypeChange(type: string) {
+    if (this.isEditMode) return;
+    if (type === 'BOOK') this.productForm.category = 'Sách';
+    else if (type === 'CD') this.productForm.category = 'CD';
+    else if (type === 'DVD') this.productForm.category = 'DVD';
+    else if (type === 'NEWSPAPER') this.productForm.category = 'Báo chí';
+  }
+
   ngOnInit() {
     this.fetchProducts();
   }
@@ -105,7 +190,8 @@ export class ProductsComponent implements OnInit {
     const params: ProductSearchParams = {
       keyword: this.keyword,
       category: this.category,
-      mediaTypes: this.mediaTypesFilter ? [this.mediaTypesFilter] : undefined
+      mediaTypes: this.mediaTypesFilter ? [this.mediaTypesFilter] : undefined,
+      status: 'ALL'
     };
     
     console.log('[ProductsComponent] fetchProducts() gui params:', params);
@@ -156,6 +242,23 @@ export class ProductsComponent implements OnInit {
 
   getSelectedCount(): number {
     return Object.keys(this.selectedProducts).filter((id) => this.selectedProducts[+id]).length;
+  }
+
+  // Dashboard Metrics Getters
+  get totalProductsCount(): number {
+    return this.products.length;
+  }
+
+  get activeProductsCount(): number {
+    return this.products.filter((p) => p.status === 'ACTIVE').length;
+  }
+
+  get outOfStockCount(): number {
+    return this.products.filter((p) => p.quantityInStock === 0).length;
+  }
+
+  get deactivatedCount(): number {
+    return this.products.filter((p) => p.status === 'DEACTIVATED').length;
   }
 
   // Pagination Getters & Methods
@@ -255,18 +358,22 @@ export class ProductsComponent implements OnInit {
     if (!this.selectedProductForStock) return;
     
     if (this.stockDelta === 0) {
-      alert('Vui lòng nhập số lượng điều chỉnh khác 0');
+      this.showAlert('Thông báo', 'Vui lòng nhập số lượng điều chỉnh khác 0', 'warning');
       return;
     }
 
     const finalStock = this.selectedProductForStock.quantityInStock + this.stockDelta;
     if (finalStock < 0) {
-      alert(`Điều chỉnh kho không thể làm tồn kho bị âm (Tồn kho hiện tại: ${this.selectedProductForStock.quantityInStock})`);
+      this.showAlert(
+        'Lỗi tồn kho',
+        `Điều chỉnh kho không thể làm tồn kho bị âm (Tồn kho hiện tại: ${this.selectedProductForStock.quantityInStock})`,
+        'error'
+      );
       return;
     }
 
     if (!this.stockReason.trim()) {
-      alert('Vui lòng ghi rõ lý do điều chỉnh kho');
+      this.showAlert('Thiếu thông tin', 'Vui lòng ghi rõ lý do điều chỉnh kho', 'warning');
       return;
     }
 
@@ -278,7 +385,7 @@ export class ProductsComponent implements OnInit {
           this.fetchProducts();
         },
         error: (err) => {
-          alert(err.error?.message || 'Không thể điều chỉnh tồn kho');
+          this.showAlert('Lỗi điều chỉnh', err.error?.message || 'Không thể điều chỉnh tồn kho', 'error');
         }
       });
   }
@@ -399,7 +506,7 @@ export class ProductsComponent implements OnInit {
         this.isProductModalOpen = true;
       },
       error: (err) => {
-        alert(err.error?.message || 'Không thể tải chi tiết sản phẩm');
+        this.showAlert('Lỗi tải dữ liệu', err.error?.message || 'Không thể tải chi tiết sản phẩm', 'error');
       }
     });
   }
@@ -617,49 +724,56 @@ export class ProductsComponent implements OnInit {
     }
   }
 
-  // Batch delete items via checkboxes
   deleteSelectedProducts() {
     const selectedIds = Object.keys(this.selectedProducts)
       .filter((id) => this.selectedProducts[+id])
       .map((id) => +id);
 
     if (selectedIds.length === 0) {
-      alert('Vui lòng chọn ít nhất một sản phẩm để xóa');
+      this.showAlert('Yêu cầu chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để xóa', 'warning');
       return;
     }
 
     if (selectedIds.length > 10) {
-      alert('Hệ thống giới hạn xóa tối đa 10 sản phẩm trong một lần xóa hàng loạt');
+      this.showAlert('Vượt giới hạn', 'Hệ thống giới hạn xóa tối đa 10 sản phẩm trong một lần xóa hàng loạt', 'warning');
       return;
     }
 
-    const confirmDel = confirm(`Bạn có chắc chắn muốn xóa/ngừng hoạt động ${selectedIds.length} sản phẩm đã chọn hay không?`);
-    if (!confirmDel) return;
+    this.showConfirm(
+      'Xác nhận xử lý hàng loạt',
+      `Bạn có chắc chắn muốn thực hiện xử lý trên ${selectedIds.length} sản phẩm đã chọn hay không?\n\n(Hệ thống sẽ tự động Xóa cứng đối với sản phẩm có tồn kho bằng 0, và tự động chuyển sang trạng thái Ngừng hoạt động (Deactivate) đối với sản phẩm còn tồn kho > 0).`,
+      'danger',
+      () => {
+        this.productService.deleteProducts(selectedIds).subscribe({
+          next: (res) => {
+            const details: string[] = [];
+            
+            res.results.forEach((item: any) => {
+              if (item.status === 'DELETED') {
+                details.push(`ID ${item.id} (Hết hàng): Đã xóa cứng khỏi cơ sở dữ liệu.`);
+              } else if (item.status === 'DEACTIVATED_ORDERED') {
+                details.push(`ID ${item.id} (Đã có đơn hàng): Tự động chuyển thành NGỪNG HOẠT ĐỘNG để bảo toàn lịch sử giao dịch.`);
+              } else if (item.status === 'DEACTIVATED') {
+                details.push(`ID ${item.id} (Còn hàng): Đã chuyển thành NGỪNG HOẠT ĐỘNG.`);
+              } else {
+                details.push(`ID ${item.id}: Không tìm thấy sản phẩm.`);
+              }
+            });
 
-    this.productService.deleteProducts(selectedIds).subscribe({
-      next: (res) => {
-        let deletedMsg = '';
-        let deactMsg = '';
-        let failMsg = '';
-        
-        // Output detailed statuses
-        res.results.forEach((item: any) => {
-          if (item.status === 'DELETED') {
-            deletedMsg += `ID ${item.id} (hết hàng): Đã xóa cứng khỏi database.\n`;
-          } else if (item.status === 'DEACTIVATED') {
-            deactMsg += `ID ${item.id} (còn hàng): Đã chuyển thành NGỪNG HOẠT ĐỘNG và ghi log.\n`;
-          } else {
-            failMsg += `ID ${item.id}: Không tìm thấy.\n`;
+            this.showAlert(
+              'Thao tác thành công',
+              `Đã hoàn thành xử lý hàng loạt cho ${selectedIds.length} sản phẩm đã chọn:`,
+              'success',
+              details
+            );
+            
+            this.fetchProducts();
+          },
+          error: (err) => {
+            this.showAlert('Lỗi thực thi', err.error?.message || 'Không thể xóa hàng loạt sản phẩm', 'error');
           }
         });
-
-        alert(`Kết quả thực thi xóa hàng loạt:\n\n${deletedMsg}${deactMsg}${failMsg}`);
-        
-        this.fetchProducts();
-      },
-      error: (err) => {
-        alert(err.error?.message || 'Không thể xóa hàng loạt sản phẩm');
       }
-    });
+    );
   }
 }

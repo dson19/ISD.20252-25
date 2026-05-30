@@ -73,6 +73,7 @@ export interface ProductSearchParams {
   mediaTypes?: string[];
   minPrice?: number;
   maxPrice?: number;
+  status?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -102,6 +103,9 @@ export class ProductService {
     }
     if (params.maxPrice !== undefined) {
       httpParams = httpParams.set('maxPrice', params.maxPrice);
+    }
+    if (params.status) {
+      httpParams = httpParams.set('status', params.status);
     }
 
     return this.http.get<Product[]>(`${this.baseUrl}/api/products`, { params: httpParams });

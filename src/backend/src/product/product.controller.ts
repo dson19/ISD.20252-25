@@ -34,6 +34,7 @@ export class ProductController {
     @Query('mediaTypes') mediaTypes?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
+    @Query('status') status?: string,
   ) {
     return this.productService.searchProducts({
       keyword,
@@ -41,6 +42,7 @@ export class ProductController {
       mediaTypes: this.parseMediaTypes(mediaTypes),
       minPrice: this.parseOptionalNumber(minPrice, 'minPrice'),
       maxPrice: this.parseOptionalNumber(maxPrice, 'maxPrice'),
+      status,
     });
   }
 

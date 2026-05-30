@@ -36,9 +36,17 @@ export class ProductRepository {
     minPrice?: number,
     maxPrice?: number,
     mediaTypes?: string[],
+    status?: string,
   ): Promise<Product[]> {
     const query = this.repository.createQueryBuilder('product');
-    query.where('product.status = :status', { status: 'ACTIVE' });
+    
+    if (status) {
+      if (status.toUpperCase() !== 'ALL') {
+        query.where('product.status = :status', { status: status.toUpperCase() });
+      }
+    } else {
+      query.where('product.status = :status', { status: 'ACTIVE' });
+    }
 
     if (keyword) {
       query.andWhere('product.title ILIKE :keyword', {

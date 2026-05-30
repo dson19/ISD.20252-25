@@ -137,4 +137,21 @@ export class LogsComponent implements OnInit {
         value: typeof obj[key] === 'object' ? JSON.stringify(obj[key]) : obj[key]
       }));
   }
+
+  // Dashboard statistics getters
+  get totalLogsCount(): number {
+    return this.filteredLogs.length;
+  }
+
+  get createLogsCount(): number {
+    return this.filteredLogs.filter(l => l.actionType === 'CREATE').length;
+  }
+
+  get stockLogsCount(): number {
+    return this.filteredLogs.filter(l => l.actionType === 'STOCK_ADJUST').length;
+  }
+
+  get deleteLogsCount(): number {
+    return this.filteredLogs.filter(l => l.actionType === 'DELETE' || l.actionType === 'DEACTIVATE').length;
+  }
 }

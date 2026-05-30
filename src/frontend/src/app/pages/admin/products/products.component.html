@@ -1,16 +1,21 @@
-<div class="p-8 max-w-7xl mx-auto">
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-    <div>
-      <p class="text-xs font-bold text-primary uppercase tracking-wider mb-1">QUẢN LÝ DANH MỤC</p>
+<div class="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+  
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+    <div class="space-y-1">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
+          Quản lý danh mục
+        </span>
+      </div>
       <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Kho sản phẩm</h1>
-      <p class="text-sm text-gray-500 mt-1">Quản lý catalog, kiểm kho tài sản số và điều chỉnh tồn kho vật lý.</p>
+      <p class="text-sm text-gray-500">Quản lý catalog, kiểm kho tài sản số và điều chỉnh tồn kho vật lý.</p>
     </div>
     
-    <div class="flex gap-3 w-full md:w-auto">
+    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
       <button
         (click)="openCreateModal()"
-        class="bg-primary text-white px-5 py-3 rounded-2xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all flex items-center transform hover:-translate-y-0.5 focus:outline-none"
+        class="flex-1 md:flex-none bg-primary text-white px-5 py-3 rounded-2xl font-extrabold text-sm flex items-center justify-center shadow-md shadow-blue-500/10 focus:outline-none transition-all duration-200 cursor-pointer"
       >
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
@@ -18,43 +23,103 @@
         Tạo sản phẩm
       </button>
 
-      @if (getSelectedCount() > 0) {
-        <button
-          (click)="deleteSelectedProducts()"
-          class="bg-red-50 text-danger border border-red-200 px-5 py-3 rounded-2xl font-bold text-sm hover:bg-red-500 hover:text-white hover:border-red-500 shadow-sm transition-all flex items-center transform hover:-translate-y-0.5 focus:outline-none"
-        >
-          <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Xóa đã chọn ({{ getSelectedCount() }})
-        </button>
-      }
+      <button
+        (click)="deleteSelectedProducts()"
+        [disabled]="getSelectedCount() === 0"
+        class="flex-1 md:flex-none border px-5 py-3 rounded-2xl font-extrabold text-sm flex items-center justify-center transition-all duration-200 focus:outline-none shadow-sm"
+        [ngClass]="getSelectedCount() === 0 
+          ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-60' 
+          : 'bg-red-50 text-danger border-red-200 hover:bg-red-600 hover:text-white hover:border-red-600 cursor-pointer'"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Xóa / Ngừng bán @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
+      </button>
     </div>
   </div>
 
+  <!-- Dashboard Metrics Panel (Mới) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <!-- Card 1: Tổng đầu sản phẩm -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+      <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TỔNG SẢN PHẨM</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ totalProductsCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 2: Đang bán hàng -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+      <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐANG BÁN HÀNG</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ activeProductsCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 3: Đã hết hàng -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+      <div class="p-3.5 bg-rose-50 text-rose-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐẠ HẾT HÀNG</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ outOfStockCount }}</p>
+      </div>
+    </div>
+
+    <!-- Card 4: Tạm ngưng bán -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+      <div class="p-3.5 bg-slate-100 text-slate-600 rounded-2xl">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TẠM NGƯNG BÁN</p>
+        <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ deactivatedCount }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid Workspace -->
   <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-    <!-- Toolbar -->
-    <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    
+    <!-- Toolbar Search & Filter panel -->
+    <div class="p-6 border-b border-gray-100 bg-gray-50/40 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div class="flex-1 max-w-lg relative w-full">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <svg class="h-4.5 w-4.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
         <input
           type="text"
           [(ngModel)]="keyword"
           (ngModelChange)="onFilterChange()"
-          class="block w-full pl-10 pr-3 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-primary focus:border-primary shadow-sm placeholder-gray-400"
-          placeholder="Tìm theo tên hoặc mã vạch sản phẩm..."
+          class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all"
+          placeholder="Tìm theo tiêu đề, tác giả hoặc mã vạch..."
         />
       </div>
       
       <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+        <!-- Category selector -->
         <select
           [(ngModel)]="category"
           (ngModelChange)="onFilterChange()"
-          class="block py-3 pl-3 pr-10 text-sm border-gray-200 bg-white rounded-2xl focus:ring-primary focus:border-primary shadow-sm text-gray-700 font-semibold"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
           <option value="">Tất cả danh mục</option>
           <option value="Sách">Sách</option>
@@ -63,141 +128,158 @@
           <option value="Báo chí">Báo chí</option>
         </select>
 
+        <!-- Media types selector -->
         <select
           [(ngModel)]="mediaTypesFilter"
           (ngModelChange)="onFilterChange()"
-          class="block py-3 pl-3 pr-10 text-sm border-gray-200 bg-white rounded-2xl focus:ring-primary focus:border-primary shadow-sm text-gray-700 font-semibold"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
           <option value="">Tất cả loại tài liệu</option>
-          <option value="BOOK">SÁCH</option>
-          <option value="CD">CD</option>
-          <option value="DVD">DVD</option>
-          <option value="NEWSPAPER">BÁO CHÍ</option>
+          <option value="BOOK">Sách (BOOK)</option>
+          <option value="CD">Đĩa nhạc (CD)</option>
+          <option value="DVD">Đĩa phim (DVD)</option>
+          <option value="NEWSPAPER">Báo / Ấn phẩm</option>
         </select>
         
+        <!-- Status filter -->
         <select
           [(ngModel)]="statusFilter"
           (ngModelChange)="onFilterChange()"
-          class="block py-3 pl-3 pr-10 text-sm border-gray-200 bg-white rounded-2xl focus:ring-primary focus:border-primary shadow-sm text-gray-700 font-semibold"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="ACTIVE">Đang hoạt động</option>
           <option value="DEACTIVATED">Ngừng hoạt động</option>
         </select>
         
+        <!-- Reload button -->
         <button
           (click)="fetchProducts()"
-          class="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl transition-colors shadow-sm focus:outline-none flex items-center justify-center transform active:scale-95"
+          class="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-2xl transition-all shadow-sm focus:outline-none flex items-center justify-center"
           title="Tải lại sản phẩm"
         >
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
         </button>
       </div>
     </div>
 
-    <!-- Table -->
+    <!-- Table content section -->
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-gray-50/70 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
-            <th class="p-5 pl-8 w-12">
+          <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
+            <th class="p-5 pl-8 w-12 text-center">
               <input
                 type="checkbox"
                 [(ngModel)]="isAllSelected"
                 (ngModelChange)="toggleSelectAll()"
-                class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                class="rounded border-gray-350 text-primary focus:ring-primary/20 h-4.5 w-4.5 cursor-pointer transition-all"
               />
             </th>
-            <th class="p-5">Mã Vạch</th>
-            <th class="p-5">Tên Sản Phẩm / Tác giả</th>
-            <th class="p-5 text-center">Loại tài liệu</th>
-            <th class="p-5 text-center">Tồn Kho</th>
-            <th class="p-5 text-right">Giá niêm yết (VND)</th>
-            <th class="p-5 text-center">Trạng Thái</th>
-            <th class="p-5 text-center">Hành động</th>
+            <th class="p-5 w-32">MÃ VẠCH</th>
+            <th class="p-5">THÔNG TIN SẢN PHẨM</th>
+            <th class="p-5 text-center w-28">LOẠI TÀI LIỆU</th>
+            <th class="p-5 text-center w-28">TỒN KHO HÀNG</th>
+            <th class="p-5 text-right w-36">GIÁ NIÊM YẾT (VND)</th>
+            <th class="p-5 text-center w-28">TRẠNG THÁI</th>
+            <th class="p-5 text-center w-36">THAO TÁC</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           @if (isLoading) {
             <tr>
-              <td colspan="8" class="p-12 text-center text-gray-400 font-medium">
-                <div class="flex items-center justify-center space-x-2">
-                  <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <td colspan="8" class="p-16 text-center text-gray-400 font-semibold">
+                <div class="flex flex-col items-center justify-center space-y-3">
+                  <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Đang tải danh sách sản phẩm...</span>
+                  <span class="text-sm">Đang tải danh sách sản phẩm từ kho dữ liệu...</span>
                 </div>
               </td>
             </tr>
           } @else if (products.length === 0) {
             <tr>
-              <td colspan="8" class="p-12 text-center text-gray-400 font-medium">
-                Không tìm thấy sản phẩm nào trong kho.
+              <td colspan="8" class="p-16 text-center text-gray-400 font-semibold">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <span class="text-sm">Không tìm thấy sản phẩm nào khớp với bộ lọc hiện tại.</span>
+                </div>
               </td>
             </tr>
           } @else {
             @for (product of paginatedProducts; track product.productID) {
-              <tr class="hover:bg-gray-50/50 transition-colors group">
-                <td class="p-5 pl-8">
+              <tr class="hover:bg-gray-50/40 transition-colors group">
+                <td class="p-5 pl-8 text-center" (click)="$event.stopPropagation()">
                   <input
                     type="checkbox"
                     [(ngModel)]="selectedProducts[product.productID]"
                     (ngModelChange)="onRowSelectChange()"
-                    class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                    class="rounded border-gray-300 text-primary focus:ring-primary/20 h-4.5 w-4.5 cursor-pointer transition-all"
                   />
                 </td>
                 <td class="p-5 whitespace-nowrap">
-                  <span class="text-xs font-mono font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">{{ product.barcode }}</span>
+                  <span class="text-xs font-mono font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-xl border border-gray-200/50 shadow-inner">{{ product.barcode }}</span>
                 </td>
                 <td class="p-5">
                   <div class="flex items-center">
-                    <div class="h-10 w-10 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-100">
+                    <div class="h-11 w-11 rounded-2xl bg-gray-50 flex-shrink-0 overflow-hidden border border-gray-150 shadow-sm group-hover:shadow transition-shadow">
                       @if (product.imageUrl) {
-                        <img [src]="product.imageUrl" class="h-full w-full object-cover" alt="Product thumbnail" />
+                        <img [src]="product.imageUrl" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Product thumbnail" />
                       } @else {
-                        <div class="h-full w-full bg-blue-50 text-primary flex items-center justify-center font-bold text-xs">AIMS</div>
+                        <div class="h-full w-full bg-primary/5 text-primary flex items-center justify-center font-black text-[10px] tracking-wider uppercase">AIMS</div>
                       }
                     </div>
-                    <div class="ml-4 max-w-sm">
-                      <p class="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">{{ product.title }}</p>
-                      <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">Danh mục: {{ product.category }}</p>
+                    <div class="ml-4 flex-1 min-w-0">
+                      <p class="text-sm font-extrabold text-gray-900 line-clamp-3 group-hover:text-primary transition-colors leading-snug">{{ product.title }}</p>
+                      <p class="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-1">Danh mục: {{ product.category }}</p>
                     </div>
                   </div>
                 </td>
                 <td class="p-5 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-50 text-primary border border-blue-100">
+                  <span [ngClass]="{
+                    'bg-indigo-50 text-indigo-700 border-indigo-150/60': product.mediaType === 'BOOK',
+                    'bg-emerald-50 text-emerald-700 border-emerald-150/60': product.mediaType === 'CD',
+                    'bg-amber-50 text-amber-700 border-amber-150/60': product.mediaType === 'DVD',
+                    'bg-rose-50 text-rose-700 border-rose-150/60': product.mediaType === 'NEWSPAPER'
+                  }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold border shadow-sm">
                     {{ product.mediaType }}
                   </span>
                 </td>
                 <td class="p-5 text-center">
-                  <span class="text-sm font-extrabold" [ngClass]="{'text-danger': product.quantityInStock === 0, 'text-gray-900': product.quantityInStock > 0}">
+                  <span [ngClass]="{
+                    'bg-red-50 text-red-650 border-red-100': product.quantityInStock === 0,
+                    'bg-amber-50 text-amber-655 border-amber-150/70': product.quantityInStock > 0 && product.quantityInStock < 10,
+                    'bg-slate-50 text-slate-700 border-slate-200/60': product.quantityInStock >= 10
+                  }" class="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-black font-mono border shadow-sm min-w-[3rem]">
                     {{ product.quantityInStock }}
                   </span>
                 </td>
-                <td class="p-5 text-right text-sm font-bold text-gray-900">
+                <td class="p-5 text-right font-mono font-black text-sm text-gray-900">
                   {{ product.currentPrice | number:'1.0-0' }}
                 </td>
                 <td class="p-5 text-center">
                   @if (product.status === 'ACTIVE') {
-                    <span class="inline-flex items-center text-xs font-bold text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
+                    <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
                       <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse"></span>
                       Đang bán
                     </span>
                   } @else {
-                    <span class="inline-flex items-center text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">
+                    <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
                       <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>
                       Tạm ngưng
                     </span>
                   }
                 </td>
-                <td class="p-5 text-center">
-                  <div class="flex items-center justify-center space-x-1.5">
+                <td class="p-5 text-center" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-center space-x-2">
                     <button
                       (click)="openEditModal(product)"
-                      class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 rounded-xl transition-all border border-transparent hover:border-blue-100 focus:outline-none"
+                      class="w-8 h-8 rounded-xl border border-gray-200 hover:border-blue-100 text-gray-500 hover:text-primary hover:bg-blue-50 flex items-center justify-center transition-all shadow-sm focus:outline-none"
                       title="Sửa sản phẩm"
                     >
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,13 +288,14 @@
                     </button>
                     <button
                       (click)="openStockModal(product)"
-                      class="px-3 py-2 text-xs font-bold text-gray-700 hover:text-primary bg-gray-100 hover:bg-blue-50 rounded-xl transition-all border border-gray-200 hover:border-blue-100 focus:outline-none flex items-center"
-                      title="Điều chỉnh kho"
+                      class="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:text-primary bg-slate-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-100 rounded-xl transition-all shadow-sm focus:outline-none"
+                      title="Điều chỉnh kho hàng"
                     >
-                      Nhập/Xuất kho
+                      Nhập/Xuất
                     </button>
                   </div>
                 </td>
+              </tr>
             }
           }
         </tbody>
@@ -220,25 +303,25 @@
     </div>
 
     <!-- Pagination Footer -->
-    <div *ngIf="!isLoading && products.length > 0" class="p-6 border-t border-gray-100 bg-gray-50/30 flex flex-col lg:flex-row items-center justify-between gap-4">
+    <div *ngIf="!isLoading && products.length > 0" class="p-6 border-t border-gray-100 bg-gray-50/40 flex flex-col lg:flex-row items-center justify-between gap-4">
       <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-        <!-- Page Size Selector -->
+        <!-- Page size selector -->
         <div class="flex items-center space-x-2.5">
-          <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Hiển thị</span>
+          <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Hiển thị</span>
           <select
             [(ngModel)]="pageSize"
             (ngModelChange)="onPageSizeChange()"
-            class="py-2 pl-3 pr-8 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-primary focus:border-primary shadow-sm text-gray-700 font-extrabold cursor-pointer"
+            class="py-2 pl-3 pr-8 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-extrabold cursor-pointer transition-all"
           >
-            <option [value]="10">10 sản phẩm</option>
-            <option [value]="15">15 sản phẩm</option>
-            <option [value]="20">20 sản phẩm</option>
-            <option [value]="50">50 sản phẩm</option>
+            <option [value]="10">10 dòng</option>
+            <option [value]="15">15 dòng</option>
+            <option [value]="20">20 dòng</option>
+            <option [value]="50">50 dòng</option>
           </select>
         </div>
 
-        <p class="text-xs text-gray-500 font-medium">
-          Đang xem <span class="font-extrabold text-gray-900">{{ pageStart }} - {{ pageEnd }}</span> trên tổng số <span class="font-extrabold text-gray-900">{{ products.length }}</span> sản phẩm
+        <p class="text-xs text-gray-500 font-semibold">
+          Đang xem <span class="font-extrabold text-gray-900">{{ pageStart }} - {{ pageEnd }}</span> trên tổng <span class="font-extrabold text-gray-900">{{ products.length }}</span> dòng dữ liệu
         </p>
       </div>
       
@@ -319,10 +402,11 @@
           <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h4 class="text-sm font-bold text-gray-800 border-l-4 border-primary pl-2.5">Loại tài liệu sản phẩm</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div [class.md:col-span-2]="!isEditMode">
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Loại sản phẩm</label>
                 <select
                   [(ngModel)]="productForm.mediaType"
+                  (ngModelChange)="onMediaTypeChange($event)"
                   [disabled]="isEditMode"
                   class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"
                 >
@@ -336,19 +420,21 @@
                 }
               </div>
               
-              <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái bán</label>
-                <select
-                  [(ngModel)]="productForm.status"
-                  class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800"
-                >
-                  <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-                  <option value="DEACTIVATED">Ngừng hoạt động (DEACTIVATED)</option>
-                </select>
-              </div>
+              @if (isEditMode) {
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái bán</label>
+                  <select
+                    [(ngModel)]="productForm.status"
+                    class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800"
+                  >
+                    <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
+                    <option value="DEACTIVATED">Ngừng hoạt động (DEACTIVATED)</option>
+                  </select>
+                </div>
+              }
             </div>
           </div>
-
+ 
           <!-- Block 2: General Information -->
           <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h4 class="text-sm font-bold text-gray-800 border-l-4 border-primary pl-2.5">Thông tin chung sản phẩm</h4>
@@ -357,36 +443,36 @@
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tiêu đề sản phẩm <span class="text-danger">*</span></label>
                 <input type="text" [(ngModel)]="productForm.title" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Ví dụ: Mũ nồi xanh Việt Nam..." />
               </div>
-
+ 
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mã danh mục chung <span class="text-danger">*</span></label>
-                <input type="text" [(ngModel)]="productForm.category" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Ví dụ: Sách, Phim, Nhạc..." />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Thể loại / Danh mục chi tiết <span class="text-danger">*</span></label>
+                <input type="text" [(ngModel)]="productForm.category" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Ví dụ: Văn học, Khoa học, Nhạc trẻ, Phim hành động..." />
               </div>
-
+ 
               <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mã vạch (Barcode) <span class="text-danger">*</span></label>
                 <input type="text" [(ngModel)]="productForm.barcode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-mono font-medium" placeholder="Ví dụ: BK-VN2024-01" />
               </div>
-
+ 
               <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Giá gốc (VND) <span class="text-danger">*</span></label>
-                <input type="number" [(ngModel)]="productForm.originalPrice" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold" />
+                <input type="text" [ngModel]="productForm.originalPrice" (ngModelChange)="onOriginalPriceChange($event)" [disabled]="isEditMode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold placeholder-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed" placeholder="0" />
               </div>
-
+ 
               <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Giá bán hiện tại (VND) <span class="text-danger">*</span></label>
-                <input type="number" [(ngModel)]="productForm.currentPrice" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold" />
+                <input type="text" [ngModel]="productForm.currentPrice" (ngModelChange)="onCurrentPriceChange($event)" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold placeholder-gray-400" placeholder="0" />
                 <span class="text-[10px] text-gray-400 font-bold block mt-1">Yêu cầu: Nằm trong khoảng 30% - 150% của giá gốc.</span>
               </div>
-
+ 
               <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Số lượng tồn kho ban đầu <span class="text-danger">*</span></label>
                 <input type="number" [(ngModel)]="productForm.quantityInStock" [disabled]="isEditMode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold disabled:bg-gray-100" />
               </div>
-
+ 
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trọng lượng (grams) <span class="text-danger">*</span></label>
-                <input type="number" [(ngModel)]="productForm.weight" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Khối lượng (KG) <span class="text-danger">*</span></label>
+                <input type="number" step="any" [(ngModel)]="productForm.weight" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Ví dụ: 0.5, 1.2..." />
               </div>
 
               <div class="grid grid-cols-3 gap-2 md:col-span-2">
@@ -680,6 +766,123 @@
           >
             Xác nhận
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Custom Confirmation Modal -->
+  @if (isConfirmModalOpen) {
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div class="p-6 text-center">
+          <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+               [ngClass]="{
+                 'bg-red-50 text-danger': confirmType === 'danger',
+                 'bg-amber-50 text-amber-500': confirmType === 'warning',
+                 'bg-blue-50 text-primary': confirmType === 'info'
+               }">
+            @if (confirmType === 'danger') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            } @else if (confirmType === 'warning') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            } @else {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          </div>
+          
+          <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ confirmTitle }}</h3>
+          <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-6">{{ confirmMessage }}</p>
+          
+          <div class="flex items-center justify-center space-x-3">
+            <button
+              (click)="closeConfirm()"
+              class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-2xl hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              (click)="triggerConfirmAction()"
+              [ngClass]="{
+                'bg-red-600 hover:bg-red-700 text-white': confirmType === 'danger',
+                'bg-amber-500 hover:bg-amber-600 text-white': confirmType === 'warning',
+                'bg-primary hover:bg-primary-hover text-white': confirmType === 'info'
+              }"
+              class="flex-1 px-4 py-3 font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Custom Alert / Message Modal -->
+  @if (isAlertModalOpen) {
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full border border-gray-100 shadow-2xl overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div class="p-6 text-center">
+          <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-4" 
+               [ngClass]="{
+                 'bg-green-50 text-success': alertType === 'success',
+                 'bg-red-50 text-danger': alertType === 'error',
+                 'bg-amber-50 text-amber-500': alertType === 'warning',
+                 'bg-blue-50 text-primary': alertType === 'info'
+               }">
+            @if (alertType === 'success') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            } @else if (alertType === 'error') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            } @else if (alertType === 'warning') {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            } @else {
+              <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          </div>
+          
+          <h3 class="text-xl font-extrabold text-gray-900 mb-2">{{ alertTitle }}</h3>
+          <p class="text-sm text-gray-500 font-semibold leading-relaxed mb-4">{{ alertMessage }}</p>
+          
+          @if (alertDetails.length > 0) {
+            <div class="text-left bg-gray-50/70 border border-gray-100 rounded-2xl p-4 mb-6 max-h-48 overflow-y-auto space-y-2.5">
+              @for (detail of alertDetails; track $index) {
+                <div class="flex items-start text-xs font-bold text-gray-600 leading-normal">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 mr-2 flex-shrink-0"></span>
+                  <span>{{ detail }}</span>
+                </div>
+              }
+            </div>
+          }
+          
+          <div class="flex items-center justify-center" [class.mt-6]="alertDetails.length === 0">
+            <button
+              (click)="closeAlert()"
+              [ngClass]="{
+                'bg-success hover:bg-green-600': alertType === 'success',
+                'bg-danger hover:bg-red-700': alertType === 'error',
+                'bg-amber-500 hover:bg-amber-600': alertType === 'warning',
+                'bg-primary hover:bg-primary-hover': alertType === 'info'
+              }"
+              class="w-full py-3 text-white font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
+            >
+              Đồng ý
+            </button>
+          </div>
         </div>
       </div>
     </div>

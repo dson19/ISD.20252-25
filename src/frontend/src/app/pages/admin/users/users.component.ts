@@ -41,6 +41,23 @@ export class UsersComponent implements OnInit {
   statusFilter = '';
   isLoading = false;
 
+  // Statistic getters for Dashboard Metrics Panel
+  get totalUsersCount(): number {
+    return this.users.length;
+  }
+
+  get activeUsersCount(): number {
+    return this.users.filter(u => u.status === 'ACTIVE').length;
+  }
+
+  get lockedUsersCount(): number {
+    return this.users.filter(u => u.status === 'DEACTIVATED').length;
+  }
+
+  get adminUsersCount(): number {
+    return this.users.filter(u => u.roles && u.roles.some(r => r.name === 'ADMIN')).length;
+  }
+
   // Audit logs expand/collapse tracking
   expandedUserIds = new Set<number>();
 
@@ -57,6 +74,19 @@ export class UsersComponent implements OnInit {
     fullName: string;
     newPassword?: string;
   } | null = null;
+
+  // Custom Popup Alert/Confirm properties
+  isConfirmModalOpen = false;
+  confirmTitle = '';
+  confirmMessage = '';
+  confirmType: 'info' | 'warning' | 'danger' = 'info';
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = false;
+  alertTitle = '';
+  alertMessage = '';
+  alertType: 'success' | 'error' | 'warning' | 'info' = 'info';
+
 
   constructor(
     private readonly http: HttpClient,
@@ -128,22 +158,28 @@ export class UsersComponent implements OnInit {
   toggleUserStatus(user: User) {
     const newStatus = user.status === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE';
     const actionText = newStatus === 'ACTIVE' ? 'mở khóa' : 'khóa';
-    const confirmToggle = confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản [${user.email}]?`);
-    if (!confirmToggle) return;
-
-    this.http
-      .patch<User>(`${this.baseUrl}/api/users/${user.userID}/status`, {
-        status: newStatus
-      })
-      .subscribe({
-        next: (updatedUser) => {
-          user.status = updatedUser.status;
-          this.fetchUsers(); // Refresh to get updated audit logs
-        },
-        error: (err) => {
-          alert(err.error?.message || `Không thể ${actionText} tài khoản`);
-        }
-      });
+    
+    this.showConfirm(
+      'Xác nhận thay đổi trạng thái',
+      `Bạn có chắc chắn muốn ${actionText} tài khoản [${user.email}]?`,
+      newStatus === 'ACTIVE' ? 'info' : 'warning',
+      () => {
+        this.http
+          .patch<User>(`${this.baseUrl}/api/users/${user.userID}/status`, {
+            status: newStatus
+          })
+          .subscribe({
+            next: (updatedUser) => {
+              user.status = updatedUser.status;
+              this.fetchUsers(); // Refresh to get updated audit logs
+              this.showAlert('Thành công', `Đã ${actionText} tài khoản [${user.email}] thành công.`, 'success');
+            },
+            error: (err) => {
+              this.showAlert('Thao tác thất bại', err.error?.message || `Không thể ${actionText} tài khoản`, 'error');
+            }
+          });
+      }
+    );
   }
 
   // Expand / collapse audit logs panel
@@ -182,7 +218,7 @@ export class UsersComponent implements OnInit {
     );
 
     if (chosenRoles.length === 0) {
-      alert('Vui lòng chọn ít nhất một vai trò cho người dùng');
+      this.showAlert('Cảnh báo', 'Vui lòng chọn ít nhất một vai trò cho người dùng', 'warning');
       return;
     }
 
@@ -194,9 +230,10 @@ export class UsersComponent implements OnInit {
         next: (updatedUser) => {
           this.closeRolesModal();
           this.fetchUsers(); // Refresh to update list and logs
+          this.showAlert('Cập nhật thành công', 'Cập nhật vai trò người dùng thành công.', 'success');
         },
         error: (err) => {
-          alert(err.error?.message || 'Không thể cập nhật vai trò người dùng');
+          this.showAlert('Lỗi cập nhật', err.error?.message || 'Không thể cập nhật vai trò người dùng', 'error');
         }
       });
   }
@@ -204,29 +241,71 @@ export class UsersComponent implements OnInit {
   // Reset Password trigger
   resetPassword(user: User, event: Event) {
     event.stopPropagation(); // Avoid triggering row click
-    const confirmReset = confirm(`Bạn có chắc chắn muốn reset mật khẩu cho tài khoản [${user.email}]?`);
-    if (!confirmReset) return;
-
-    this.http
-      .post<any>(`${this.baseUrl}/api/auth/reset-password/${user.userID}`, {})
-      .subscribe({
-        next: (res) => {
-          this.resetPwdResult = {
-            email: res.email,
-            fullName: res.fullName,
-            newPassword: res.newPassword
-          };
-          this.isResetPwdModalOpen = true;
-          this.fetchUsers(); // Refresh to get updated audit logs
-        },
-        error: (err) => {
-          alert(err.error?.message || 'Không thể reset mật khẩu người dùng');
-        }
-      });
+    
+    this.showConfirm(
+      'Xác nhận reset mật khẩu',
+      `Bạn có chắc chắn muốn reset mật khẩu cho tài khoản [${user.email}]? Mật khẩu mới sẽ được sinh ngẫu nhiên tạm thời.`,
+      'warning',
+      () => {
+        this.http
+          .post<any>(`${this.baseUrl}/api/auth/reset-password/${user.userID}`, {})
+          .subscribe({
+            next: (res) => {
+              this.resetPwdResult = {
+                email: res.email,
+                fullName: res.fullName,
+                newPassword: res.newPassword
+              };
+              this.isResetPwdModalOpen = true;
+              this.fetchUsers(); // Refresh to get updated audit logs
+            },
+            error: (err) => {
+              this.showAlert('Reset thất bại', err.error?.message || 'Không thể reset mật khẩu người dùng', 'error');
+            }
+          });
+      }
+    );
   }
 
   closeResetPwdModal() {
     this.isResetPwdModalOpen = false;
     this.resetPwdResult = null;
   }
+
+  // Helper Methods for Custom Alert & Confirm Popups
+  showAlert(title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
+    this.alertTitle = title;
+    this.alertMessage = message;
+    this.alertType = type;
+    this.isAlertModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeAlert() {
+    this.isAlertModalOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  showConfirm(title: string, message: string, type: 'info' | 'warning' | 'danger', action: () => void) {
+    this.confirmTitle = title;
+    this.confirmMessage = message;
+    this.confirmType = type;
+    this.confirmAction = action;
+    this.isConfirmModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeConfirm() {
+    this.isConfirmModalOpen = false;
+    this.confirmAction = null;
+    this.cdr.detectChanges();
+  }
+
+  triggerConfirmAction() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirm();
+  }
+
 }
