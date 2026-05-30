@@ -113,9 +113,6 @@
           class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all"
           placeholder="Tìm theo tiêu đề, tác giả hoặc mã vạch..."
         />
-        <div class="mt-2 text-[11px] text-gray-400 font-bold uppercase tracking-wider pl-1">
-          Hiển thị {{ products.length }} sản phẩm trên {{ totalDatabaseProductsCount }} sản phẩm
-        </div>
       </div>
       
       <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
@@ -174,14 +171,7 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-            <th class="p-5 pl-8 w-12 text-center">
-              <input
-                type="checkbox"
-                [(ngModel)]="isAllSelected"
-                (ngModelChange)="toggleSelectAll()"
-                class="rounded border-gray-350 text-primary focus:ring-primary/20 h-4.5 w-4.5 cursor-pointer transition-all"
-              />
-            </th>
+            <th class="p-5 pl-8 w-12 text-center"></th>
             <th class="p-5 w-32">MÃ VẠCH</th>
             <th class="p-5">THÔNG TIN SẢN PHẨM</th>
             <th class="p-5 text-center w-28">LOẠI TÀI LIỆU</th>
@@ -325,7 +315,7 @@
         </div>
 
         <p class="text-xs text-gray-500 font-semibold">
-          Đang xem <span class="font-extrabold text-gray-900">{{ pageStart }} - {{ pageEnd }}</span> trên tổng <span class="font-extrabold text-gray-900">{{ products.length }}</span> dòng dữ liệu
+          Đang xem <span class="font-extrabold text-gray-900">{{ pageStart }} - {{ pageEnd }}</span> trên <span class="font-extrabold text-gray-900">{{ products.length }}</span> kết quả (Tổng kho: {{ totalDatabaseProductsCount }})
         </p>
       </div>
       
