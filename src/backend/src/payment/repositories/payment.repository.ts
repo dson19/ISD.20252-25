@@ -17,11 +17,17 @@ export class PaymentRepository {
     this.transactionRepository = this.dataSource.getRepository(PaymentTransaction);
   }
 
-  async createTransaction(orderId: number, amount: number, method: 'PAYPAL' | 'VIETQR'): Promise<PaymentTransaction> {
+  async createTransaction(
+    orderId: number,
+    amount: number,
+    method: 'PAYPAL' | 'VIETQR',
+    transactionContent?: string,
+  ): Promise<PaymentTransaction> {
     const newTx = this.transactionRepository.create({
       order: { orderID: orderId },
       amount,
       method: method,
+      transactionContent,
       status: 'PENDING',
     });
     return await this.transactionRepository.save(newTx);

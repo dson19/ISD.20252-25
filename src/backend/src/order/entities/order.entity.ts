@@ -37,6 +37,9 @@ export class Order {
   @Column({ type: 'varchar', length: 50, default: 'PENDING' })
   status: string;
 
+  @Column({ name: 'customer_access_token', type: 'varchar', length: 64, unique: true, nullable: true })
+  customerAccessToken: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

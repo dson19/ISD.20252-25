@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { DataSource, EntityManager, In } from 'typeorm';
+import { NotificationEventBus } from '../../notification/events/notification-event-bus';
+import { PaypalService } from '../../payment/services/paypal.service';
 import { Product } from '../../product/entities/product.entity';
 import { CartItemDto } from '../dto/cart-item.dto';
 import { DeliveryInfoDto } from '../dto/delivery-info.dto';
@@ -25,6 +28,9 @@ export class OrderService {
     private readonly dataSource: DataSource,
     private readonly cartService: CartService,
     private readonly shippingCalculatorService: ShippingCalculatorService,
+    private readonly notificationEventBus: NotificationEventBus,
+    @Inject(forwardRef(() => PaypalService))
+    private readonly paypalService: PaypalService,
   ) { }
 
   async placeOrder(cartItems: CartItemDto[], deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
@@ -108,6 +114,7 @@ export class OrderService {
           shippingFee,
           totalPayment,
           status: 'PENDING',
+          customerAccessToken: this.generateCustomerAccessToken(),
         }),
       );
 
@@ -184,15 +191,16 @@ export class OrderService {
 
   async getOrderDetail(orderId: number): Promise<any> {
     const order = await this.findOrderOrFail(this.dataSource.manager, orderId);
-    const txs = await this.dataSource.manager.query(
-      'SELECT method FROM payment_transactions WHERE order_id = $1 AND status = $2 LIMIT 1',
-      [orderId, 'SUCCESS']
-    );
-    const paymentMethod = txs.length > 0 ? txs[0].method : null;
+    const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
     return {
       ...order,
-      paymentMethod
+      paymentMethod: paymentInfo?.method ?? null,
     };
+  }
+
+  async getCustomerOrderDetail(orderId: number, token: string): Promise<any> {
+    await this.findCustomerOrderOrFail(orderId, token);
+    return this.getOrderDetail(orderId);
   }
 
   async updateDeliveryInfo(orderId: number, deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
@@ -248,11 +256,23 @@ export class OrderService {
 
     order.status = 'APPROVED';
     await this.dataSource.manager.save(Order, order);
-    return this.findOrderOrFail(this.dataSource.manager, orderId);
+    const updatedOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
+    this.notificationEventBus.publish({
+      type: 'ORDER_APPROVED',
+      orderId,
+    });
+    return updatedOrder;
   }
 
   async rejectOrder(orderId: number): Promise<Order> {
-    return this.dataSource.transaction(async (manager) => {
+    const existingOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
+    const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
+
+    if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'PAYPAL') {
+      await this.paypalService.refundOrderInPaypal(orderId, false);
+    }
+
+    const updatedOrder = await this.dataSource.transaction(async (manager) => {
       const order = await this.findOrderOrFail(manager, orderId);
       if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
         throw new BadRequestException(`Order ${orderId} cannot be rejected from status ${order.status}`);
@@ -260,14 +280,7 @@ export class OrderService {
 
       await this.restoreReservedStock(manager, order);
 
-      // Check payment method
-      const txs = await manager.query(
-        'SELECT method FROM payment_transactions WHERE order_id = $1 AND status = $2 LIMIT 1',
-        [orderId, 'SUCCESS']
-      );
-      const paymentMethod = txs.length > 0 ? txs[0].method : null;
-
-      if (order.status === 'PENDING_PROCESSING' && paymentMethod === 'VIETQR') {
+      if (order.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'VIETQR') {
         order.status = 'REFUND_PENDING';
       } else {
         order.status = 'REJECTED';
@@ -276,10 +289,26 @@ export class OrderService {
       await manager.save(Order, order);
       return this.findOrderOrFail(manager, orderId);
     });
+
+    this.notificationEventBus.publish({
+      type: 'ORDER_REJECTED',
+      orderId,
+      paymentTransactionId: paymentInfo?.transaction_id,
+      refundMethod: paymentInfo?.method ?? null,
+      refundStatus: this.resolveRefundStatus(paymentInfo?.method ?? null, updatedOrder.status),
+    });
+    return updatedOrder;
   }
 
   async cancelOrder(orderId: number): Promise<Order> {
-    return this.dataSource.transaction(async (manager) => {
+    const existingOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
+    const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
+
+    if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'PAYPAL') {
+      await this.paypalService.refundOrderInPaypal(orderId, false);
+    }
+
+    const updatedOrder = await this.dataSource.transaction(async (manager) => {
       const order = await this.findOrderOrFail(manager, orderId);
       if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
         throw new BadRequestException(`Order ${orderId} cannot be cancelled from status ${order.status}`);
@@ -287,14 +316,7 @@ export class OrderService {
 
       await this.restoreReservedStock(manager, order);
 
-      // Check payment method
-      const txs = await manager.query(
-        'SELECT method FROM payment_transactions WHERE order_id = $1 AND status = $2 LIMIT 1',
-        [orderId, 'SUCCESS']
-      );
-      const paymentMethod = txs.length > 0 ? txs[0].method : null;
-
-      if (order.status === 'PENDING_PROCESSING' && paymentMethod === 'VIETQR') {
+      if (order.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'VIETQR') {
         order.status = 'REFUND_PENDING';
       } else {
         order.status = 'CANCELLED';
@@ -303,6 +325,20 @@ export class OrderService {
       await manager.save(Order, order);
       return this.findOrderOrFail(manager, orderId);
     });
+
+    this.notificationEventBus.publish({
+      type: 'ORDER_CANCELLED',
+      orderId,
+      paymentTransactionId: paymentInfo?.transaction_id,
+      refundMethod: paymentInfo?.method ?? null,
+      refundStatus: this.resolveRefundStatus(paymentInfo?.method ?? null, updatedOrder.status),
+    });
+    return updatedOrder;
+  }
+
+  async cancelCustomerOrder(orderId: number, token: string): Promise<Order> {
+    await this.findCustomerOrderOrFail(orderId, token);
+    return this.cancelOrder(orderId);
   }
 
   async getPendingOrders(page = 1, limit = this.defaultPendingPageSize) {
@@ -393,7 +429,7 @@ export class OrderService {
   }
 
   async confirmVietqrRefund(orderId: number): Promise<Order> {
-    return this.dataSource.transaction(async (manager) => {
+    const updatedOrder = await this.dataSource.transaction(async (manager) => {
       const order = await manager.findOne(Order, {
         where: { orderID: orderId },
         relations: ['orderItems', 'deliveryInfo', 'invoice'],
@@ -429,6 +465,54 @@ export class OrderService {
 
       return order;
     });
+    this.notificationEventBus.publish({
+      type: 'ORDER_CANCELLED',
+      orderId,
+      refundMethod: 'VIETQR',
+      refundStatus: 'REFUNDED',
+    });
+    return updatedOrder;
+  }
+
+  private async findCustomerOrderOrFail(orderId: number, token: string): Promise<Order> {
+    if (!token?.trim()) {
+      throw new BadRequestException('Missing customer order access token');
+    }
+
+    const order = await this.dataSource.getRepository(Order).findOne({
+      where: {
+        orderID: orderId,
+        customerAccessToken: token,
+      },
+      relations: ['orderItems', 'orderItems.product', 'deliveryInfo', 'invoice'],
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} was not found for this access token`);
+    }
+
+    return order;
+  }
+
+  private async getSuccessfulPaymentInfo(
+    manager: EntityManager,
+    orderId: number,
+  ): Promise<{ transaction_id: number; method: string } | null> {
+    const txs = await manager.query(
+      'SELECT transaction_id, method FROM payment_transactions WHERE order_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 1',
+      [orderId, 'SUCCESS'],
+    );
+    return txs.length > 0 ? txs[0] : null;
+  }
+
+  private resolveRefundStatus(paymentMethod: string | null, orderStatus: string): string {
+    if (paymentMethod === 'PAYPAL') {
+      return 'REFUNDED';
+    }
+    if (paymentMethod === 'VIETQR') {
+      return orderStatus === 'REFUNDED' ? 'REFUNDED' : 'REFUND_PENDING';
+    }
+    return 'No payment refund required';
   }
 
   private async restoreReservedStock(manager: EntityManager, order: Order): Promise<void> {
@@ -478,5 +562,9 @@ export class OrderService {
 
   private roundMoney(value: number): number {
     return Math.round(value * 100) / 100;
+  }
+
+  private generateCustomerAccessToken(): string {
+    return randomBytes(32).toString('hex');
   }
 }
