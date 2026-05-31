@@ -37,7 +37,7 @@ export class OrderController {
   constructor(
     private readonly cartService: CartService,
     private readonly orderService: OrderService,
-  ) {}
+  ) { }
 
   @Post('cart/check-stock')
   async checkCartStock(@Body() dto: CheckCartStockDto) {
@@ -66,7 +66,6 @@ export class OrderController {
 
   @Get('vietqr-refunds')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PRODUCT_MANAGER')
   async getVietqrRefunds(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
