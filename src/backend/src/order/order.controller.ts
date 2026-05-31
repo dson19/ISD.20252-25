@@ -66,6 +66,7 @@ export class OrderController {
 
   @Get('vietqr-refunds')
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PRODUCT_MANAGER')
   async getVietqrRefunds(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
@@ -74,15 +75,11 @@ export class OrderController {
   }
 
   @Get(':orderId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PRODUCT_MANAGER')
   async getOrderDetail(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.getOrderDetail(orderId);
   }
 
   @Patch(':orderId/delivery-info')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PRODUCT_MANAGER')
   async updateDeliveryInfo(
     @Param('orderId', ParseIntPipe) orderId: number,
     @Body() dto: DeliveryInfoDto,
