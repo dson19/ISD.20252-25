@@ -8,14 +8,23 @@ async function bootstrap() {
     res.setHeader('Cache-Control', 'no-store');
     next();
   });
-  const allowedDevOrigins = [
+  const allowedOrigins = [
     /^http:\/\/localhost:\d+$/,
     /^http:\/\/127\.0\.0\.1:\d+$/,
     /^http:\/\/0\.0\.0\.0:\d+$/,
+    /^https:\/\/.*\.vercel\.app$/,
   ];
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : [];
+
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedDevOrigins.some((pattern) => pattern.test(origin))) {
+      if (
+        !origin ||
+        allowedOrigins.some((pattern) => pattern.test(origin)) ||
+        allowedOriginsEnv.includes(origin)
+      ) {
         callback(null, true);
         return;
       }
