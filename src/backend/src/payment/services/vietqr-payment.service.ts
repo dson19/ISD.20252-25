@@ -8,6 +8,7 @@ import { VietqrTransaction } from '../entities/vietqr-transaction.entity';
 import { PaymentRepository } from '../repositories/payment.repository';
 import { VietqrApiClient } from '../API/vietqr-api.client';
 import { VietqrRepository } from '../repositories/vietqr.repository';
+import { NotificationEventBus } from '../../notification/events/notification-event-bus';
 
 export interface VietqrPaymentResponse {
   paymentId: number;
@@ -47,6 +48,7 @@ export class VietqrPaymentService {
     private readonly paymentRepository: PaymentRepository,
     private readonly vietqrRepository: VietqrRepository,
     private readonly vietqrApiClient: VietqrApiClient,
+    private readonly notificationEventBus: NotificationEventBus,
   ) { }
 
   async createPayment(dto: CreateVietqrPaymentDto): Promise<VietqrPaymentResponse> {
@@ -68,7 +70,7 @@ export class VietqrPaymentService {
       return this.toPaymentResponse(existingPending, existingPending.paymentTransaction.transactionID);
     }
 
-    const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, dto.amount, 'VIETQR');
+    const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, dto.amount, 'VIETQR', content);
     try {
       const qrResponse = await this.vietqrApiClient.generateQrCode({
         orderId: String(dto.orderId),
@@ -157,6 +159,11 @@ export class VietqrPaymentService {
       );
       await this.orderRepository.update(vietqrTransaction.orderId, {
         status: 'PENDING_PROCESSING',
+      });
+      this.notificationEventBus.publish({
+        type: 'ORDER_PAYMENT_SUCCEEDED',
+        orderId: vietqrTransaction.orderId,
+        paymentTransactionId: vietqrTransaction.paymentTransaction.transactionID,
       });
     }
 

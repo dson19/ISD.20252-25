@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { OrderModule } from './order/order.module';
 import { PaymentModule } from './payment/payment.module';
 import { AuthModule } from './auth/auth.module';
+import { NotificationModule } from './notification/notification.module';
 
 
 @Module({
@@ -16,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
     ProductsModule,
     UserModule,
     AuthModule,
+    NotificationModule,
     OrderModule,
     PaymentModule,
     TypeOrmModule.forRootAsync({

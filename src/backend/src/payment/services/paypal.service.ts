@@ -3,6 +3,7 @@ import { PaymentRepository } from '../repositories/payment.repository';
 import { PaypalRepository } from '../repositories/paypal.repository';
 import { OrderRepository } from '../../order/order.repository';
 import { PaypalApiClient } from '../API/paypal-api-client';
+import { NotificationEventBus } from '../../notification/events/notification-event-bus';
 
 /**
  * + Coupling/Cohesion level:
@@ -18,6 +19,7 @@ export class PaypalService {
         private readonly paypalRepository: PaypalRepository,
         private readonly orderRepository: OrderRepository,
         private readonly paypalApiClient: PaypalApiClient,
+        private readonly notificationEventBus: NotificationEventBus,
     ) { }
 
     async createOrderInPaypal(orderId: number) {
@@ -33,7 +35,12 @@ export class PaypalService {
         try {
             const paypalOrder = await this.paypalApiClient.createOrder(orderId, usdAmount);
 
-            const paymentTx = await this.paymentRepository.createTransaction(orderId, vndAmount, 'PAYPAL');
+            const paymentTx = await this.paymentRepository.createTransaction(
+                orderId,
+                vndAmount,
+                'PAYPAL',
+                `PayPal order ${paypalOrder.id}`,
+            );
 
             await this.paypalRepository.createPaypalTx(paypalOrder.id, paymentTx.transactionID, paypalOrder.status);
 
@@ -71,6 +78,13 @@ export class PaypalService {
                 }
 
                 await this.orderRepository.updateStatus(orderId, 'PENDING_PROCESSING');
+                if (paypalTx?.paymentTransaction) {
+                    this.notificationEventBus.publish({
+                        type: 'ORDER_PAYMENT_SUCCEEDED',
+                        orderId,
+                        paymentTransactionId: paypalTx.paymentTransaction.transactionID,
+                    });
+                }
             }
 
             return captureData;
@@ -79,7 +93,7 @@ export class PaypalService {
         }
     }
 
-    async refundOrderInPaypal(orderId: number) {
+    async refundOrderInPaypal(orderId: number, updateOrderStatus = true) {
         // Tìm giao dịch PayPal thành công của đơn hàng này
         const paypalTx = await this.paypalRepository.findBySystemOrderId(orderId);
         if (!paypalTx || !paypalTx.paypalCaptureID) {
@@ -100,7 +114,16 @@ export class PaypalService {
                 );
             }
 
-            await this.orderRepository.updateStatus(orderId, 'CANCELLED');
+            if (updateOrderStatus) {
+                await this.orderRepository.updateStatus(orderId, 'CANCELLED');
+                this.notificationEventBus.publish({
+                    type: 'ORDER_CANCELLED',
+                    orderId,
+                    paymentTransactionId: paypalTx.paymentTransaction?.transactionID,
+                    refundMethod: 'PAYPAL',
+                    refundStatus: 'REFUNDED',
+                });
+            }
 
             return refundData;
         } catch (err: any) {

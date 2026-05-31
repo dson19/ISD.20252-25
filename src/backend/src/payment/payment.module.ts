@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from '../order/entities/order.entity';
 import { Invoice } from '../order/entities/invoice.entity';
@@ -16,11 +16,13 @@ import { VietqrApiClient } from './API/vietqr-api.client';
 import { VietqrPaymentService } from './services/vietqr-payment.service';
 import { VietqrRepository } from './repositories/vietqr.repository';
 import { PaypalApiClient } from './API/paypal-api-client';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, Invoice, PaymentTransaction, PaypalTransaction, VietqrTransaction]),
-    OrderModule,
+    forwardRef(() => OrderModule),
+    NotificationModule,
   ],
   controllers: [PaymentController, VietqrController, VietqrMerchantController],
   providers: [

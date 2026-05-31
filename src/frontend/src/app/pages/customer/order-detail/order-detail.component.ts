@@ -11,6 +11,7 @@ import { PaymentService } from '../../../services/payment.service';
 })
 export class OrderDetailComponent implements OnInit {
   orderId = signal<number | null>(null);
+  customerAccessToken = signal<string | null>(null);
   order = signal<any>(null);
   orderLoaded = signal<boolean>(false);
   showModal = signal<boolean>(false);
@@ -28,23 +29,34 @@ export class OrderDetailComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       const orderIdParam = params['orderId'];
+      const tokenParam = params['token'];
+      const intent = params['intent'];
       if (orderIdParam) {
         this.orderId.set(Number(orderIdParam));
-        this.loadOrderDetails();
+        this.customerAccessToken.set(tokenParam || null);
+        this.loadOrderDetails(intent === 'cancel');
       } else {
         this.orderLoaded.set(true);
       }
     });
   }
 
-  loadOrderDetails() {
+  loadOrderDetails(openCancelAfterLoad = false) {
     const id = this.orderId();
     if (!id) return;
 
-    this.paymentService.getOrderDetail(id).subscribe({
+    const token = this.customerAccessToken();
+    const request = token
+      ? this.paymentService.getCustomerOrderDetail(id, token)
+      : this.paymentService.getOrderDetail(id);
+
+    request.subscribe({
       next: (data) => {
         this.order.set(data);
         this.orderLoaded.set(true);
+        if (openCancelAfterLoad && this.canCancel()) {
+          this.showConfirmCancel();
+        }
       },
       error: (err) => {
         console.error('Lỗi khi lấy thông tin đơn hàng:', err);
@@ -87,6 +99,34 @@ export class OrderDetailComponent implements OnInit {
     this.cancelLoading.set(true);
 
     const paymentMethod = currentOrder.paymentMethod;
+    const token = this.customerAccessToken();
+
+    if (token) {
+      this.paymentService.cancelCustomerOrder(id, token).subscribe({
+        next: (res) => {
+          this.cancelLoading.set(false);
+          this.showConfirmModal.set(false);
+          this.openModal(
+            'Hủy đơn hàng thành công',
+            res.status === 'REFUND_PENDING'
+              ? 'Đơn hàng đã được hủy. Hoàn tiền VietQR đang chờ quản trị viên xác nhận.'
+              : 'Đơn hàng đã được hủy và trạng thái hoàn tiền đã được cập nhật.',
+            'success'
+          );
+          this.loadOrderDetails();
+        },
+        error: (err) => {
+          this.cancelLoading.set(false);
+          this.showConfirmModal.set(false);
+          this.openModal(
+            'Không thể hủy đơn hàng',
+            `Có lỗi xảy ra khi hủy đơn hàng.\nChi tiết lỗi: ${err.error?.message || err.message}`,
+            'error'
+          );
+        }
+      });
+      return;
+    }
 
     if (paymentMethod === 'PAYPAL') {
       // Đơn hàng thanh toán bằng PayPal -> Phải hoàn tiền tự động qua PayPal thành công mới cho hủy đơn

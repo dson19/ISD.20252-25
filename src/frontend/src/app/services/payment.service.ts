@@ -28,6 +28,10 @@ export class PaymentService {
     return this.http.get(`${this.baseUrl}/api/orders/${orderId}`);
   }
 
+  getCustomerOrderDetail(orderId: number, token: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/customer/orders/${orderId}?token=${encodeURIComponent(token)}`);
+  }
+
   refundOrder(orderId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/paypal/order/refund`, {
       orderID: orderId
@@ -36,6 +40,10 @@ export class PaymentService {
 
   cancelOrder(orderId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/orders/${orderId}/cancel`, {});
+  }
+
+  cancelCustomerOrder(orderId: number, token: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/customer/orders/${orderId}/cancel?token=${encodeURIComponent(token)}`, {});
   }
 
   createVietqrPayment(orderId: number, amount: number, content: string): Observable<any> {
