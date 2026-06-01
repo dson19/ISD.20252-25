@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -201,7 +201,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       });
   }
 
-  continueToPayment(): void {
+  continueToPayment(form: NgForm): void {
+    if (form.invalid || !this.provinceValid) {
+      form.control.markAllAsTouched();
+      return;
+    }
+
     if (this.cartItems.length === 0) {
       this.router.navigate(['/cart']);
       return;
@@ -229,11 +234,23 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.submitting = false;
-        this.errorMessage =
-          error.status === 400
-            ? 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.'
-            : 'Không thể đặt hàng. Hãy kiểm tra backend API và thử lại.';
-        this.stockIssues = this.extractStockIssues(error);
+        const response = error.error as { message?: string | string[]; issues?: StockIssue[] } | undefined;
+        if (error.status === 400) {
+          if (Array.isArray(response?.issues) && response.issues.length > 0) {
+            this.errorMessage = 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.';
+            this.stockIssues = response.issues;
+          } else if (response?.message) {
+            const msg = Array.isArray(response.message) ? response.message.join(', ') : response.message;
+            this.errorMessage = `Thông tin đặt hàng không hợp lệ: ${msg}`;
+            this.stockIssues = [];
+          } else {
+            this.errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+            this.stockIssues = [];
+          }
+        } else {
+          this.errorMessage = 'Không thể đặt hàng. Hãy kiểm tra backend API và thử lại.';
+          this.stockIssues = [];
+        }
       },
     });
   }
