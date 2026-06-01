@@ -102,7 +102,7 @@ export class VietqrPaymentService {
     }
   }
 
-  async getStatusByPaymentId(paymentId: number): Promise<VietqrPaymentResponse> {
+  async getStatusByPaymentId(paymentId: number, simulate = false): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
@@ -110,6 +110,7 @@ export class VietqrPaymentService {
 
     const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
     if (
+      simulate &&
       vietqrTransaction.status === 'PENDING' &&
       (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development')
     ) {
@@ -136,7 +137,7 @@ export class VietqrPaymentService {
     return this.toPaymentResponse(vietqrTransaction, paymentId);
   }
 
-  async getStatusByTransactionRef(transactionRef: string): Promise<VietqrPaymentResponse> {
+  async getStatusByTransactionRef(transactionRef: string, simulate = false): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByTransactionRefId(transactionRef);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR transaction reference ${transactionRef} was not found`);
@@ -144,6 +145,7 @@ export class VietqrPaymentService {
 
     const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
     if (
+      simulate &&
       vietqrTransaction.status === 'PENDING' &&
       (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development')
     ) {

@@ -54,7 +54,10 @@ export class PaymentService {
     });
   }
 
-  getVietqrPaymentStatus(paymentId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/api/vietqr/payments/${paymentId}/status`);
+  getVietqrPaymentStatus(paymentId: number, simulate = false): Observable<any> {
+    const url = simulate
+      ? `${this.baseUrl}/api/vietqr/payments/${paymentId}/status?simulate=true`
+      : `${this.baseUrl}/api/vietqr/payments/${paymentId}/status`;
+    return this.http.get(url);
   }
 }
