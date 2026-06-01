@@ -79,6 +79,8 @@ export class VietqrApiClient {
     return this.mapGenerateQrResponse(data);
   }
 
+
+
   private async requestAccessToken(config: VietqrApiConfig): Promise<string> {
     const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
 

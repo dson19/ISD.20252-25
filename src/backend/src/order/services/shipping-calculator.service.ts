@@ -6,6 +6,10 @@ import { Injectable } from '@nestjs/common';
  *   - Functional Cohesion: Exclusively focused on calculating order shipping fees based on weight and geographic factors.
  * + Reason why:
  *   - Isolating dynamic shipping fee algorithms from the main OrderService prevents formula duplication and simplifies price calculation test suites.
+ * 
+ * + SOLID Principles Review:
+ *   - OCP Violation: Calculation thresholds, inner/outer city province matchers, and fee increments are hardcoded. Changing policies or adding new shipping tiers (e.g. Express) requires modifying this class.
+ *     Improvement: Define a ShippingStrategy interface and implement specific strategies (e.g. InnerCityShippingStrategy, OtherProvinceShippingStrategy, ExpressShippingStrategy).
  */
 @Injectable()
 export class ShippingCalculatorService {

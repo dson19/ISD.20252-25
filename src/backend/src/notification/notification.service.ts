@@ -11,6 +11,18 @@ import {
 } from './interfaces/notification-provider.interface';
 import { EmailTemplateService, RenderedEmail } from './templates/email-template.service';
 
+/**
+ * + Coupling/Cohesion level:
+ *   - Data Coupling: Receives event payloads and entity structures.
+ *   - Functional Cohesion: Dedicated entirely to managing/dispatching notifications based on system events.
+ * 
+ * + SOLID Principles Review:
+ *   - SRP Adherence: Coordinates only event-triggered dispatching. Rendering and sending are delegated.
+ *   - OCP Adherence: Event bus driven design and provider registration allow extending notification channels and provider implementations without modifying the service.
+ *   - LSP Adherence: Swaps email/SMS providers transparently because they adhere strictly to the NotificationProvider interface.
+ *   - ISP Adherence: Relies on the highly cohesive, role-specific NotificationProvider interface.
+ *   - DIP Adherence: Depends on the NotificationProvider abstraction injected via the NOTIFICATION_PROVIDERS token instead of hardcoding any specific API client.
+ */
 @Injectable()
 export class NotificationService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(NotificationService.name);

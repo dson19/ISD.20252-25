@@ -235,7 +235,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       this.statusMessage.set('Đang kiểm tra trạng thái thanh toán...');
     }
 
-    this.paymentService.getVietqrPaymentStatus(paymentId).subscribe({
+    this.paymentService.getVietqrPaymentStatus(paymentId, showLoading).subscribe({
       next: (res) => {
         if (showLoading) {
           this.loading.set(false);
