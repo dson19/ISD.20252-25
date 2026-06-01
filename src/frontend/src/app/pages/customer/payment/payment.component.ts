@@ -53,6 +53,10 @@ export class PaymentComponent implements OnInit, OnDestroy {
       const success = params['success'];
       const cancel = params['cancel'];
 
+      if (paypalToken || cancel === 'true') {
+        this.paymentMethod.set('CARD');
+      }
+
       if (orderIdParam) {
         this.orderId.set(Number(orderIdParam));
 
