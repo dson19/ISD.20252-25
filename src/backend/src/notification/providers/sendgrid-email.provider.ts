@@ -22,7 +22,7 @@ export class SendGridEmailProvider implements NotificationProvider {
       return;
     }
 
-    await sendgrid.send({
+    const result = await sendgrid.send({
       to: message.to,
       from: {
         email: this.fromEmail,
@@ -32,5 +32,7 @@ export class SendGridEmailProvider implements NotificationProvider {
       html: message.html,
       text: message.text,
     });
+    const response = Array.isArray(result) ? result[0] : undefined;
+    this.logger.log(`SendGrid accepted email to ${message.to} with status ${response?.statusCode ?? 'unknown'}`);
   }
 }
