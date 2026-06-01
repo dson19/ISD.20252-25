@@ -183,8 +183,9 @@ export class VietqrPaymentService {
       }
     }
 
+    const normalizedContent = (dto.content ?? '').trim().toUpperCase();
     const byDetails = await this.vietqrRepository.findByContentOrderAndAmount(
-      dto.content,
+      normalizedContent,
       Number(dto.orderId),
       Number(dto.amount),
     );
@@ -204,7 +205,9 @@ export class VietqrPaymentService {
       throw new BadRequestException('VietQR callback amount does not match payment');
     }
 
-    if (vietqrTransaction.content !== dto.content) {
+    const dbContent = (vietqrTransaction.content ?? '').trim().toUpperCase();
+    const callbackContent = (dto.content ?? '').trim().toUpperCase();
+    if (dbContent !== callbackContent) {
       throw new BadRequestException('VietQR callback content does not match payment');
     }
   }
@@ -240,7 +243,7 @@ export class VietqrPaymentService {
   }
 
   private validateAndNormalizeContent(content: string): string {
-    const normalizedContent = content.trim();
+    const normalizedContent = content.trim().toUpperCase();
     if (!normalizedContent || normalizedContent.length > 23 || !/^[A-Za-z0-9 ]+$/.test(normalizedContent)) {
       throw new BadRequestException('VietQR payment content must be at most 23 non-accented alphanumeric characters');
     }

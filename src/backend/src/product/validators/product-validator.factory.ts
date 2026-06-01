@@ -179,6 +179,12 @@ class NewspaperValidator extends BaseProductValidator {
  *   - Functional Cohesion: Dedicated entirely to instantiating, selecting, and returning the correct type-specific validator.
  * + Reason why:
  *   - Centralizing sub-validation setup inside a specialized factory prevents core catalog modules from hardcoding product-type rules.
+ * 
+ * + SOLID Principles Review:
+ *   - SRP & LSP & ISP Adherence: Highly cohesive, delegates specific validation rules to independent subtype validators, all of which safely implement the ProductValidator interface.
+ *   - OCP Mild Violation: Static private `validators` map requires modifying this factory class whenever a new product category is added.
+ *     Improvement: Inject a list of validators dynamically using a custom injection token (e.g. `@Inject(PRODUCT_VALIDATORS)`), allowing expansion without modifying the factory.
+ *   - DIP Adherence: Consumed by ProductService relying on the ProductValidator interface abstraction.
  */
 @Injectable()
 export class ProductValidatorFactory {

@@ -19,6 +19,14 @@ import { ShippingCalculatorService } from './shipping-calculator.service';
  *   - Procedural Cohesion: Sequences complex order validations, shipping calculations, and entity persistence steps inside placeOrder().
  * + Reason why:
  *   - Delegating shipping calculations and cart validations to dedicated services ensures the ordering service maintains a clean, single procedural focus.
+ * 
+ * + SOLID Principles Review:
+ *   - SRP Violation: OrderService is responsible for order processing calculations, stock validation coordination, workflow state transitions, and third-party payment refunds.
+ *     Improvement: Split into OrderCalculatorService, StockReservationService, and OrderWorkflowService.
+ *   - OCP Violation: Conditional branches in rejectOrder() and cancelOrder() check specific payment methods (PAYPAL, VIETQR). Adding new payment systems requires modifying this service.
+ *     Improvement: Implement a unified PaymentRefundStrategy interface.
+ *   - DIP Violation: Depends directly on concrete PaypalService (using forwardRef to resolve circular dependency).
+ *     Improvement: Introduce a RefundProcessor interface abstraction.
  */
 @Injectable()
 export class OrderService {
