@@ -176,6 +176,36 @@ export class ProductsComponent implements OnInit {
     return 0;
   }
 
+  normalizeDate(val: string): string | null {
+    if (!val) return null;
+    const trimmed = String(val).trim();
+    
+    // Check YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+    
+    // Check DD/MM/YYYY
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+      const parts = trimmed.split('/');
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      return `${year}-${month}-${day}`;
+    }
+
+    // Check DD-MM-YYYY
+    if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(trimmed)) {
+      const parts = trimmed.split('-');
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      return `${year}-${month}-${day}`;
+    }
+    
+    return null;
+  }
+
   onMediaTypeChange(type: string) {
     if (this.isEditMode) return;
     if (type === 'BOOK') this.productForm.category = 'Sách';
@@ -511,7 +541,10 @@ export class ProductsComponent implements OnInit {
           quantityInStock: fullProduct.quantityInStock,
           imageUrl: fullProduct.imageUrl || '',
           status: fullProduct.status,
-          book: fullProduct.book || {
+          book: fullProduct.book ? {
+            ...fullProduct.book,
+            publicationDate: fullProduct.book.publicationDate ? String(fullProduct.book.publicationDate).slice(0, 10) : ''
+          } : {
             authors: '',
             coverType: 'Bìa mềm',
             publisher: '',
@@ -534,7 +567,10 @@ export class ProductsComponent implements OnInit {
             language: 'Tiếng Việt',
             subtitles: 'Tiếng Việt'
           },
-          newspaper: fullProduct.newspaper || {
+          newspaper: fullProduct.newspaper ? {
+            ...fullProduct.newspaper,
+            publicationDate: fullProduct.newspaper.publicationDate ? String(fullProduct.newspaper.publicationDate).slice(0, 10) : ''
+          } : {
             editorInChief: '',
             publisher: '',
             publicationDate: ''
@@ -639,10 +675,17 @@ export class ProductsComponent implements OnInit {
         this.errorMessage = 'Nhà xuất bản không được để trống';
         return false;
       }
-      if (!book.publicationDate?.trim()) {
+      const pubDate = book.publicationDate;
+      if (!pubDate || (typeof pubDate === 'string' && !pubDate.trim())) {
         this.errorMessage = 'Ngày xuất bản không được để trống';
         return false;
       }
+      const normalized = this.normalizeDate(String(pubDate));
+      if (!normalized) {
+        this.errorMessage = 'Ngày xuất bản không đúng định dạng (Yêu cầu: YYYY-MM-DD hoặc DD/MM/YYYY)';
+        return false;
+      }
+      book.publicationDate = normalized;
       if (book.numPages !== null && book.numPages <= 0) {
         this.errorMessage = 'Số trang phải lớn hơn 0';
         return false;
@@ -707,10 +750,17 @@ export class ProductsComponent implements OnInit {
         this.errorMessage = 'Nhà xuất bản báo không được để trống';
         return false;
       }
-      if (!np.publicationDate?.trim()) {
+      const pubDate = np.publicationDate;
+      if (!pubDate || (typeof pubDate === 'string' && !pubDate.trim())) {
         this.errorMessage = 'Ngày xuất bản báo không được để trống';
         return false;
       }
+      const normalized = this.normalizeDate(String(pubDate));
+      if (!normalized) {
+        this.errorMessage = 'Ngày xuất bản báo không đúng định dạng (Yêu cầu: YYYY-MM-DD hoặc DD/MM/YYYY)';
+        return false;
+      }
+      np.publicationDate = normalized;
     }
 
     this.errorMessage = '';
