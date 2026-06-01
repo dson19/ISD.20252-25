@@ -26,20 +26,41 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-8 mb-6">
       <h2 class="text-lg font-bold text-gray-900 mb-6">Chi tiet giao hang</h2>
 
-      <form class="space-y-6" #checkoutForm="ngForm" (ngSubmit)="continueToPayment()">
+      <form class="space-y-6" #checkoutForm="ngForm" (ngSubmit)="continueToPayment(checkoutForm)" novalidate>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Ho va ten nguoi nhan <span class="text-danger">*</span></label>
-          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: Nguyen Minh Anh" required>
+          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" #receiverNameModel="ngModel" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: Nguyen Minh Anh" required>
+          @if (receiverNameModel.invalid && (receiverNameModel.dirty || receiverNameModel.touched || checkoutForm.submitted)) {
+            <div class="text-danger text-xs mt-1">Họ và tên người nhận là bắt buộc.</div>
+          }
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-danger">*</span></label>
-          <input type="email" name="email" [(ngModel)]="deliveryInfo.email" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="email@example.com" required>
+          <input type="email" name="email" [(ngModel)]="deliveryInfo.email" #emailModel="ngModel" email required class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="email@example.com">
+          @if (emailModel.invalid && (emailModel.dirty || emailModel.touched || checkoutForm.submitted)) {
+            <div class="text-danger text-xs mt-1">
+              @if (emailModel.errors?.['required']) {
+                Email là bắt buộc.
+              } @else if (emailModel.errors?.['email']) {
+                Email không đúng định dạng.
+              }
+            </div>
+          }
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">So dien thoai <span class="text-danger">*</span></label>
-          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: 0987654321" required>
+          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" #phoneModel="ngModel" pattern="^(0|\+84)[3|5|7|8|9][0-9]{8}$" required class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: 0987654321">
+          @if (phoneModel.invalid && (phoneModel.dirty || phoneModel.touched || checkoutForm.submitted)) {
+            <div class="text-danger text-xs mt-1">
+              @if (phoneModel.errors?.['required']) {
+                Số điện thoại là bắt buộc.
+              } @else if (phoneModel.errors?.['pattern']) {
+                Số điện thoại không đúng định dạng.
+              }
+            </div>
+          }
         </div>
 
         <div class="relative">
@@ -56,6 +77,9 @@
             autocomplete="off"
             required
           >
+          @if (!provinceValid && (provinceSearch || checkoutForm.submitted)) {
+            <div class="text-danger text-xs mt-1">Vui lòng chọn Tỉnh / Thành phố từ danh sách hợp lệ.</div>
+          }
           @if (provinceOptionsOpen) {
             <div class="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
               @for (province of filteredProvinces; track province) {
@@ -75,7 +99,10 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Dia chi chi tiet <span class="text-danger">*</span></label>
-          <textarea name="address" [(ngModel)]="deliveryInfo.address" (ngModelChange)="calculateShippingFee()" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="So nha, ten duong, phuong/xa, quan/huyen" required></textarea>
+          <textarea name="address" [(ngModel)]="deliveryInfo.address" #addressModel="ngModel" (ngModelChange)="calculateShippingFee()" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="So nha, ten duong, phuong/xa, quan/huyen" required></textarea>
+          @if (addressModel.invalid && (addressModel.dirty || addressModel.touched || checkoutForm.submitted)) {
+            <div class="text-danger text-xs mt-1">Địa chỉ chi tiết là bắt buộc.</div>
+          }
         </div>
 
         <div>
@@ -93,7 +120,7 @@
           </a>
           <button
             type="submit"
-            [disabled]="checkoutForm.invalid || !provinceValid || loadingOrder || submitting || calculatingShipping || cartItems.length === 0"
+            [disabled]="loadingOrder || submitting || calculatingShipping || cartItems.length === 0"
             class="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {{ submitting ? (editOrderId ? 'Dang cap nhat...' : 'Dang tao don hang...') : (editOrderId ? 'Cap nhat hoa don' : 'Xac nhan dat hang') }}
