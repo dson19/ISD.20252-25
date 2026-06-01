@@ -64,9 +64,6 @@ export class PaymentComponent implements OnInit, OnDestroy {
           next: (order) => {
             this.totalAmount.set(Number(order.totalPayment));
             this.orderLoaded.set(true);
-            if (this.paymentMethod() === 'QR') {
-              this.loadOrCreateVietqrPayment();
-            }
           },
           error: (err) => {
             this.orderLoaded.set(true);
@@ -127,7 +124,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
   selectMethod(method: 'QR' | 'CARD') {
     this.paymentMethod.set(method);
     if (method === 'QR') {
-      this.loadOrCreateVietqrPayment();
+      if (this.paymentId() && !this.isExpired()) {
+        this.startStatusPolling(this.paymentId()!);
+      }
     } else {
       this.stopStatusPolling();
     }
@@ -289,7 +288,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       if (pId) {
         this.checkPaymentStatus(pId, true);
       } else {
-        this.showAlert('Lỗi', 'Không tìm thấy thông tin giao dịch VietQR.', 'error');
+        this.loadOrCreateVietqrPayment();
       }
     } else {
       this.loading.set(true);

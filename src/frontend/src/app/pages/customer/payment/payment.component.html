@@ -60,23 +60,27 @@
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 inline-block mb-4">
           @if (qrLink() || qrCode()) {
             <img [src]="qrLink() || qrCode()" alt="VietQR" class="w-48 h-48 mx-auto object-contain">
+            <p class="mt-3 font-bold text-gray-800 text-sm">Quét mã để thanh toán</p>
+            <p class="text-xs text-gray-500">Mở ứng dụng ngân hàng để quét mã VietQR</p>
           } @else {
-            <div class="w-48 h-48 flex flex-col items-center justify-center bg-gray-50 rounded-xl mx-auto border border-dashed border-gray-200">
-              <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mb-2"></div>
-              <span class="text-xs text-gray-400">Đang tạo mã QR...</span>
+            <div class="w-48 h-48 flex flex-col items-center justify-center bg-gray-50 rounded-xl mx-auto border border-dashed border-gray-200 p-4">
+              <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1M18 8h1M6 8H5M12 20v1M18 16h1M6 16H5M12 9v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span class="text-xs text-gray-400 text-center font-medium leading-relaxed">Chưa tạo mã QR. Nhấn nút bên dưới để tạo mã.</span>
             </div>
           }
-          <p class="mt-3 font-bold text-gray-800 text-sm">Quét mã để thanh toán</p>
-          <p class="text-xs text-gray-500">Mở ứng dụng ngân hàng để quét mã VietQR</p>
         </div>
-        <div
-          class="flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-100 py-2 px-4 rounded-full w-fit mx-auto">
-          <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Còn lại <span class="text-danger ml-1">{{ qrTimeLeft() }}</span>
-        </div>
+        @if (paymentId()) {
+          <div
+            class="flex items-center justify-center text-sm font-medium text-gray-600 bg-gray-100 py-2 px-4 rounded-full w-fit mx-auto">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Còn lại <span class="text-danger ml-1">{{ qrTimeLeft() }}</span>
+          </div>
+        }
       </div>
       } @else {
       <!-- PayPal Redirect Info -->
@@ -104,7 +108,7 @@
             class="text-xl">VND</span></p>
       </div>
 
-      @if (paymentMethod() === 'QR') {
+      @if (paymentMethod() === 'QR' && paymentId()) {
       <div class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mb-8 space-y-3 text-sm animate-fade-in">
         <div class="flex justify-between border-b border-blue-100 pb-2">
           <span class="text-gray-500">Ngân hàng</span>
@@ -140,9 +144,9 @@
 
       <div>
         <button (click)="confirmPayment()"
-          [disabled]="isExpired() || !paymentId()"
+          [disabled]="isExpired()"
           class="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-          Xác nhận
+          {{ paymentId() ? 'Kiểm tra trạng thái' : 'Tạo mã QR thanh toán' }}
         </button>
       </div>
       } @else {
