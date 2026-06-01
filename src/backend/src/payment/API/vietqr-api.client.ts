@@ -79,6 +79,33 @@ export class VietqrApiClient {
     return this.mapGenerateQrResponse(data);
   }
 
+  async simulateDevTestCallback(request: GenerateVietqrCodeRequest): Promise<string> {
+    const config = this.getConfig();
+    const token = await this.requestAccessToken(config);
+
+    const response = await fetch(`${config.apiBaseUrl}/vqr/bank/api/test/transaction-callback`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bankAccount: config.bankAccount,
+        amount: request.amount,
+        content: request.content,
+        orderId: request.orderId,
+        transType: 'C',
+        transactionId: `MOCK-TX-${request.orderId}-${Date.now()}`,
+        transactionTime: Date.now(),
+        referenceNumber: `MOCK-REF-${request.orderId}-${Date.now()}`,
+      }),
+    });
+
+    const text = await response.text();
+    console.log('VietQR simulateDevTestCallback response:', text);
+    return text;
+  }
+
   private async requestAccessToken(config: VietqrApiConfig): Promise<string> {
     const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
 
