@@ -119,6 +119,30 @@ export class VietqrPaymentService {
       throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
     }
 
+    const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
+    if (
+      vietqrTransaction.status === 'PENDING' &&
+      (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development')
+    ) {
+      await this.handleCallback({
+        bankaccount: process.env.VIETQR_BANK_ACCOUNT || '0398277899',
+        amount: Number(vietqrTransaction.amount),
+        transType: 'C',
+        content: vietqrTransaction.content,
+        transactionid: `MOCK-TX-${vietqrTransaction.orderId}-${Date.now()}`,
+        transactiontime: Date.now(),
+        referencenumber: vietqrTransaction.transactionRefId || `MOCK-REF-${vietqrTransaction.orderId}`,
+        orderId: String(vietqrTransaction.orderId),
+      }).catch((err) => {
+        console.error('Failed to auto-simulate callback on status check:', err);
+      });
+
+      const updated = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
+      if (updated) {
+        return this.toPaymentResponse(updated, paymentId);
+      }
+    }
+
     await this.expireIfNeeded(vietqrTransaction);
     return this.toPaymentResponse(vietqrTransaction, paymentId);
   }
@@ -127,6 +151,30 @@ export class VietqrPaymentService {
     const vietqrTransaction = await this.vietqrRepository.findByTransactionRefId(transactionRef);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR transaction reference ${transactionRef} was not found`);
+    }
+
+    const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
+    if (
+      vietqrTransaction.status === 'PENDING' &&
+      (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development')
+    ) {
+      await this.handleCallback({
+        bankaccount: process.env.VIETQR_BANK_ACCOUNT || '0398277899',
+        amount: Number(vietqrTransaction.amount),
+        transType: 'C',
+        content: vietqrTransaction.content,
+        transactionid: `MOCK-TX-${vietqrTransaction.orderId}-${Date.now()}`,
+        transactiontime: Date.now(),
+        referencenumber: transactionRef,
+        orderId: String(vietqrTransaction.orderId),
+      }).catch((err) => {
+        console.error('Failed to auto-simulate callback on status check by ref:', err);
+      });
+
+      const updated = await this.vietqrRepository.findByTransactionRefId(transactionRef);
+      if (updated) {
+        return this.toPaymentResponse(updated, updated.paymentTransaction.transactionID);
+      }
     }
 
     await this.expireIfNeeded(vietqrTransaction);
