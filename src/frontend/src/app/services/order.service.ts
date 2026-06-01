@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CartItem } from './cart.service';
@@ -65,6 +65,12 @@ export interface ShippingFeeResponse {
   totalPayment: number;
 }
 
+export interface OrderListFilters {
+  search?: string;
+  dateRange?: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH';
+  paymentMethod?: 'ALL' | 'PAYPAL' | 'VIETQR' | 'UNPAID';
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   constructor(
@@ -109,12 +115,16 @@ export class OrderService {
     return this.http.get<OrderResponse>(`${this.baseUrl}/api/orders/${orderId}`);
   }
 
-  getPendingOrders(page: number, limit: number): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/orders/pending?page=${page}&limit=${limit}`);
+  getPendingOrders(page: number, limit: number, filters: OrderListFilters = {}): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/orders/pending`, {
+      params: this.buildOrderListParams(page, limit, filters),
+    });
   }
 
-  getVietqrRefunds(page: number, limit: number): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/orders/vietqr-refunds?page=${page}&limit=${limit}`);
+  getVietqrRefunds(page: number, limit: number, filters: OrderListFilters = {}): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/orders/vietqr-refunds`, {
+      params: this.buildOrderListParams(page, limit, filters),
+    });
   }
 
   confirmVietqrRefund(orderId: number): Observable<any> {
@@ -131,5 +141,24 @@ export class OrderService {
 
   cancelOrder(orderId: number): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/api/orders/${orderId}/cancel`, {});
+  }
+
+  private buildOrderListParams(page: number, limit: number, filters: OrderListFilters): HttpParams {
+    let params = new HttpParams()
+      .set('page', String(page))
+      .set('limit', String(limit));
+
+    const search = filters.search?.trim();
+    if (search) {
+      params = params.set('search', search);
+    }
+    if (filters.dateRange && filters.dateRange !== 'ALL') {
+      params = params.set('dateRange', filters.dateRange);
+    }
+    if (filters.paymentMethod && filters.paymentMethod !== 'ALL') {
+      params = params.set('paymentMethod', filters.paymentMethod);
+    }
+
+    return params;
   }
 }

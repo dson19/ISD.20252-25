@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OrderService } from '../../../services/order.service';
+import { OrderListFilters, OrderService } from '../../../services/order.service';
 
 @Component({
   selector: 'app-orders',
@@ -19,6 +19,11 @@ export class OrdersComponent implements OnInit {
   pageSize = 30;
   totalItems = 0;
   totalPages = 0;
+
+  // Filter properties
+  searchQuery = '';
+  dateRange: OrderListFilters['dateRange'] = 'ALL';
+  paymentMethod: OrderListFilters['paymentMethod'] = 'ALL';
 
   // Detail Modal properties
   selectedOrder: any = null;
@@ -66,14 +71,18 @@ export class OrdersComponent implements OnInit {
   setTab(tab: 'pending' | 'refund') {
     this.activeTab = tab;
     this.currentPage = 1;
+    if (tab === 'refund' && (this.paymentMethod === 'PAYPAL' || this.paymentMethod === 'UNPAID')) {
+      this.paymentMethod = 'ALL';
+    }
     this.loadOrders();
   }
 
   loadOrders() {
     this.isLoading = true;
+    const filters = this.currentFilters();
     const req = this.activeTab === 'pending'
-      ? this.orderService.getPendingOrders(this.currentPage, this.pageSize)
-      : this.orderService.getVietqrRefunds(this.currentPage, this.pageSize);
+      ? this.orderService.getPendingOrders(this.currentPage, this.pageSize, filters)
+      : this.orderService.getVietqrRefunds(this.currentPage, this.pageSize, filters);
 
     req.subscribe({
       next: (res) => {
@@ -95,6 +104,27 @@ export class OrdersComponent implements OnInit {
     if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
     this.loadOrders();
+  }
+
+  applyFilters() {
+    this.currentPage = 1;
+    this.loadOrders();
+  }
+
+  clearFilters() {
+    this.searchQuery = '';
+    this.dateRange = 'ALL';
+    this.paymentMethod = 'ALL';
+    this.currentPage = 1;
+    this.loadOrders();
+  }
+
+  private currentFilters(): OrderListFilters {
+    return {
+      search: this.searchQuery,
+      dateRange: this.dateRange,
+      paymentMethod: this.paymentMethod,
+    };
   }
 
   // Thao tác xem chi tiết đơn hàng
