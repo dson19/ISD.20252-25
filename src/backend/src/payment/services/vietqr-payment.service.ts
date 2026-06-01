@@ -91,17 +91,6 @@ export class VietqrPaymentService {
         expiredAt,
       });
 
-      const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
-      if (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development') {
-        this.vietqrApiClient.simulateDevTestCallback({
-          orderId: String(dto.orderId),
-          amount: dto.amount,
-          content,
-        }).catch((err) => {
-          console.error('Failed to trigger VietQR dev test callback:', err);
-        });
-      }
-
       return this.toPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
     } catch (error) {
       await this.paymentRepository.updateTransactionStatusIfCurrent(
