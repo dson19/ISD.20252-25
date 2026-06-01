@@ -37,7 +37,7 @@ export class OrderController {
   constructor(
     private readonly cartService: CartService,
     private readonly orderService: OrderService,
-  ) {}
+  ) { }
 
   @Post('cart/check-stock')
   async checkCartStock(@Body() dto: CheckCartStockDto) {
@@ -75,15 +75,11 @@ export class OrderController {
   }
 
   @Get(':orderId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PRODUCT_MANAGER')
   async getOrderDetail(@Param('orderId', ParseIntPipe) orderId: number) {
     return this.orderService.getOrderDetail(orderId);
   }
 
   @Patch(':orderId/delivery-info')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PRODUCT_MANAGER')
   async updateDeliveryInfo(
     @Param('orderId', ParseIntPipe) orderId: number,
     @Body() dto: DeliveryInfoDto,
