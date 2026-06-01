@@ -17,6 +17,8 @@ export class PaymentResultComponent implements OnInit {
   errorMessage = signal<string>('');
   orderLoaded = signal<boolean>(false);
 
+  paymentMethod = signal<string | null>(null);
+
   constructor(
     private route: ActivatedRoute,
     private paymentService: PaymentService
@@ -39,6 +41,7 @@ export class PaymentResultComponent implements OnInit {
           next: (order) => {
             this.totalAmount.set(Number(order.totalPayment));
             this.deliveryInfo.set(order.deliveryInfo);
+            this.paymentMethod.set(order.paymentMethod);
             this.orderLoaded.set(true);
           },
           error: (err) => {

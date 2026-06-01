@@ -21,6 +21,7 @@ import { OrderService } from './services/order.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { OrderListFilters } from './services/order.service';
 
 /**
  * OrderController - REST API cho cart va quy trinh dat/duyet/huy don hang.
@@ -60,8 +61,11 @@ export class OrderController {
   async getPendingOrders(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
+    @Query('search') search?: string,
+    @Query('dateRange') dateRange?: OrderListFilters['dateRange'],
+    @Query('paymentMethod') paymentMethod?: OrderListFilters['paymentMethod'],
   ) {
-    return this.orderService.getPendingOrders(page, limit);
+    return this.orderService.getPendingOrders(page, limit, { search, dateRange, paymentMethod });
   }
 
   @Get('vietqr-refunds')
@@ -70,8 +74,11 @@ export class OrderController {
   async getVietqrRefunds(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit: number,
+    @Query('search') search?: string,
+    @Query('dateRange') dateRange?: OrderListFilters['dateRange'],
+    @Query('paymentMethod') paymentMethod?: OrderListFilters['paymentMethod'],
   ) {
-    return this.orderService.getVietqrRefundRequests(page, limit);
+    return this.orderService.getVietqrRefundRequests(page, limit, { search, dateRange, paymentMethod });
   }
 
   @Get(':orderId')

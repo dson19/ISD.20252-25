@@ -10,6 +10,10 @@ import { Injectable, BadRequestException } from '@nestjs/common';
  */
 @Injectable()
 export class PaypalApiClient {
+    private getFrontendUrl(): string {
+        return (process.env.APP_PUBLIC_URL || 'http://localhost:4200').replace(/\/$/, '');
+    }
+
     private getPaypalConfig() {
         const clientId = process.env.PAYPAL_CLIENT_ID;
         const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -51,6 +55,7 @@ export class PaypalApiClient {
     async createOrder(orderId: number, usdAmount: string): Promise<any> {
         const { apiBaseUrl } = this.getPaypalConfig();
         const accessToken = await this.getAccessToken();
+        const frontendUrl = this.getFrontendUrl();
 
         try {
             const response = await fetch(`${apiBaseUrl}/v2/checkout/orders`, {
@@ -75,8 +80,8 @@ export class PaypalApiClient {
                         brand_name: 'AIMS Store',
                         landing_page: 'NO_PREFERENCE',
                         user_action: 'PAY_NOW',
-                        return_url: `http://localhost:4200/payment?orderId=${orderId}&success=true`,
-                        cancel_url: `http://localhost:4200/payment?orderId=${orderId}&cancel=true`,
+                        return_url: `${frontendUrl}/payment?orderId=${orderId}&success=true`,
+                        cancel_url: `${frontendUrl}/payment?orderId=${orderId}&cancel=true`,
                     },
                 }),
             });

@@ -62,7 +62,13 @@
           <div class="flex items-center justify-between py-4 border-t border-gray-100">
             <div>
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Phương thức thanh toán</p>
-              <p class="text-sm font-medium text-gray-900">PayPal / Thẻ tín dụng</p>
+              @if (paymentMethod() === 'VIETQR') {
+                <p class="text-sm font-medium text-gray-900">VietQR</p>
+              } @else if (paymentMethod() === 'PAYPAL') {
+                <p class="text-sm font-medium text-gray-900">PayPal / Thẻ tín dụng</p>
+              } @else {
+                <p class="text-sm font-medium text-gray-900">Chưa xác định</p>
+              }
             </div>
             <div class="text-right">
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tổng thanh toán</p>

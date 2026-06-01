@@ -103,27 +103,49 @@
           </svg>
         </div>
         <input 
-          type="text" 
+          type="text"
+          name="orderSearch"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="applyFilters()"
           class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all" 
           placeholder="Tìm theo tên khách hàng hoặc mã đơn..."
         />
       </div>
       
       <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-        <select class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all">
-          <option>Lọc theo ngày: Hôm nay</option>
-          <option>Tuần này</option>
-          <option>Tháng này</option>
+        <select
+          name="dateRange"
+          [(ngModel)]="dateRange"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
+        >
+          <option value="ALL">Lọc theo ngày: Tất cả</option>
+          <option value="TODAY">Hôm nay</option>
+          <option value="WEEK">7 ngày gần đây</option>
+          <option value="MONTH">Tháng này</option>
         </select>
         
-        <select class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all">
-          <option>Phương thức: Tất cả</option>
-          <option>PayPal</option>
-          <option>VietQR</option>
+        <select
+          name="paymentMethod"
+          [(ngModel)]="paymentMethod"
+          class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
+        >
+          <option value="ALL">Phương thức: Tất cả</option>
+          <option value="PAYPAL" [disabled]="activeTab === 'refund'">PayPal</option>
+          <option value="VIETQR">VietQR</option>
+          <option value="UNPAID" [disabled]="activeTab === 'refund'">Chưa thanh toán</option>
         </select>
 
-        <button class="bg-primary text-white px-5 py-3 rounded-2xl font-extrabold text-sm hover:bg-primary-hover shadow-md shadow-blue-500/10 transition-all cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200">
+        <button
+          (click)="applyFilters()"
+          class="bg-primary text-white px-5 py-3 rounded-2xl font-extrabold text-sm hover:bg-primary-hover shadow-md shadow-blue-500/10 transition-all cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200"
+        >
           Áp dụng bộ lọc
+        </button>
+        <button
+          (click)="clearFilters()"
+          class="bg-white text-gray-600 border border-gray-200 px-5 py-3 rounded-2xl font-extrabold text-sm hover:bg-gray-50 shadow-sm transition-all cursor-pointer active:scale-95 duration-200"
+        >
+          Xóa lọc
         </button>
       </div>
     </div>

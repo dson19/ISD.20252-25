@@ -37,6 +37,7 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
+    this.logger.log('Notification service subscribed to event bus');
     this.subscription = this.eventBus.events$().subscribe((event) => {
       void this.handle(event);
     });
@@ -48,6 +49,7 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
 
   async handle(event: NotificationEvent): Promise<void> {
     try {
+      this.logger.log(`Handling ${event.type} notification for order #${event.orderId}`);
       const order = await this.loadOrder(event.orderId);
       if (!order.deliveryInfo?.email) {
         this.logger.warn(`Notification skipped because order #${event.orderId} has no customer email`);
@@ -130,9 +132,17 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
             text: email.text,
           });
         } catch (error: any) {
-          this.logger.error(`Email notification to ${to} failed`, error?.stack || error);
+          this.logger.error(`Email notification to ${to} failed`, this.formatProviderError(error));
         }
       }),
     );
+  }
+
+  private formatProviderError(error: any): string {
+    const responseBody = error?.response?.body;
+    if (responseBody) {
+      return JSON.stringify(responseBody);
+    }
+    return error?.stack || error?.message || String(error);
   }
 }

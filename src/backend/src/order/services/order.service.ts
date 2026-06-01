@@ -1,6 +1,6 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { DataSource, EntityManager, In } from 'typeorm';
+import { DataSource, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import { NotificationEventBus } from '../../notification/events/notification-event-bus';
 import { PaypalService } from '../../payment/services/paypal.service';
 import { Product } from '../../product/entities/product.entity';
@@ -12,6 +12,12 @@ import { OrderItem } from '../entities/order-item.entity';
 import { Order } from '../entities/order.entity';
 import { CartStockIssue, CartService } from './cart.service';
 import { ShippingCalculatorService } from './shipping-calculator.service';
+
+export interface OrderListFilters {
+  search?: string;
+  dateRange?: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH';
+  paymentMethod?: 'ALL' | 'PAYPAL' | 'VIETQR' | 'UNPAID';
+}
 
 /**
  * + Coupling/Cohesion level:
@@ -349,7 +355,7 @@ export class OrderService {
     return this.cancelOrder(orderId);
   }
 
-  async getPendingOrders(page = 1, limit = this.defaultPendingPageSize) {
+  async getPendingOrders(page = 1, limit = this.defaultPendingPageSize, filters: OrderListFilters = {}) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), this.defaultPendingPageSize);
 
@@ -364,20 +370,12 @@ export class OrderService {
       .skip((safePage - 1) * safeLimit)
       .take(safeLimit);
 
+    this.applyOrderListFilters(query, filters);
+
     const [items, total] = await query.getManyAndCount();
 
-    // Fetch paymentMethod for each order
     const orderIds = items.map(o => o.orderID);
-    let paymentMethodsMap: Record<number, string> = {};
-    if (orderIds.length > 0) {
-      const txs = await this.dataSource.manager.query(
-        'SELECT order_id, method FROM payment_transactions WHERE order_id = ANY($1) AND status = $2',
-        [orderIds, 'SUCCESS']
-      );
-      for (const tx of txs) {
-        paymentMethodsMap[tx.order_id] = tx.method;
-      }
-    }
+    const paymentMethodsMap = await this.getLatestSuccessfulPaymentMethods(orderIds);
 
     const itemsWithMethod = items.map(item => ({
       ...item,
@@ -393,11 +391,11 @@ export class OrderService {
     };
   }
 
-  async getVietqrRefundRequests(page = 1, limit = 30) {
+  async getVietqrRefundRequests(page = 1, limit = 30, filters: OrderListFilters = {}) {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), 30);
 
-    const [items, total] = await this.dataSource.getRepository(Order)
+    const query = this.dataSource.getRepository(Order)
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.orderItems', 'orderItems')
       .leftJoinAndSelect('orderItems.product', 'product')
@@ -406,21 +404,19 @@ export class OrderService {
       .where('order.status = :status', { status: 'REFUND_PENDING' })
       .orderBy('order.createdAt', 'ASC')
       .skip((safePage - 1) * safeLimit)
-      .take(safeLimit)
-      .getManyAndCount();
+      .take(safeLimit);
 
-    // Fetch paymentMethod for each order
+    this.applyOrderListFilters(query, {
+      ...filters,
+      paymentMethod: filters.paymentMethod === 'PAYPAL' || filters.paymentMethod === 'UNPAID'
+        ? 'ALL'
+        : filters.paymentMethod,
+    });
+
+    const [items, total] = await query.getManyAndCount();
+
     const orderIds = items.map(o => o.orderID);
-    let paymentMethodsMap: Record<number, string> = {};
-    if (orderIds.length > 0) {
-      const txs = await this.dataSource.manager.query(
-        'SELECT order_id, method FROM payment_transactions WHERE order_id = ANY($1) AND status = $2',
-        [orderIds, 'SUCCESS']
-      );
-      for (const tx of txs) {
-        paymentMethodsMap[tx.order_id] = tx.method;
-      }
-    }
+    const paymentMethodsMap = await this.getLatestSuccessfulPaymentMethods(orderIds);
 
     const itemsWithMethod = items.map(item => ({
       ...item,
@@ -511,6 +507,96 @@ export class OrderService {
       [orderId, 'SUCCESS'],
     );
     return txs.length > 0 ? txs[0] : null;
+  }
+
+  private async getLatestSuccessfulPaymentMethods(orderIds: number[]): Promise<Record<number, string>> {
+    const paymentMethodsMap: Record<number, string> = {};
+    if (orderIds.length === 0) {
+      return paymentMethodsMap;
+    }
+
+    const txs = await this.dataSource.manager.query(
+      `SELECT DISTINCT ON (order_id) order_id, method
+       FROM payment_transactions
+       WHERE order_id = ANY($1) AND status = $2
+       ORDER BY order_id, created_at DESC`,
+      [orderIds, 'SUCCESS'],
+    );
+    for (const tx of txs) {
+      paymentMethodsMap[tx.order_id] = tx.method;
+    }
+    return paymentMethodsMap;
+  }
+
+  private applyOrderListFilters(query: SelectQueryBuilder<Order>, filters: OrderListFilters): void {
+    const search = filters.search?.trim();
+    if (search) {
+      const orderId = Number(search.replace(/^#/, ''));
+      const searchPattern = `%${search.toLowerCase()}%`;
+
+      if (Number.isInteger(orderId) && orderId > 0) {
+        query.andWhere(
+          '(order.orderID = :orderId OR LOWER(deliveryInfo.receiverName) LIKE :search OR LOWER(deliveryInfo.email) LIKE :search OR deliveryInfo.phoneNumber LIKE :search)',
+          { orderId, search: searchPattern },
+        );
+      } else {
+        query.andWhere(
+          '(LOWER(deliveryInfo.receiverName) LIKE :search OR LOWER(deliveryInfo.email) LIKE :search OR deliveryInfo.phoneNumber LIKE :search)',
+          { search: searchPattern },
+        );
+      }
+    }
+
+    const dateRange = filters.dateRange ?? 'ALL';
+    if (dateRange !== 'ALL') {
+      const startDate = this.resolveDateRangeStart(dateRange);
+      if (startDate) {
+        query.andWhere('order.createdAt >= :startDate', { startDate });
+      }
+    }
+
+    const paymentMethod = filters.paymentMethod ?? 'ALL';
+    if (paymentMethod === 'PAYPAL' || paymentMethod === 'VIETQR') {
+      query.andWhere(
+        `(
+          SELECT payment_filter.method
+          FROM payment_transactions payment_filter
+          WHERE payment_filter.order_id = "order"."order_id"
+            AND payment_filter.status = :paymentSuccessStatus
+          ORDER BY payment_filter.created_at DESC
+          LIMIT 1
+        ) = :paymentMethod`,
+        { paymentSuccessStatus: 'SUCCESS', paymentMethod },
+      );
+    }
+
+    if (paymentMethod === 'UNPAID') {
+      query.andWhere(
+        `NOT EXISTS (
+          SELECT 1
+          FROM payment_transactions payment_filter
+          WHERE payment_filter.order_id = "order"."order_id"
+            AND payment_filter.status = :paymentSuccessStatus
+        )`,
+        { paymentSuccessStatus: 'SUCCESS' },
+      );
+    }
+  }
+
+  private resolveDateRangeStart(dateRange: OrderListFilters['dateRange']): Date | null {
+    const now = new Date();
+    if (dateRange === 'TODAY') {
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    if (dateRange === 'WEEK') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      start.setDate(start.getDate() - 6);
+      return start;
+    }
+    if (dateRange === 'MONTH') {
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+    return null;
   }
 
   private resolveRefundStatus(paymentMethod: string | null, orderStatus: string): string {
