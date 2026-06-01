@@ -506,8 +506,8 @@ export class ProductsComponent implements OnInit {
           width: fullProduct.width,
           height: fullProduct.height,
           weight: fullProduct.weight,
-          originalPrice: fullProduct.originalPrice,
-          currentPrice: fullProduct.currentPrice,
+          originalPrice: this.formatPriceInput(Math.round(Number(fullProduct.originalPrice))),
+          currentPrice: this.formatPriceInput(Math.round(Number(fullProduct.currentPrice))),
           quantityInStock: fullProduct.quantityInStock,
           imageUrl: fullProduct.imageUrl || '',
           status: fullProduct.status,
@@ -612,8 +612,8 @@ export class ProductsComponent implements OnInit {
     }
 
     // Price Ratio validation
-    const origPrice = Number(this.productForm.originalPrice);
-    const currPrice = Number(this.productForm.currentPrice);
+    const origPrice = this.parsePrice(this.productForm.originalPrice);
+    const currPrice = this.parsePrice(this.productForm.currentPrice);
     if (origPrice <= 0) {
       this.errorMessage = 'Giá gốc phải lớn hơn 0';
       return false;
@@ -732,8 +732,8 @@ export class ProductsComponent implements OnInit {
       width: this.productForm.width,
       height: this.productForm.height,
       weight: Number(this.productForm.weight),
-      originalPrice: Number(this.productForm.originalPrice),
-      currentPrice: Number(this.productForm.currentPrice),
+      originalPrice: this.parsePrice(this.productForm.originalPrice),
+      currentPrice: this.parsePrice(this.productForm.currentPrice),
       quantityInStock: Number(this.productForm.quantityInStock),
       imageUrl: this.productForm.imageUrl ? this.productForm.imageUrl.trim() : null,
       status: this.productForm.status
