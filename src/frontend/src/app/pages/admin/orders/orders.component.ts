@@ -16,7 +16,7 @@ export class OrdersComponent implements OnInit {
 
   // Pagination properties
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 30;
   totalItems = 0;
   totalPages = 0;
 
