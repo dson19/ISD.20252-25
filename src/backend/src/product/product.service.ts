@@ -13,19 +13,16 @@ import { CdTrack } from './entities/cd-track.entity';
 import { Cd } from './entities/cd.entity';
 import { Dvd } from './entities/dvd.entity';
 import { Newspaper } from './entities/newspaper.entity';
+import { Media } from './entities/media.entity';
 import { ProductLog } from './entities/product-audit-log.entity';
 import { Product } from './entities/product.entity';
 import { ProductRepository } from './product.repository';
-import {
-  ProductMediaType,
-  ProductValidatorFactory,
-} from './validators/product-validator.factory';
+import { ProductValidatorFactory } from './validators/product-validator.factory';
 
-type ProductDetailKey = 'book' | 'cd' | 'dvd' | 'newspaper';
 type DeleteResultStatus = 'DEACTIVATED' | 'DELETED' | 'NOT_FOUND' | 'DEACTIVATED_ORDERED';
 
 const COMMON_PRODUCT_FIELDS: (keyof CreateProductDto)[] = [
-  'mediaType',
+  'productType',
   'title',
   'category',
   'description',
@@ -41,14 +38,6 @@ const COMMON_PRODUCT_FIELDS: (keyof CreateProductDto)[] = [
   'imageUrl',
 ];
 
-/**
- * + Coupling/Cohesion level:
- *   - Control Coupling: ProductService passes the `mediaType` string to ProductValidatorFactory to retrieve validator strategies.
- *   - Data Coupling: Interacts with ProductRepository by passing primitive search parameters and IDs.
- *   - Procedural Cohesion: Sequences database transactions, entity creations, audit log writing, and attachment logic.
- * + Reason why:
- *   - Outsourcing specific validations to ProductValidatorFactory keeps core catalog operations stateless and free of hardcoded conditional switches.
- */
 @Injectable()
 export class ProductService {
   constructor(
@@ -100,7 +89,7 @@ export class ProductService {
       await this.saveProductDetail(
         manager,
         savedProduct,
-        validator.mediaType,
+        validator.productType,
         dto,
       );
       await this.writeAuditLog(manager, {
@@ -128,14 +117,14 @@ export class ProductService {
       const productRepo = manager.getRepository(Product);
       const product = await productRepo.findOneByOrFail({ productID: id });
       const productPatch = this.buildProductPayload(dto);
-      delete productPatch.mediaType;
+      delete productPatch.productType;
       productRepo.merge(product, productPatch);
       const savedProduct = await productRepo.save(product);
 
       await this.saveProductDetail(
         manager,
         savedProduct,
-        validator.mediaType,
+        validator.productType,
         dto,
       );
       await this.writeAuditLog(manager, {
@@ -233,7 +222,7 @@ export class ProductService {
               changedFields: {
                 productID: id,
                 title: product.title,
-                mediaType: product.mediaType,
+                productType: product.productType,
               },
               performedBy: managerId,
             });
@@ -354,56 +343,102 @@ export class ProductService {
   }
 
   private async attachDetail(product: Product) {
-    const mediaType = product.mediaType as ProductMediaType;
-    const detailKey = this.detailKeyForMediaType(mediaType);
-    const detail = await this.findDetail(product.productID, mediaType);
+    const productType = product.productType;
+    const detailKey = this.detailKeyForMediaType(productType);
+    const detail = await this.findDetail(product.productID, productType);
 
     return {
       ...product,
-      [detailKey]: this.stripNestedProduct(detail),
+      [detailKey]: this.stripAndFlattenDetail(detail),
     };
   }
 
-  private async findDetail(productID: number, mediaType: ProductMediaType) {
-    switch (mediaType) {
+  private async findDetail(productID: number, productType: string) {
+    switch (productType?.toUpperCase()) {
       case 'BOOK':
         return this.dataSource
           .getRepository(Book)
-          .findOneBy({ productID });
+          .findOne({ where: { productID }, relations: ['media'] });
       case 'CD':
         return this.dataSource.getRepository(Cd).findOne({
           where: { productID },
-          relations: ['tracks'],
+          relations: ['media', 'tracks'],
         });
       case 'DVD':
-        return this.dataSource.getRepository(Dvd).findOneBy({ productID });
+        return this.dataSource.getRepository(Dvd).findOne({
+          where: { productID },
+          relations: ['media'],
+        });
       case 'NEWSPAPER':
         return this.dataSource
           .getRepository(Newspaper)
-          .findOneBy({ productID });
+          .findOne({ where: { productID }, relations: ['media'] });
+      default:
+        throw new BadRequestException(`Unsupported productType: ${productType}`);
     }
   }
 
   private async saveProductDetail(
     manager: EntityManager,
     product: Product,
-    mediaType: ProductMediaType,
+    productType: string,
     dto: CreateProductDto | UpdateProductDto,
   ): Promise<void> {
-    switch (mediaType) {
+    const mediaRepo = manager.getRepository(Media);
+    let publisher: string | undefined;
+    let releaseDate: Date | string | undefined;
+    let language: string | undefined;
+    let genre: string | undefined;
+
+    if (dto.book) {
+      publisher = dto.book.publisher;
+      releaseDate = dto.book.publicationDate;
+      language = dto.book.language;
+      genre = dto.book.genre;
+    } else if (dto.newspaper) {
+      publisher = dto.newspaper.publisher;
+      releaseDate = dto.newspaper.publicationDate;
+      language = dto.newspaper.language;
+    } else if (dto.cd) {
+      publisher = dto.cd.recordLabel;
+      releaseDate = dto.cd.releaseDate;
+      genre = dto.cd.genre;
+    } else if (dto.dvd) {
+      publisher = dto.dvd.studio;
+      releaseDate = dto.dvd.releaseDate;
+      language = dto.dvd.language;
+      genre = dto.dvd.genre;
+    }
+
+    const savedMedia = await mediaRepo.save({
+      productID: product.productID,
+      product,
+      publisher,
+      releaseDate: releaseDate ? new Date(releaseDate) : undefined,
+      language,
+      genre,
+    });
+
+    switch (productType?.toUpperCase()) {
       case 'BOOK':
         if (dto.book) {
-          await manager
-            .getRepository(Book)
-            .save({ productID: product.productID, product, ...dto.book });
+          await manager.getRepository(Book).save({
+            productID: product.productID,
+            media: savedMedia,
+            authors: dto.book.authors,
+            coverType: dto.book.coverType,
+            numPages: dto.book.numPages,
+          });
         }
         return;
       case 'CD':
         if (dto.cd) {
           const { tracks, ...cdFields } = dto.cd;
-          const cd = await manager
-            .getRepository(Cd)
-            .save({ productID: product.productID, product, ...cdFields });
+          const cd = await manager.getRepository(Cd).save({
+            productID: product.productID,
+            media: savedMedia,
+            artists: cdFields.artists,
+          });
 
           if (tracks !== undefined) {
             await manager
@@ -426,20 +461,31 @@ export class ProductService {
         return;
       case 'DVD':
         if (dto.dvd) {
-          await manager
-            .getRepository(Dvd)
-            .save({ productID: product.productID, product, ...dto.dvd });
+          await manager.getRepository(Dvd).save({
+            productID: product.productID,
+            media: savedMedia,
+            discType: dto.dvd.discType,
+            director: dto.dvd.director,
+            runtimeMinutes: dto.dvd.runtimeMinutes,
+            subtitles: dto.dvd.subtitles,
+          });
         }
         return;
       case 'NEWSPAPER':
         if (dto.newspaper) {
           await manager.getRepository(Newspaper).save({
             productID: product.productID,
-            product,
-            ...dto.newspaper,
+            media: savedMedia,
+            editorInChief: dto.newspaper.editorInChief,
+            issueNumber: dto.newspaper.issueNumber,
+            frequency: dto.newspaper.frequency,
+            issn: dto.newspaper.issn,
+            sections: dto.newspaper.sections,
           });
         }
         return;
+      default:
+        throw new BadRequestException(`Unsupported productType: ${productType}`);
     }
   }
 
@@ -472,19 +518,34 @@ export class ProductService {
     return payload;
   }
 
-  private stripNestedProduct<T>(detail: T): Omit<T, 'product'> | null {
+  private stripAndFlattenDetail(detail: any): any {
     if (!detail) {
       return null;
     }
-
-    const { product: _product, ...payload } = detail as T & {
-      product?: Product;
-    };
+    const { media, ...rest } = detail;
+    if (media) {
+      const { product, ...mediaFields } = media;
+      const result = {
+        ...rest,
+        ...mediaFields,
+      };
+      if (mediaFields.releaseDate !== undefined) {
+        result.publicationDate = mediaFields.releaseDate;
+      }
+      if (mediaFields.publisher !== undefined) {
+        result.recordLabel = mediaFields.publisher;
+      }
+      if (mediaFields.publisher !== undefined) {
+        result.studio = mediaFields.publisher;
+      }
+      return result;
+    }
+    const { product, ...payload } = detail;
     return payload;
   }
 
-  private detailKeyForMediaType(mediaType: ProductMediaType): ProductDetailKey {
-    switch (mediaType) {
+  private detailKeyForMediaType(productType: string): string {
+    switch (productType?.toUpperCase()) {
       case 'BOOK':
         return 'book';
       case 'CD':
@@ -493,6 +554,8 @@ export class ProductService {
         return 'dvd';
       case 'NEWSPAPER':
         return 'newspaper';
+      default:
+        throw new BadRequestException(`Unsupported productType: ${productType}`);
     }
   }
 

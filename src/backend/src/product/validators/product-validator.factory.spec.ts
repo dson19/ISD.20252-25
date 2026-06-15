@@ -24,7 +24,7 @@ describe('ProductValidatorFactory', () => {
     );
   });
 
-  it('rejects detail objects that do not match mediaType', () => {
+  it('rejects detail objects that do not match productType', () => {
     const dto = buildBookDto();
     dto.cd = {
       artists: 'Artist',
@@ -38,7 +38,7 @@ describe('ProductValidatorFactory', () => {
   it('rejects invalid CD tracks', () => {
     const dto: CreateProductDto = {
       ...buildCommonDto(),
-      mediaType: 'CD',
+      productType: 'CD',
       cd: {
         artists: 'Artist',
         recordLabel: 'Label',
@@ -54,7 +54,7 @@ describe('ProductValidatorFactory', () => {
 function buildBookDto(overrides: Partial<CreateProductDto> = {}) {
   return {
     ...buildCommonDto(),
-    mediaType: 'BOOK',
+    productType: 'BOOK',
     book: {
       authors: 'Author',
       coverType: 'PAPERBACK',
@@ -67,7 +67,7 @@ function buildBookDto(overrides: Partial<CreateProductDto> = {}) {
 
 function buildCommonDto(): CreateProductDto {
   return {
-    mediaType: 'BOOK',
+    productType: 'BOOK',
     title: 'Clean Architecture',
     category: 'Book',
     barcode: 'BARCODE-1',

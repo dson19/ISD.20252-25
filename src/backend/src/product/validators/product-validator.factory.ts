@@ -15,12 +15,9 @@ import {
 } from '../dto/update-product.dto';
 import { Product } from '../entities/product.entity';
 
-export type ProductMediaType = 'BOOK' | 'CD' | 'DVD' | 'NEWSPAPER';
-type ProductDetailKey = 'book' | 'cd' | 'dvd' | 'newspaper';
-
 export interface ProductValidator {
-  readonly mediaType: ProductMediaType;
-  readonly detailKey: ProductDetailKey;
+  readonly productType: string;
+  readonly detailKey: string;
   validateCreate(dto: CreateProductDto): void;
   validateUpdate(dto: UpdateProductDto, existing: Product): void;
 }
@@ -35,22 +32,22 @@ type DetailPayload =
   | UpdateDvdDetailDto
   | UpdateNewspaperDetailDto;
 
-const DETAIL_KEYS: ProductDetailKey[] = ['book', 'cd', 'dvd', 'newspaper'];
+const DETAIL_KEYS: string[] = ['book', 'cd', 'dvd', 'newspaper'];
 
 abstract class BaseProductValidator implements ProductValidator {
-  abstract readonly mediaType: ProductMediaType;
-  abstract readonly detailKey: ProductDetailKey;
+  abstract readonly productType: string;
+  abstract readonly detailKey: string;
 
   validateCreate(dto: CreateProductDto): void {
     validateCommonProductFields(dto);
     validatePriceRange(dto.originalPrice, dto.currentPrice);
     validateMatchingCreateDetail(dto, this.detailKey);
-    this.validateCreateDetail(dto[this.detailKey] as DetailPayload);
+    this.validateCreateDetail(dto[this.detailKey as keyof CreateProductDto] as DetailPayload);
   }
 
   validateUpdate(dto: UpdateProductDto, existing: Product): void {
-    if (dto.mediaType !== undefined && dto.mediaType !== existing.mediaType) {
-      throw new BadRequestException('mediaType cannot be changed');
+    if (dto.productType !== undefined && dto.productType !== existing.productType) {
+      throw new BadRequestException('productType cannot be changed');
     }
 
     if (
@@ -67,7 +64,7 @@ abstract class BaseProductValidator implements ProductValidator {
     );
     validateMatchingUpdateDetail(dto, this.detailKey);
 
-    const detail = dto[this.detailKey] as DetailPayload | undefined;
+    const detail = dto[this.detailKey as keyof UpdateProductDto] as DetailPayload | undefined;
     if (detail) {
       this.validateUpdateDetail(detail);
     }
@@ -99,8 +96,8 @@ abstract class BaseProductValidator implements ProductValidator {
 }
 
 class BookValidator extends BaseProductValidator {
-  readonly mediaType = 'BOOK' as const;
-  readonly detailKey = 'book' as const;
+  readonly productType = 'BOOK';
+  readonly detailKey = 'book';
 
   protected validateCreateDetail(detail: CreateBookDetailDto): void {
     this.validateRequiredString(detail.authors, 'book.authors');
@@ -116,8 +113,8 @@ class BookValidator extends BaseProductValidator {
 }
 
 class CdValidator extends BaseProductValidator {
-  readonly mediaType = 'CD' as const;
-  readonly detailKey = 'cd' as const;
+  readonly productType = 'CD';
+  readonly detailKey = 'cd';
 
   protected validateCreateDetail(detail: CreateCdDetailDto): void {
     this.validateRequiredString(detail.artists, 'cd.artists');
@@ -132,8 +129,8 @@ class CdValidator extends BaseProductValidator {
 }
 
 class DvdValidator extends BaseProductValidator {
-  readonly mediaType = 'DVD' as const;
-  readonly detailKey = 'dvd' as const;
+  readonly productType = 'DVD';
+  readonly detailKey = 'dvd';
 
   protected validateCreateDetail(detail: CreateDvdDetailDto): void {
     this.validateRequiredString(detail.discType, 'dvd.discType');
@@ -153,8 +150,8 @@ class DvdValidator extends BaseProductValidator {
 }
 
 class NewspaperValidator extends BaseProductValidator {
-  readonly mediaType = 'NEWSPAPER' as const;
-  readonly detailKey = 'newspaper' as const;
+  readonly productType = 'NEWSPAPER';
+  readonly detailKey = 'newspaper';
 
   protected validateCreateDetail(detail: CreateNewspaperDetailDto): void {
     this.validateRequiredString(
@@ -173,51 +170,38 @@ class NewspaperValidator extends BaseProductValidator {
   }
 }
 
-/**
- * + Coupling/Cohesion level:
- *   - Control Coupling: Decides and dispatches validator strategy instances based on string parameter flags passed by ProductService.
- *   - Functional Cohesion: Dedicated entirely to instantiating, selecting, and returning the correct type-specific validator.
- * + Reason why:
- *   - Centralizing sub-validation setup inside a specialized factory prevents core catalog modules from hardcoding product-type rules.
- * 
- * + SOLID Principles Review:
- *   - SRP & LSP & ISP Adherence: Highly cohesive, delegates specific validation rules to independent subtype validators, all of which safely implement the ProductValidator interface.
- *   - OCP Mild Violation: Static private `validators` map requires modifying this factory class whenever a new product category is added.
- *     Improvement: Inject a list of validators dynamically using a custom injection token (e.g. `@Inject(PRODUCT_VALIDATORS)`), allowing expansion without modifying the factory.
- *   - DIP Adherence: Consumed by ProductService relying on the ProductValidator interface abstraction.
- */
 @Injectable()
 export class ProductValidatorFactory {
-  private readonly validators = new Map<ProductMediaType, ProductValidator>([
+  private readonly validators = new Map<string, ProductValidator>([
     ['BOOK', new BookValidator()],
     ['CD', new CdValidator()],
     ['DVD', new DvdValidator()],
     ['NEWSPAPER', new NewspaperValidator()],
   ]);
 
-  getValidator(mediaType: string): ProductValidator {
-    const normalized = mediaType?.toUpperCase() as ProductMediaType;
+  getValidator(productType: string): ProductValidator {
+    const normalized = productType?.toUpperCase();
     const validator = this.validators.get(normalized);
 
     if (!validator) {
-      throw new BadRequestException(`Unsupported mediaType: ${mediaType}`);
+      throw new BadRequestException(`Unsupported productType: ${productType}`);
     }
 
     return validator;
   }
 
   validateCreate(dto: CreateProductDto): ProductValidator {
-    const mediaType = dto.mediaType?.toUpperCase();
-    dto.mediaType = mediaType;
-    const validator = this.getValidator(mediaType);
+    const productType = dto.productType?.toUpperCase();
+    dto.productType = productType;
+    const validator = this.getValidator(productType);
     validator.validateCreate(dto);
     return validator;
   }
 
   validateUpdate(dto: UpdateProductDto, existing: Product): ProductValidator {
-    const validator = this.getValidator(existing.mediaType);
-    if (dto.mediaType !== undefined) {
-      dto.mediaType = dto.mediaType.toUpperCase();
+    const validator = this.getValidator(existing.productType);
+    if (dto.productType !== undefined) {
+      dto.productType = dto.productType.toUpperCase();
     }
     validator.validateUpdate(dto, existing);
     return validator;
@@ -263,23 +247,23 @@ function validatePriceRange(originalPrice: number, currentPrice: number): void {
 
 function validateMatchingCreateDetail(
   dto: CreateProductDto,
-  expectedKey: ProductDetailKey,
+  expectedKey: string,
 ): void {
-  const providedKeys = DETAIL_KEYS.filter((key) => dto[key] !== undefined);
+  const providedKeys = DETAIL_KEYS.filter((key) => dto[key as keyof CreateProductDto] !== undefined);
 
   if (providedKeys.length !== 1 || providedKeys[0] !== expectedKey) {
     throw new BadRequestException(
-      `mediaType ${dto.mediaType} requires exactly one ${expectedKey} detail object`,
+      `productType ${dto.productType} requires exactly one ${expectedKey} detail object`,
     );
   }
 }
 
 function validateMatchingUpdateDetail(
   dto: UpdateProductDto,
-  expectedKey: ProductDetailKey,
+  expectedKey: string,
 ): void {
   const invalidKey = DETAIL_KEYS.find(
-    (key) => key !== expectedKey && dto[key] !== undefined,
+    (key) => key !== expectedKey && dto[key as keyof UpdateProductDto] !== undefined,
   );
 
   if (invalidKey) {

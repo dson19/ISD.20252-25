@@ -129,7 +129,7 @@ export class CreateNewspaperDetailDto {
 
 export class CreateProductDto {
   @IsString()
-  mediaType: string;
+  productType: string;
 
   @IsString()
   title: string;

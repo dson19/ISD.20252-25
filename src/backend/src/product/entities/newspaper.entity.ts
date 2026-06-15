@@ -1,23 +1,17 @@
 import { Entity, Column, OneToOne, JoinColumn, PrimaryColumn } from 'typeorm';
-import { Product } from './product.entity';
+import { Media } from './media.entity';
 
 @Entity('newspapers')
 export class Newspaper {
   @PrimaryColumn({ name: 'product_id' })
   productID: number;
 
-  @OneToOne(() => Product, { onDelete: 'CASCADE', eager: true })
+  @OneToOne(() => Media, { onDelete: 'CASCADE', eager: true })
   @JoinColumn({ name: 'product_id' })
-  product: Product;
+  media: Media;
 
   @Column({ name: 'editor_in_chief', type: 'varchar', length: 255 })
   editorInChief: string;
-
-  @Column({ type: 'varchar', length: 255 })
-  publisher: string;
-
-  @Column({ name: 'publication_date', type: 'date' })
-  publicationDate: Date;
 
   @Column({ name: 'issue_number', type: 'varchar', length: 50, nullable: true })
   issueNumber: string;
@@ -27,9 +21,6 @@ export class Newspaper {
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   issn: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  language: string;
 
   @Column({ type: 'text', nullable: true })
   sections: string;

@@ -82,7 +82,7 @@ describe('ProductService', () => {
 function buildProduct(productID: number, quantityInStock: number) {
   return {
     productID,
-    mediaType: 'BOOK',
+    productType: 'BOOK',
     title: `Product ${productID}`,
     category: 'Book',
     barcode: `BARCODE-${productID}`,

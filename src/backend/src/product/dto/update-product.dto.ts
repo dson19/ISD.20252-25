@@ -145,7 +145,7 @@ export class UpdateNewspaperDetailDto
 export class UpdateProductDto {
   @IsOptional()
   @IsString()
-  mediaType?: string;
+  productType?: string;
 
   @IsOptional()
   @IsString()

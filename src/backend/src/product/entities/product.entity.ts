@@ -15,7 +15,7 @@ export class Product {
   productID: number;
 
   @Column({ type: 'varchar', length: 20, name: 'product_type' })
-  mediaType: string; // BOOK, NEWSPAPER, CD, DVD
+  productType: string; // BOOK, NEWSPAPER, CD, DVD
 
   @Column({ type: 'varchar', length: 255 })
   title: string;
