@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../app.config';
 
 export interface CdTrack {
@@ -9,9 +10,32 @@ export interface CdTrack {
   lengthSeconds: number;
 }
 
+export interface ProductMediaDetail {
+  publisher?: string | null;
+  language?: string | null;
+  releaseDate?: string | null;
+  genre?: string | null;
+}
+
+export function getProductType(product?: { productType?: string | null; mediaType?: string | null } | null): string {
+  return product?.productType ?? product?.mediaType ?? 'PRODUCT';
+}
+
+export function productTypeLabel(productType?: string | null): string {
+  const labels: Record<string, string> = {
+    BOOK: 'Sách',
+    NEWSPAPER: 'Báo chí',
+    CD: 'CD',
+    DVD: 'DVD',
+  };
+
+  return productType ? (labels[productType] ?? productType) : 'Sản phẩm';
+}
+
 export interface Product {
   productID: number;
   mediaType: 'BOOK' | 'CD' | 'DVD' | 'NEWSPAPER' | string;
+  productType?: 'BOOK' | 'CD' | 'DVD' | 'NEWSPAPER' | string;
   title: string;
   category: string;
   description?: string | null;
@@ -31,39 +55,50 @@ export interface Product {
     coverType: string;
     publisher: string;
     publicationDate: string;
+    releaseDate?: string | null;
     numPages?: number | null;
+    numberOfPages?: number | null;
     language?: string | null;
     genre?: string | null;
+    media?: ProductMediaDetail | null;
   } | null;
   newspaper?: {
     productID: number;
     editorInChief: string;
     publisher: string;
     publicationDate: string;
+    releaseDate?: string | null;
     issueNumber?: string | null;
     frequency?: string | null;
+    publicationFrequency?: string | null;
     issn?: string | null;
     language?: string | null;
     sections?: string | null;
+    media?: ProductMediaDetail | null;
   } | null;
   cd?: {
     productID: number;
     artists: string;
     recordLabel: string;
+    publisher?: string | null;
     genre: string;
     releaseDate?: string | null;
     tracks?: CdTrack[];
+    media?: ProductMediaDetail | null;
   } | null;
   dvd?: {
     productID: number;
     discType: string;
     director: string;
     runtimeMinutes: number;
+    runtime?: number | null;
     studio: string;
+    publisher?: string | null;
     language: string;
     subtitles: string;
     releaseDate?: string | null;
     genre?: string | null;
+    media?: ProductMediaDetail | null;
   } | null;
 }
 
@@ -84,7 +119,9 @@ export class ProductService {
   ) {}
 
   getRandomProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.baseUrl}/api/products/random`);
+    return this.http
+      .get<Product[]>(`${this.baseUrl}/api/products/random`)
+      .pipe(map((products) => this.normalizeProducts(products)));
   }
 
   searchProducts(params: ProductSearchParams): Observable<Product[]> {
@@ -108,26 +145,36 @@ export class ProductService {
       httpParams = httpParams.set('status', params.status);
     }
 
-    return this.http.get<Product[]>(`${this.baseUrl}/api/products`, { params: httpParams });
+    return this.http
+      .get<Product[]>(`${this.baseUrl}/api/products`, { params: httpParams })
+      .pipe(map((products) => this.normalizeProducts(products)));
   }
 
   getProductById(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.baseUrl}/api/products/${id}`);
+    return this.http
+      .get<Product>(`${this.baseUrl}/api/products/${id}`)
+      .pipe(map((product) => this.normalizeProduct(product)));
   }
 
   createProduct(dto: any): Observable<Product> {
-    return this.http.post<Product>(`${this.baseUrl}/api/products`, dto);
+    return this.http
+      .post<Product>(`${this.baseUrl}/api/products`, dto)
+      .pipe(map((product) => this.normalizeProduct(product)));
   }
 
   updateProduct(id: number, dto: any): Observable<Product> {
-    return this.http.patch<Product>(`${this.baseUrl}/api/products/${id}`, dto);
+    return this.http
+      .patch<Product>(`${this.baseUrl}/api/products/${id}`, dto)
+      .pipe(map((product) => this.normalizeProduct(product)));
   }
 
   adjustStock(id: number, quantityDelta: number, reason: string): Observable<Product> {
-    return this.http.patch<Product>(`${this.baseUrl}/api/products/${id}/stock`, {
-      quantityDelta,
-      reason
-    });
+    return this.http
+      .patch<Product>(`${this.baseUrl}/api/products/${id}/stock`, {
+        quantityDelta,
+        reason
+      })
+      .pipe(map((product) => this.normalizeProduct(product)));
   }
 
   deleteProducts(ids: number[]): Observable<any> {
@@ -140,5 +187,18 @@ export class ProductService {
 
   getAuditLogs(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/products/audit-logs`);
+  }
+
+  private normalizeProducts(products: Product[]): Product[] {
+    return products.map((product) => this.normalizeProduct(product));
+  }
+
+  private normalizeProduct(product: Product): Product {
+    const productType = getProductType(product);
+    return {
+      ...product,
+      productType,
+      mediaType: productType,
+    };
   }
 }

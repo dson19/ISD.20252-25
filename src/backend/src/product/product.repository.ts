@@ -44,6 +44,7 @@ export class ProductRepository {
   ): Promise<Product[]> {
     const query = this.repository
       .createQueryBuilder('product')
+      .leftJoin('media', 'media', 'media.product_id = product.product_id')
       .leftJoin('books', 'book', 'book.product_id = product.product_id')
       .leftJoin('cds', 'cd', 'cd.product_id = product.product_id')
       .leftJoin('cd_tracks', 'cd_track', 'cd_track.product_id = product.product_id')
@@ -68,17 +69,13 @@ export class ProductRepository {
             .orWhere('product.category ILIKE :keyword')
             .orWhere('product.description ILIKE :keyword')
             .orWhere('product.barcode ILIKE :keyword')
+            .orWhere('media.publisher ILIKE :keyword')
+            .orWhere('media.language ILIKE :keyword')
+            .orWhere('media.genre ILIKE :keyword')
             .orWhere('book.authors ILIKE :keyword')
-            .orWhere('book.publisher ILIKE :keyword')
-            .orWhere('book.genre ILIKE :keyword')
             .orWhere('cd.artists ILIKE :keyword')
-            .orWhere('cd.record_label ILIKE :keyword')
-            .orWhere('cd.genre ILIKE :keyword')
             .orWhere('cd_track.title ILIKE :keyword')
             .orWhere('dvd.director ILIKE :keyword')
-            .orWhere('dvd.studio ILIKE :keyword')
-            .orWhere('dvd.genre ILIKE :keyword')
-            .orWhere('newspaper.publisher ILIKE :keyword')
             .orWhere('newspaper.editor_in_chief ILIKE :keyword')
             .orWhere('newspaper.sections ILIKE :keyword');
         }),

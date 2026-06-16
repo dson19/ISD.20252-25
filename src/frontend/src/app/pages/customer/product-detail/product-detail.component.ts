@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CartService } from '../../../services/cart.service';
-import { Product, ProductService } from '../../../services/product.service';
+import { getProductType, Product, ProductService, productTypeLabel } from '../../../services/product.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -145,6 +145,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return this.product?.imageUrl || 'https://placehold.co/500x650/e2e8f0/475569?text=AIMS';
   }
 
+  productType(): string {
+    return getProductType(this.product);
+  }
+
   dimensions(): string {
     if (!this.product) {
       return 'Không có';
@@ -162,14 +166,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return new Intl.DateTimeFormat('vi-VN').format(new Date(value));
   }
 
-  mediaTypeLabel(mediaType: string): string {
-    const labels: Record<string, string> = {
-      BOOK: 'Sách',
-      NEWSPAPER: 'Báo chí',
-      CD: 'CD',
-      DVD: 'DVD',
-    };
-    return labels[mediaType] ?? mediaType;
+  mediaTypeLabel(mediaType?: string | null): string {
+    return productTypeLabel(mediaType);
   }
 
   trackLength(seconds: number): string {
@@ -178,8 +176,97 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
+  bookPublisher(): string {
+    return this.valueOrEmpty(this.product?.book?.publisher ?? this.product?.book?.media?.publisher);
+  }
+
+  bookReleaseDate(): string {
+    return this.formatDate(
+      this.product?.book?.publicationDate ??
+        this.product?.book?.releaseDate ??
+        this.product?.book?.media?.releaseDate,
+    );
+  }
+
+  bookPageCount(): string {
+    return this.valueOrEmpty(this.product?.book?.numPages ?? this.product?.book?.numberOfPages);
+  }
+
+  bookLanguage(): string {
+    return this.valueOrEmpty(this.product?.book?.language ?? this.product?.book?.media?.language);
+  }
+
+  bookGenre(): string {
+    return this.valueOrEmpty(this.product?.book?.genre ?? this.product?.book?.media?.genre);
+  }
+
+  newspaperPublisher(): string {
+    return this.valueOrEmpty(
+      this.product?.newspaper?.publisher ?? this.product?.newspaper?.media?.publisher,
+    );
+  }
+
+  newspaperReleaseDate(): string {
+    return this.formatDate(
+      this.product?.newspaper?.publicationDate ??
+        this.product?.newspaper?.releaseDate ??
+        this.product?.newspaper?.media?.releaseDate,
+    );
+  }
+
+  newspaperFrequency(): string {
+    return this.valueOrEmpty(
+      this.product?.newspaper?.frequency ?? this.product?.newspaper?.publicationFrequency,
+    );
+  }
+
+  cdPublisher(): string {
+    return this.valueOrEmpty(
+      this.product?.cd?.recordLabel ?? this.product?.cd?.publisher ?? this.product?.cd?.media?.publisher,
+    );
+  }
+
+  cdGenre(): string {
+    return this.valueOrEmpty(this.product?.cd?.genre ?? this.product?.cd?.media?.genre);
+  }
+
+  cdReleaseDate(): string {
+    return this.formatDate(this.product?.cd?.releaseDate ?? this.product?.cd?.media?.releaseDate);
+  }
+
+  dvdRuntime(): string {
+    const runtime = this.product?.dvd?.runtimeMinutes ?? this.product?.dvd?.runtime;
+    return runtime ? `${runtime} phút` : 'Không có';
+  }
+
+  dvdPublisher(): string {
+    return this.valueOrEmpty(
+      this.product?.dvd?.studio ?? this.product?.dvd?.publisher ?? this.product?.dvd?.media?.publisher,
+    );
+  }
+
+  dvdLanguage(): string {
+    return this.valueOrEmpty(this.product?.dvd?.language ?? this.product?.dvd?.media?.language);
+  }
+
+  dvdGenre(): string {
+    return this.valueOrEmpty(this.product?.dvd?.genre ?? this.product?.dvd?.media?.genre);
+  }
+
+  dvdReleaseDate(): string {
+    return this.formatDate(this.product?.dvd?.releaseDate ?? this.product?.dvd?.media?.releaseDate);
+  }
+
   private normalizedQuantity(): number {
     return Math.max(1, Math.floor(Number(this.selectedQuantity) || 1));
+  }
+
+  private valueOrEmpty(value: unknown): string {
+    if (value === null || value === undefined || value === '') {
+      return 'Không có';
+    }
+
+    return String(value);
   }
 
   private showToast(message: string): void {

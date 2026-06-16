@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Product } from './product.service';
+import { getProductType, Product } from './product.service';
 
 const CART_STORAGE_KEY = 'aims_cart';
 
@@ -46,7 +46,7 @@ export class CartService {
           price: Number(product.currentPrice),
           imageUrl: product.imageUrl || 'https://placehold.co/300x400/e2e8f0/475569?text=AIMS',
           quantity: requestedQuantity,
-          mediaType: product.mediaType,
+          mediaType: getProductType(product),
           quantityInStock: maxQuantity,
         },
       ];

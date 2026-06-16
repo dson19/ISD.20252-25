@@ -46,6 +46,7 @@ export interface OrderItemResponse {
     title: string;
     currentPrice: number | string;
     imageUrl?: string | null;
+    productType?: string;
     mediaType?: string;
     quantityInStock?: number;
   };

@@ -5,7 +5,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { of, Subscription } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { CartService } from '../../../services/cart.service';
-import { Product, ProductSearchParams, ProductService } from '../../../services/product.service';
+import {
+  getProductType,
+  Product,
+  ProductSearchParams,
+  ProductService,
+  productTypeLabel,
+} from '../../../services/product.service';
 
 interface CategoryFilter {
   label: string;
@@ -160,14 +166,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     return product.imageUrl || 'https://placehold.co/300x400/e2e8f0/475569?text=AIMS';
   }
 
-  mediaTypeLabel(mediaType: string): string {
-    const labels: Record<string, string> = {
-      BOOK: 'Sách',
-      NEWSPAPER: 'Báo chí',
-      CD: 'CD',
-      DVD: 'DVD',
-    };
-    return labels[mediaType] ?? mediaType;
+  productType(product: Product): string {
+    return getProductType(product);
+  }
+
+  mediaTypeLabel(mediaType?: string | null): string {
+    return productTypeLabel(mediaType);
   }
 
   private loadProducts(): void {
