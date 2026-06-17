@@ -282,8 +282,13 @@ export class OrderService {
     const existingOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
     const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
 
-    if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'PAYPAL') {
-      await this.paymentService.processRefund(orderId, Number(existingOrder.totalPayment), 'PAYPAL');
+    let refundAutomated = false;
+    if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method) {
+      ({ automated: refundAutomated } = await this.paymentService.processRefundIfSupported(
+        orderId,
+        Number(existingOrder.totalPayment),
+        paymentInfo.method,
+      ));
     }
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
@@ -294,11 +299,9 @@ export class OrderService {
 
       await this.restoreReservedStock(manager, order);
 
-      if (order.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'VIETQR') {
-        order.status = 'REFUND_PENDING';
-      } else {
-        order.status = 'REJECTED';
-      }
+      order.status = refundAutomated || order.status !== 'PENDING_PROCESSING'
+        ? 'REJECTED'
+        : 'REFUND_PENDING';
 
       await manager.save(Order, order);
       return this.findOrderOrFail(manager, orderId);
@@ -318,8 +321,13 @@ export class OrderService {
     const existingOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
     const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
 
-    if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'PAYPAL') {
-      await this.paymentService.processRefund(orderId, Number(existingOrder.totalPayment), 'PAYPAL');
+    let refundAutomated = false;
+    if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method) {
+      ({ automated: refundAutomated } = await this.paymentService.processRefundIfSupported(
+        orderId,
+        Number(existingOrder.totalPayment),
+        paymentInfo.method,
+      ));
     }
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
@@ -330,11 +338,9 @@ export class OrderService {
 
       await this.restoreReservedStock(manager, order);
 
-      if (order.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'VIETQR') {
-        order.status = 'REFUND_PENDING';
-      } else {
-        order.status = 'CANCELLED';
-      }
+      order.status = refundAutomated || order.status !== 'PENDING_PROCESSING'
+        ? 'CANCELLED'
+        : 'REFUND_PENDING';
 
       await manager.save(Order, order);
       return this.findOrderOrFail(manager, orderId);

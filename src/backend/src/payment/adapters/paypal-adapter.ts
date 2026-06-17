@@ -4,6 +4,8 @@ import { PaypalService } from '../services/paypal.service';
 
 @Injectable()
 export class PaypalAdapter implements IPaymentAdapter {
+  readonly supportsAutomatedRefund = true;
+
   constructor(private readonly paypalService: PaypalService) {}
 
   async createPaymentRequest(orderId: number, _amount: number): Promise<any> {

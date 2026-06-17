@@ -48,12 +48,21 @@ export class PaymentService {
 
     const adapter = this.getAdapter(method);
     const result = await adapter.executeRefund({ orderId, transaction }, amount);
-
-    if (result?.status !== 'REFUND_PENDING') {
-      await this.paymentRepository.updateTransactionStatus(transaction.transactionID, 'REFUNDED');
-    }
-
+    await this.paymentRepository.updateTransactionStatus(transaction.transactionID, 'REFUNDED');
     return result;
+  }
+
+  async processRefundIfSupported(
+    orderId: number,
+    amount: number,
+    method: string,
+  ): Promise<{ automated: boolean }> {
+    const adapter = this.getAdapter(method);
+    if (!adapter.supportsAutomatedRefund) {
+      return { automated: false };
+    }
+    await this.processRefund(orderId, amount, method);
+    return { automated: true };
   }
 
   private getAdapter(method: string): IPaymentAdapter {
