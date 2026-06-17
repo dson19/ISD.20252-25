@@ -30,6 +30,7 @@ describe('ProductService', () => {
       dataSource as never,
       productRepository as never,
       validatorFactory as never,
+      [] as never,
     );
   });
 

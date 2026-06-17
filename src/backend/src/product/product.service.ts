@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,16 +9,11 @@ import { BatchDeleteProductsDto } from './dto/batch-delete-products.dto';
 import { ChangeStockDto } from './dto/change-stock.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Book } from './entities/book.entity';
-import { CdTrack } from './entities/cd-track.entity';
-import { Cd } from './entities/cd.entity';
-import { Dvd } from './entities/dvd.entity';
-import { Newspaper } from './entities/newspaper.entity';
-import { Media } from './entities/media.entity';
 import { ProductLog } from './entities/product-audit-log.entity';
 import { Product } from './entities/product.entity';
 import { ProductRepository } from './product.repository';
 import { ProductValidatorFactory } from './validators/product-validator.factory';
+import { PRODUCT_TYPE_HANDLERS, ProductTypeHandler } from './interfaces/product-type-handler.interface';
 
 type DeleteResultStatus = 'DEACTIVATED' | 'DELETED' | 'NOT_FOUND' | 'DEACTIVATED_ORDERED';
 
@@ -44,6 +40,7 @@ export class ProductService {
     private readonly dataSource: DataSource,
     private readonly productRepository: ProductRepository,
     private readonly validatorFactory: ProductValidatorFactory,
+    @Inject(PRODUCT_TYPE_HANDLERS) private readonly typeHandlers: ProductTypeHandler[],
   ) {}
 
   async searchProducts(params: {
@@ -354,28 +351,8 @@ export class ProductService {
   }
 
   private async findDetail(productID: number, productType: string) {
-    switch (productType?.toUpperCase()) {
-      case 'BOOK':
-        return this.dataSource
-          .getRepository(Book)
-          .findOne({ where: { productID }, relations: ['media'] });
-      case 'CD':
-        return this.dataSource.getRepository(Cd).findOne({
-          where: { productID },
-          relations: ['media', 'tracks'],
-        });
-      case 'DVD':
-        return this.dataSource.getRepository(Dvd).findOne({
-          where: { productID },
-          relations: ['media'],
-        });
-      case 'NEWSPAPER':
-        return this.dataSource
-          .getRepository(Newspaper)
-          .findOne({ where: { productID }, relations: ['media'] });
-      default:
-        throw new BadRequestException(`Unsupported productType: ${productType}`);
-    }
+    const handler = this.getHandler(productType);
+    return handler.findDetail(productID, this.dataSource);
   }
 
   private async saveProductDetail(
@@ -384,109 +361,8 @@ export class ProductService {
     productType: string,
     dto: CreateProductDto | UpdateProductDto,
   ): Promise<void> {
-    const mediaRepo = manager.getRepository(Media);
-    let publisher: string | undefined;
-    let releaseDate: Date | string | undefined;
-    let language: string | undefined;
-    let genre: string | undefined;
-
-    if (dto.book) {
-      publisher = dto.book.publisher;
-      releaseDate = dto.book.publicationDate;
-      language = dto.book.language;
-      genre = dto.book.genre;
-    } else if (dto.newspaper) {
-      publisher = dto.newspaper.publisher;
-      releaseDate = dto.newspaper.publicationDate;
-      language = dto.newspaper.language;
-    } else if (dto.cd) {
-      publisher = dto.cd.recordLabel;
-      releaseDate = dto.cd.releaseDate;
-      genre = dto.cd.genre;
-    } else if (dto.dvd) {
-      publisher = dto.dvd.studio;
-      releaseDate = dto.dvd.releaseDate;
-      language = dto.dvd.language;
-      genre = dto.dvd.genre;
-    }
-
-    const savedMedia = await mediaRepo.save({
-      productID: product.productID,
-      product,
-      publisher,
-      releaseDate: releaseDate ? new Date(releaseDate) : undefined,
-      language,
-      genre,
-    });
-
-    switch (productType?.toUpperCase()) {
-      case 'BOOK':
-        if (dto.book) {
-          await manager.getRepository(Book).save({
-            productID: product.productID,
-            media: savedMedia,
-            authors: dto.book.authors,
-            coverType: dto.book.coverType,
-            numPages: dto.book.numPages,
-          });
-        }
-        return;
-      case 'CD':
-        if (dto.cd) {
-          const { tracks, ...cdFields } = dto.cd;
-          const cd = await manager.getRepository(Cd).save({
-            productID: product.productID,
-            media: savedMedia,
-            artists: cdFields.artists,
-          });
-
-          if (tracks !== undefined) {
-            await manager
-              .getRepository(CdTrack)
-              .createQueryBuilder()
-              .delete()
-              .where('product_id = :productID', { productID: product.productID })
-              .execute();
-          }
-
-          if (tracks) {
-            await manager.getRepository(CdTrack).save(
-              tracks.map((track) => ({
-                ...track,
-                cd,
-              })),
-            );
-          }
-        }
-        return;
-      case 'DVD':
-        if (dto.dvd) {
-          await manager.getRepository(Dvd).save({
-            productID: product.productID,
-            media: savedMedia,
-            discType: dto.dvd.discType,
-            director: dto.dvd.director,
-            runtimeMinutes: dto.dvd.runtimeMinutes,
-            subtitles: dto.dvd.subtitles,
-          });
-        }
-        return;
-      case 'NEWSPAPER':
-        if (dto.newspaper) {
-          await manager.getRepository(Newspaper).save({
-            productID: product.productID,
-            media: savedMedia,
-            editorInChief: dto.newspaper.editorInChief,
-            issueNumber: dto.newspaper.issueNumber,
-            frequency: dto.newspaper.frequency,
-            issn: dto.newspaper.issn,
-            sections: dto.newspaper.sections,
-          });
-        }
-        return;
-      default:
-        throw new BadRequestException(`Unsupported productType: ${productType}`);
-    }
+    const handler = this.getHandler(productType);
+    return handler.saveDetail(product.productID, dto, manager);
   }
 
   private async writeAuditLog(
@@ -545,18 +421,17 @@ export class ProductService {
   }
 
   private detailKeyForMediaType(productType: string): string {
-    switch (productType?.toUpperCase()) {
-      case 'BOOK':
-        return 'book';
-      case 'CD':
-        return 'cd';
-      case 'DVD':
-        return 'dvd';
-      case 'NEWSPAPER':
-        return 'newspaper';
-      default:
-        throw new BadRequestException(`Unsupported productType: ${productType}`);
+    return this.getHandler(productType).detailKey;
+  }
+
+  private getHandler(productType: string): ProductTypeHandler {
+    const handler = this.typeHandlers.find(
+      (h) => h.mediaType === productType?.toUpperCase(),
+    );
+    if (!handler) {
+      throw new BadRequestException(`Unsupported productType: ${productType}`);
     }
+    return handler;
   }
 
   private getTodayRange(): { start: Date; end: Date } {

@@ -58,7 +58,7 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
 
       const paymentTransaction = await this.loadPaymentTransaction(order.orderID, event.paymentTransactionId);
       const email = this.renderEmail(event, order, paymentTransaction);
-      await this.dispatchEmail(order.deliveryInfo.email, email);
+      await this.dispatch(order.deliveryInfo.email, email);
     } catch (error: any) {
       this.logger.error(`Notification event ${event.type} for order #${event.orderId} failed`, error?.stack || error);
     }
@@ -120,19 +120,19 @@ export class NotificationService implements OnModuleInit, OnModuleDestroy {
     return this.emailTemplateService.renderReviewResult(context, event.type === 'ORDER_APPROVED');
   }
 
-  private async dispatchEmail(to: string, email: RenderedEmail): Promise<void> {
-    const emailProviders = this.providers.filter((provider) => provider.channel === 'EMAIL');
+  private async dispatch(to: string, email: RenderedEmail): Promise<void> {
+    const message = {
+      to,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    };
     await Promise.all(
-      emailProviders.map(async (provider) => {
+      this.providers.map(async (provider) => {
         try {
-          await provider.send({
-            to,
-            subject: email.subject,
-            html: email.html,
-            text: email.text,
-          });
+          await provider.send(message);
         } catch (error: any) {
-          this.logger.error(`Email notification to ${to} failed`, this.formatProviderError(error));
+          this.logger.error(`Notification via ${provider.channel} to ${to} failed`, this.formatProviderError(error));
         }
       }),
     );

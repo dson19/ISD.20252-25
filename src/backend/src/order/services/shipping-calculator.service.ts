@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ShippingStrategy } from '../interfaces/shipping-strategy.interface';
+import { WeightOnlyShippingStrategy } from '../strategies/weight-shipping.strategy';
 
 /**
  * + Coupling/Cohesion level:
@@ -16,13 +18,26 @@ export class ShippingCalculatorService {
   private readonly freeShippingThreshold = 100000;
   private readonly maxShippingDiscount = 25000;
   private readonly extraHalfKgFee = 2500;
+  private strategy: ShippingStrategy = new WeightOnlyShippingStrategy();
 
-  calculateShippingFee(province: string, totalWeight: number, subtotal: number): number {
+  setStrategy(strategy: ShippingStrategy): void {
+    this.strategy = strategy;
+  }
+
+  calculateShippingFee(province: string, totalWeight: number, subtotal: number, dimensions?: { length?: number; width?: number; height?: number }): number {
     const normalizedProvince = this.normalizeProvince(province);
     const weight = Math.max(totalWeight, 0);
-    const baseFee = this.isInnerCity(normalizedProvince)
+    const rawBaseFee = this.isInnerCity(normalizedProvince)
       ? this.calculateInnerCityFee(weight)
       : this.calculateOtherProvinceFee(weight);
+
+    const baseFee = this.strategy.calculateFee({
+      weight,
+      length: dimensions?.length,
+      width: dimensions?.width,
+      height: dimensions?.height,
+      baseFee: rawBaseFee,
+    });
 
     if (subtotal > this.freeShippingThreshold) {
       return Math.max(baseFee - this.maxShippingDiscount, 0);

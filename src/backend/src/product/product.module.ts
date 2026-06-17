@@ -12,6 +12,8 @@ import { ProductController } from './product.controller';
 import { ProductRepository } from './product.repository';
 import { ProductService } from './product.service';
 import { ProductValidatorFactory } from './validators/product-validator.factory';
+import { BookHandler, CdHandler, DvdHandler, NewspaperHandler } from './handlers/concrete-handlers';
+import { PRODUCT_TYPE_HANDLERS } from './interfaces/product-type-handler.interface';
 
 @Module({
   imports: [
@@ -27,7 +29,20 @@ import { ProductValidatorFactory } from './validators/product-validator.factory'
     ]),
   ],
   controllers: [ProductController],
-  providers: [ProductRepository, ProductService, ProductValidatorFactory],
+  providers: [
+    ProductRepository,
+    ProductService,
+    ProductValidatorFactory,
+    BookHandler,
+    CdHandler,
+    DvdHandler,
+    NewspaperHandler,
+    {
+      provide: PRODUCT_TYPE_HANDLERS,
+      useFactory: (book: BookHandler, cd: CdHandler, dvd: DvdHandler, newspaper: NewspaperHandler) => [book, cd, dvd, newspaper],
+      inject: [BookHandler, CdHandler, DvdHandler, NewspaperHandler],
+    },
+  ],
   exports: [ProductRepository, ProductService],
 })
 export class ProductsModule {}

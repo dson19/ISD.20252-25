@@ -17,6 +17,9 @@ import { VietqrPaymentService } from './services/vietqr-payment.service';
 import { VietqrRepository } from './repositories/vietqr.repository';
 import { PaypalApiClient } from './API/paypal-api-client';
 import { NotificationModule } from '../notification/notification.module';
+import { PaypalAdapter } from './adapters/paypal-adapter';
+import { VietqrAdapter } from './adapters/vietqr-adapter';
+import { PaymentService } from './services/payment.service';
 
 @Module({
   imports: [
@@ -33,6 +36,9 @@ import { NotificationModule } from '../notification/notification.module';
     VietqrRepository,
     VietqrApiClient,
     VietqrPaymentService,
+    PaypalAdapter,
+    VietqrAdapter,
+    PaymentService,
   ],
   exports: [
     PaymentRepository,
@@ -42,6 +48,9 @@ import { NotificationModule } from '../notification/notification.module';
     VietqrRepository,
     VietqrApiClient,
     VietqrPaymentService,
+    PaypalAdapter,
+    VietqrAdapter,
+    PaymentService,
   ],
 })
 /**

@@ -2,7 +2,7 @@ import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException 
 import { randomBytes } from 'crypto';
 import { DataSource, EntityManager, In, SelectQueryBuilder } from 'typeorm';
 import { NotificationEventBus } from '../../notification/events/notification-event-bus';
-import { PaypalService } from '../../payment/services/paypal.service';
+import { PaymentService } from '../../payment/services/payment.service';
 import { Product } from '../../product/entities/product.entity';
 import { CartItemDto } from '../dto/cart-item.dto';
 import { DeliveryInfoDto } from '../dto/delivery-info.dto';
@@ -43,8 +43,8 @@ export class OrderService {
     private readonly cartService: CartService,
     private readonly shippingCalculatorService: ShippingCalculatorService,
     private readonly notificationEventBus: NotificationEventBus,
-    @Inject(forwardRef(() => PaypalService))
-    private readonly paypalService: PaypalService,
+    @Inject(forwardRef(() => PaymentService))
+    private readonly paymentService: PaymentService,
   ) { }
 
   async placeOrder(cartItems: CartItemDto[], deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
@@ -283,7 +283,7 @@ export class OrderService {
     const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
 
     if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'PAYPAL') {
-      await this.paypalService.refundOrderInPaypal(orderId, false);
+      await this.paymentService.processRefund(orderId, Number(existingOrder.totalPayment), 'PAYPAL');
     }
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
@@ -319,7 +319,7 @@ export class OrderService {
     const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
 
     if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method === 'PAYPAL') {
-      await this.paypalService.refundOrderInPaypal(orderId, false);
+      await this.paymentService.processRefund(orderId, Number(existingOrder.totalPayment), 'PAYPAL');
     }
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {

@@ -4,3 +4,4 @@ venv/
 .agent/
 .agents
 .agents/
+.claude/
