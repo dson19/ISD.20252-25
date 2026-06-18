@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   CreateBookDetailDto,
   CreateCdDetailDto,
@@ -22,6 +22,9 @@ export interface ProductValidator {
   validateUpdate(dto: UpdateProductDto, existing: Product): void;
 }
 
+/** DI token carrying every registered product validator (composition root supplies the array). */
+export const PRODUCT_VALIDATORS = Symbol('PRODUCT_VALIDATORS');
+
 type DetailPayload =
   | CreateBookDetailDto
   | CreateCdDetailDto
@@ -32,8 +35,6 @@ type DetailPayload =
   | UpdateDvdDetailDto
   | UpdateNewspaperDetailDto;
 
-const DETAIL_KEYS: string[] = ['book', 'cd', 'dvd', 'newspaper'];
-
 abstract class BaseProductValidator implements ProductValidator {
   abstract readonly productType: string;
   abstract readonly detailKey: string;
@@ -41,7 +42,6 @@ abstract class BaseProductValidator implements ProductValidator {
   validateCreate(dto: CreateProductDto): void {
     validateCommonProductFields(dto);
     validatePriceRange(dto.originalPrice, dto.currentPrice);
-    validateMatchingCreateDetail(dto, this.detailKey);
     this.validateCreateDetail(dto[this.detailKey as keyof CreateProductDto] as DetailPayload);
   }
 
@@ -62,7 +62,6 @@ abstract class BaseProductValidator implements ProductValidator {
       dto.originalPrice ?? Number(existing.originalPrice),
       dto.currentPrice ?? Number(existing.currentPrice),
     );
-    validateMatchingUpdateDetail(dto, this.detailKey);
 
     const detail = dto[this.detailKey as keyof UpdateProductDto] as DetailPayload | undefined;
     if (detail) {
@@ -95,7 +94,8 @@ abstract class BaseProductValidator implements ProductValidator {
   protected abstract validateUpdateDetail(detail: DetailPayload): void;
 }
 
-class BookValidator extends BaseProductValidator {
+@Injectable()
+export class BookValidator extends BaseProductValidator {
   readonly productType = 'BOOK';
   readonly detailKey = 'book';
 
@@ -112,7 +112,8 @@ class BookValidator extends BaseProductValidator {
   }
 }
 
-class CdValidator extends BaseProductValidator {
+@Injectable()
+export class CdValidator extends BaseProductValidator {
   readonly productType = 'CD';
   readonly detailKey = 'cd';
 
@@ -128,7 +129,8 @@ class CdValidator extends BaseProductValidator {
   }
 }
 
-class DvdValidator extends BaseProductValidator {
+@Injectable()
+export class DvdValidator extends BaseProductValidator {
   readonly productType = 'DVD';
   readonly detailKey = 'dvd';
 
@@ -149,7 +151,8 @@ class DvdValidator extends BaseProductValidator {
   }
 }
 
-class NewspaperValidator extends BaseProductValidator {
+@Injectable()
+export class NewspaperValidator extends BaseProductValidator {
   readonly productType = 'NEWSPAPER';
   readonly detailKey = 'newspaper';
 
@@ -170,14 +173,28 @@ class NewspaperValidator extends BaseProductValidator {
   }
 }
 
+/**
+ * + SOLID Principles Review:
+ *   - OCP Adherence: Validators are injected as an array via PRODUCT_VALIDATORS and indexed by
+ *     productType. Adding a product type (Clothing/E-Book Reader) needs only a new validator class
+ *     plus a provider entry — this factory is never modified.
+ *   - SRP Adherence: The cross-type "which detail object is allowed" check lives here (it needs
+ *     knowledge of every type), while each validator only validates its own fields. detailKeys is
+ *     derived from the registered validators instead of a hardcoded list.
+ */
 @Injectable()
 export class ProductValidatorFactory {
-  private readonly validators = new Map<string, ProductValidator>([
-    ['BOOK', new BookValidator()],
-    ['CD', new CdValidator()],
-    ['DVD', new DvdValidator()],
-    ['NEWSPAPER', new NewspaperValidator()],
-  ]);
+  private readonly validators: Map<string, ProductValidator>;
+  private readonly detailKeys: string[];
+
+  constructor(
+    @Inject(PRODUCT_VALIDATORS) validators: ProductValidator[],
+  ) {
+    this.validators = new Map(
+      validators.map((validator) => [validator.productType, validator]),
+    );
+    this.detailKeys = validators.map((validator) => validator.detailKey);
+  }
 
   getValidator(productType: string): ProductValidator {
     const normalized = productType?.toUpperCase();
@@ -194,6 +211,7 @@ export class ProductValidatorFactory {
     const productType = dto.productType?.toUpperCase();
     dto.productType = productType;
     const validator = this.getValidator(productType);
+    this.assertExactlyOneMatchingDetail(dto, validator.detailKey);
     validator.validateCreate(dto);
     return validator;
   }
@@ -203,8 +221,41 @@ export class ProductValidatorFactory {
     if (dto.productType !== undefined) {
       dto.productType = dto.productType.toUpperCase();
     }
+    this.assertNoForeignDetail(dto, validator.detailKey);
     validator.validateUpdate(dto, existing);
     return validator;
+  }
+
+  /** On create: exactly one detail object must be present and it must match the product type. */
+  private assertExactlyOneMatchingDetail(
+    dto: CreateProductDto,
+    expectedKey: string,
+  ): void {
+    const providedKeys = this.detailKeys.filter(
+      (key) => dto[key as keyof CreateProductDto] !== undefined,
+    );
+
+    if (providedKeys.length !== 1 || providedKeys[0] !== expectedKey) {
+      throw new BadRequestException(
+        `productType ${dto.productType} requires exactly one ${expectedKey} detail object`,
+      );
+    }
+  }
+
+  /** On update: no detail object belonging to a different product type may be present. */
+  private assertNoForeignDetail(
+    dto: UpdateProductDto,
+    expectedKey: string,
+  ): void {
+    const invalidKey = this.detailKeys.find(
+      (key) => key !== expectedKey && dto[key as keyof UpdateProductDto] !== undefined,
+    );
+
+    if (invalidKey) {
+      throw new BadRequestException(
+        `Cannot update ${invalidKey} detail for ${expectedKey} product`,
+      );
+    }
   }
 }
 
@@ -241,34 +292,6 @@ function validatePriceRange(originalPrice: number, currentPrice: number): void {
   ) {
     throw new BadRequestException(
       'currentPrice must be between 30% and 150% of originalPrice',
-    );
-  }
-}
-
-function validateMatchingCreateDetail(
-  dto: CreateProductDto,
-  expectedKey: string,
-): void {
-  const providedKeys = DETAIL_KEYS.filter((key) => dto[key as keyof CreateProductDto] !== undefined);
-
-  if (providedKeys.length !== 1 || providedKeys[0] !== expectedKey) {
-    throw new BadRequestException(
-      `productType ${dto.productType} requires exactly one ${expectedKey} detail object`,
-    );
-  }
-}
-
-function validateMatchingUpdateDetail(
-  dto: UpdateProductDto,
-  expectedKey: string,
-): void {
-  const invalidKey = DETAIL_KEYS.find(
-    (key) => key !== expectedKey && dto[key as keyof UpdateProductDto] !== undefined,
-  );
-
-  if (invalidKey) {
-    throw new BadRequestException(
-      `Cannot update ${invalidKey} detail for ${expectedKey} product`,
     );
   }
 }

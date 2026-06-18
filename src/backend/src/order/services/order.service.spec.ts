@@ -35,18 +35,18 @@ describe('OrderService cancellation notifications', () => {
 
   it('refunds PayPal and publishes refunded cancellation notification', async () => {
     const eventBus = { publish: jest.fn() };
-    const paypalService = {
-      refundOrderInPaypal: jest.fn().mockResolvedValue({ id: 'REFUND-1' }),
+    const paymentService = {
+      processRefundIfSupported: jest.fn().mockResolvedValue({ automated: true }),
     };
     const dataSource = buildDataSource({
       order: buildOrder('PENDING_PROCESSING'),
       paymentRows: [{ transaction_id: 99, method: 'PAYPAL' }],
     });
-    const service = buildService(dataSource, eventBus, paypalService);
+    const service = buildService(dataSource, eventBus, paymentService);
 
     await service.cancelOrder(123);
 
-    expect(paypalService.refundOrderInPaypal).toHaveBeenCalledWith(123, false);
+    expect(paymentService.processRefundIfSupported).toHaveBeenCalledWith(123, 100000, 'PAYPAL');
     expect(eventBus.publish).toHaveBeenCalledWith({
       type: 'ORDER_CANCELLED',
       orderId: 123,
@@ -57,13 +57,17 @@ describe('OrderService cancellation notifications', () => {
   });
 });
 
-function buildService(dataSource: any, eventBus = { publish: jest.fn() }, paypalService = { refundOrderInPaypal: jest.fn() }) {
+function buildService(
+  dataSource: any,
+  eventBus = { publish: jest.fn() },
+  paymentService: any = { processRefundIfSupported: jest.fn().mockResolvedValue({ automated: false }) },
+) {
   return new OrderService(
     dataSource,
     {} as never,
     {} as never,
     eventBus as never,
-    paypalService as never,
+    paymentService as never,
   );
 }
 
@@ -92,6 +96,7 @@ function buildOrder(status: string) {
   return {
     orderID: 123,
     status,
+    totalPayment: 100000,
     orderItems: [
       {
         quantity: 1,

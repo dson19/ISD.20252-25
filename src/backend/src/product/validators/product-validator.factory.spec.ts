@@ -1,12 +1,23 @@
 import { BadRequestException } from '@nestjs/common';
 import { CreateProductDto } from '../dto/create-product.dto';
-import { ProductValidatorFactory } from './product-validator.factory';
+import {
+  ProductValidatorFactory,
+  BookValidator,
+  CdValidator,
+  DvdValidator,
+  NewspaperValidator,
+} from './product-validator.factory';
 
 describe('ProductValidatorFactory', () => {
   let factory: ProductValidatorFactory;
 
   beforeEach(() => {
-    factory = new ProductValidatorFactory();
+    factory = new ProductValidatorFactory([
+      new BookValidator(),
+      new CdValidator(),
+      new DvdValidator(),
+      new NewspaperValidator(),
+    ]);
   });
 
   it('rejects currentPrice outside 30%-150% of originalPrice', () => {

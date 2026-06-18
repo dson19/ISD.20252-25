@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { IPaymentAdapter } from '../interfaces/payment-adapter.interface';
+import { IRefundableAdapter } from '../interfaces/payment-adapter.interface';
 import { PaypalService } from '../services/paypal.service';
 
+/**
+ * Adapter wrapping PaypalService. PayPal exposes a refund API, so it implements
+ * IRefundableAdapter — the type system guarantees executeRefund exists.
+ */
 @Injectable()
-export class PaypalAdapter implements IPaymentAdapter {
-  readonly supportsAutomatedRefund = true;
+export class PaypalAdapter implements IRefundableAdapter {
+  readonly method = 'PAYPAL';
 
   constructor(private readonly paypalService: PaypalService) {}
 

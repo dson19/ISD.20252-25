@@ -11,7 +11,14 @@ import { ProductLog } from './entities/product-audit-log.entity';
 import { ProductController } from './product.controller';
 import { ProductRepository } from './product.repository';
 import { ProductService } from './product.service';
-import { ProductValidatorFactory } from './validators/product-validator.factory';
+import {
+  ProductValidatorFactory,
+  PRODUCT_VALIDATORS,
+  BookValidator,
+  CdValidator,
+  DvdValidator,
+  NewspaperValidator,
+} from './validators/product-validator.factory';
 import { BookHandler, CdHandler, DvdHandler, NewspaperHandler } from './handlers/concrete-handlers';
 import { PRODUCT_TYPE_HANDLERS } from './interfaces/product-type-handler.interface';
 
@@ -37,10 +44,20 @@ import { PRODUCT_TYPE_HANDLERS } from './interfaces/product-type-handler.interfa
     CdHandler,
     DvdHandler,
     NewspaperHandler,
+    BookValidator,
+    CdValidator,
+    DvdValidator,
+    NewspaperValidator,
     {
       provide: PRODUCT_TYPE_HANDLERS,
       useFactory: (book: BookHandler, cd: CdHandler, dvd: DvdHandler, newspaper: NewspaperHandler) => [book, cd, dvd, newspaper],
       inject: [BookHandler, CdHandler, DvdHandler, NewspaperHandler],
+    },
+    // OCP: validators discovered via token. Adding a product type = new validator + provider entry.
+    {
+      provide: PRODUCT_VALIDATORS,
+      useFactory: (book: BookValidator, cd: CdValidator, dvd: DvdValidator, newspaper: NewspaperValidator) => [book, cd, dvd, newspaper],
+      inject: [BookValidator, CdValidator, DvdValidator, NewspaperValidator],
     },
   ],
   exports: [ProductRepository, ProductService],

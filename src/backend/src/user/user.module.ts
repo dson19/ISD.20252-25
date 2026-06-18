@@ -7,13 +7,21 @@ import { UserAuditLog } from './entities/user-log.entity';
 import { Role } from './entities/role.entity';
 import { UserRepository } from './entities/user.repository';
 import { UserAdminController } from './user-admin.controller';
+import { UserAdminService } from './services/user-admin.service';
+import { BcryptPasswordHasher } from './services/bcrypt-password-hasher';
+import { PASSWORD_HASHER } from './interfaces/password-hasher.interface';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserAuditLog, Role]),
   ],
   controllers: [UserAdminController],
-  providers: [UserRepository],
+  providers: [
+    UserRepository,
+    UserAdminService,
+    // DIP: bind the IPasswordHasher abstraction to its bcrypt implementation.
+    { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
+  ],
   exports: [TypeOrmModule, UserRepository],
 })
 export class UserModule implements OnApplicationBootstrap {

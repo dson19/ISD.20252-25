@@ -1,10 +1,16 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { IPaymentAdapter } from '../interfaces/payment-adapter.interface';
 import { VietqrPaymentService } from '../services/vietqr-payment.service';
 
+/**
+ * Adapter wrapping VietqrPaymentService. VietQR has no refund API, so it implements
+ * only IPaymentAdapter (not IRefundableAdapter). It is therefore impossible — by type —
+ * to ask this adapter to perform an automated refund; refunds are handled manually by
+ * the Product Manager and the order is marked REFUND_PENDING upstream.
+ */
 @Injectable()
 export class VietqrAdapter implements IPaymentAdapter {
-  readonly supportsAutomatedRefund = false;
+  readonly method = 'VIETQR';
 
   constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
 
@@ -14,12 +20,5 @@ export class VietqrAdapter implements IPaymentAdapter {
       amount,
       content: `ORDER${orderId}`,
     });
-  }
-
-  async executeRefund(_transaction: any, _amount: number): Promise<never> {
-    // VietQR has no refund API — refunds must be processed manually by the Product Manager.
-    throw new NotImplementedException(
-      'VietQR does not support automated refunds. Please process the refund manually.',
-    );
   }
 }

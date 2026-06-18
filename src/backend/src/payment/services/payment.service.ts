@@ -1,29 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Order } from '../../order/entities/order.entity';
-import { PaypalAdapter } from '../adapters/paypal-adapter';
-import { VietqrAdapter } from '../adapters/vietqr-adapter';
-import { IPaymentAdapter } from '../interfaces/payment-adapter.interface';
+import {
+  IPaymentAdapter,
+  isRefundable,
+  PAYMENT_ADAPTERS,
+} from '../interfaces/payment-adapter.interface';
 import { PaymentRepository } from '../repositories/payment.repository';
 
 /**
- * Template Method pattern: processPayment and processRefund define the skeleton algorithm;
- * the concrete adapter chosen per payment method provides the varying steps.
+ * Template Method pattern: processPayment / processRefund define the fixed AIMS skeleton
+ * (validate -> call gateway -> persist), delegating the gateway-specific step to an adapter.
+ *
+ * + SOLID Principles Review:
+ *   - OCP Adherence: Adapters are injected as an array via PAYMENT_ADAPTERS and indexed by
+ *     adapter.method. Adding a gateway (VNPay/MoMo) needs only a new adapter + provider entry —
+ *     this service is never modified.
+ *   - DIP Adherence: Depends on the IPaymentAdapter abstraction, not on PaypalAdapter/VietqrAdapter.
+ *   - LSP Adherence: Refund is only attempted on adapters narrowed to IRefundableAdapter.
  */
 @Injectable()
 export class PaymentService {
-  private readonly adapterMap: Record<string, IPaymentAdapter>;
+  private readonly adapterMap: Map<string, IPaymentAdapter>;
 
   constructor(
     private readonly dataSource: DataSource,
     private readonly paymentRepository: PaymentRepository,
-    private readonly paypalAdapter: PaypalAdapter,
-    private readonly vietqrAdapter: VietqrAdapter,
+    @Inject(PAYMENT_ADAPTERS) adapters: IPaymentAdapter[],
   ) {
-    this.adapterMap = {
-      PAYPAL: this.paypalAdapter,
-      VIETQR: this.vietqrAdapter,
-    };
+    // Build the lookup dynamically from each adapter's own `method` — no hardcoded gateway names.
+    this.adapterMap = new Map(adapters.map((adapter) => [adapter.method, adapter]));
   }
 
   async processPayment(orderId: number, amount: number, method: string): Promise<any> {
@@ -47,6 +53,10 @@ export class PaymentService {
     }
 
     const adapter = this.getAdapter(method);
+    if (!isRefundable(adapter)) {
+      throw new NotFoundException(`Payment method ${method} does not support automated refunds`);
+    }
+
     const result = await adapter.executeRefund({ orderId, transaction }, amount);
     await this.paymentRepository.updateTransactionStatus(transaction.transactionID, 'REFUNDED');
     return result;
@@ -58,7 +68,7 @@ export class PaymentService {
     method: string,
   ): Promise<{ automated: boolean }> {
     const adapter = this.getAdapter(method);
-    if (!adapter.supportsAutomatedRefund) {
+    if (!isRefundable(adapter)) {
       return { automated: false };
     }
     await this.processRefund(orderId, amount, method);
@@ -66,7 +76,7 @@ export class PaymentService {
   }
 
   private getAdapter(method: string): IPaymentAdapter {
-    const adapter = this.adapterMap[method?.toUpperCase()];
+    const adapter = this.adapterMap.get(method?.toUpperCase());
     if (!adapter) {
       throw new NotFoundException(`No payment adapter found for method: ${method}`);
     }

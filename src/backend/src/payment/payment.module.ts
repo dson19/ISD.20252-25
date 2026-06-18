@@ -20,6 +20,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { PaypalAdapter } from './adapters/paypal-adapter';
 import { VietqrAdapter } from './adapters/vietqr-adapter';
 import { PaymentService } from './services/payment.service';
+import { PAYMENT_ADAPTERS } from './interfaces/payment-adapter.interface';
 
 @Module({
   imports: [
@@ -38,6 +39,13 @@ import { PaymentService } from './services/payment.service';
     VietqrPaymentService,
     PaypalAdapter,
     VietqrAdapter,
+    // OCP: register every adapter under one token so PaymentService discovers them dynamically.
+    // Adding a gateway (VNPay/MoMo) = add its adapter here, no change to PaymentService.
+    {
+      provide: PAYMENT_ADAPTERS,
+      useFactory: (paypal: PaypalAdapter, vietqr: VietqrAdapter) => [paypal, vietqr],
+      inject: [PaypalAdapter, VietqrAdapter],
+    },
     PaymentService,
   ],
   exports: [
