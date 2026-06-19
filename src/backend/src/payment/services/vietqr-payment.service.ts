@@ -238,7 +238,7 @@ export class VietqrPaymentService {
       throw new BadRequestException('VietQR callback orderId does not match payment');
     }
 
-    if (Number(vietqrTransaction.amount) !== Number(dto.amount)) {
+    if (Math.round(Number(vietqrTransaction.amount)) !== Math.round(Number(dto.amount))) {
       throw new BadRequestException('VietQR callback amount does not match payment');
     }
 

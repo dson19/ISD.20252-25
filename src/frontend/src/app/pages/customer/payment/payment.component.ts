@@ -277,8 +277,27 @@ export class PaymentComponent implements OnInit, OnDestroy {
             this.loading.set(false);
           },
           error: (err) => {
-            this.loading.set(false);
-            this.showAlert('Payment Error', err.error?.message || 'Failed to confirm payment.', 'error');
+            setTimeout(() => {
+              this.paymentService.getVietqrPaymentStatus(pId).subscribe({
+                next: (res) => {
+                  this.loading.set(false);
+                  if (res.status === 'PAID') {
+                    this.stopStatusPolling();
+                    clearInterval(this.timerSubscription);
+                    localStorage.removeItem('aims_cart');
+                    this.router.navigate(['/payment-result'], {
+                      queryParams: { success: 'true', orderId: this.orderId() }
+                    });
+                  } else {
+                    this.showAlert('Payment Error', err.error?.message || 'Failed to confirm payment.', 'error');
+                  }
+                },
+                error: () => {
+                  this.loading.set(false);
+                  this.showAlert('Payment Error', err.error?.message || 'Failed to confirm payment.', 'error');
+                }
+              });
+            }, 5000);
           }
         });
       } else {

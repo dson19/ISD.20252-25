@@ -91,11 +91,13 @@ export class VietqrRepository {
   }
 
   async findByContentAndAmount(content: string, amount: number): Promise<VietqrTransaction | null> {
-    return await this.vietqrRepository.findOne({
-      where: { content, amount },
-      order: { vietqrTransactionID: 'DESC' },
-      relations: ['paymentTransaction'],
-    });
+    return await this.vietqrRepository
+      .createQueryBuilder('vt')
+      .leftJoinAndSelect('vt.paymentTransaction', 'pt')
+      .where('vt.content = :content', { content })
+      .andWhere('ROUND(CAST(vt.amount AS NUMERIC)) = :amount', { amount: Math.round(amount) })
+      .orderBy('vt.vietqrTransactionID', 'DESC')
+      .getOne();
   }
 
   async markExpired(vietqrTransactionId: number): Promise<void> {
