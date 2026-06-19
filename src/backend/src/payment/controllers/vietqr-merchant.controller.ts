@@ -37,6 +37,11 @@ export class VietqrMerchantController {
     return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
   }
 
+  @Post('bank/api/transaction-sync')
+  async handleTransactionSync(@Body() payload: Record<string, unknown>) {
+    return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
+  }
+
   private validateBasicAuth(authorization?: string): void {
     const prefix = 'Basic ';
     if (!authorization?.startsWith(prefix)) {
