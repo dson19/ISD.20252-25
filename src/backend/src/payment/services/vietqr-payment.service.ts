@@ -209,20 +209,32 @@ export class VietqrPaymentService {
     }
 
     const normalizedContent = (dto.content ?? '').trim().toUpperCase();
-    const byDetails = await this.vietqrRepository.findByContentOrderAndAmount(
+    const parsedOrderId = Number(dto.orderId);
+    if (parsedOrderId > 0) {
+      const byDetails = await this.vietqrRepository.findByContentOrderAndAmount(
+        normalizedContent,
+        parsedOrderId,
+        Number(dto.amount),
+      );
+      if (byDetails) {
+        return byDetails;
+      }
+    }
+
+    const byContentAmount = await this.vietqrRepository.findByContentAndAmount(
       normalizedContent,
-      Number(dto.orderId),
       Number(dto.amount),
     );
-    if (byDetails) {
-      return byDetails;
+    if (byContentAmount) {
+      return byContentAmount;
     }
 
     throw new NotFoundException('Matching VietQR payment was not found');
   }
 
   private validateCallback(vietqrTransaction: VietqrTransaction, dto: VietqrCallbackDto): void {
-    if (String(vietqrTransaction.orderId) !== dto.orderId) {
+    const parsedOrderId = Number(dto.orderId);
+    if (parsedOrderId > 0 && String(vietqrTransaction.orderId) !== dto.orderId) {
       throw new BadRequestException('VietQR callback orderId does not match payment');
     }
 

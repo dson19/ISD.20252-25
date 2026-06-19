@@ -90,6 +90,14 @@ export class VietqrRepository {
     });
   }
 
+  async findByContentAndAmount(content: string, amount: number): Promise<VietqrTransaction | null> {
+    return await this.vietqrRepository.findOne({
+      where: { content, amount },
+      order: { vietqrTransactionID: 'DESC' },
+      relations: ['paymentTransaction'],
+    });
+  }
+
   async markExpired(vietqrTransactionId: number): Promise<void> {
     await this.vietqrRepository.update(vietqrTransactionId, { status: 'EXPIRED' });
   }
