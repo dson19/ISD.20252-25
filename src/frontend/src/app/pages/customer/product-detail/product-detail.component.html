@@ -6,7 +6,7 @@
 
 @if (loading) {
   <div class="bg-white rounded-lg border border-gray-100 p-12 text-center text-gray-500">
-    Đang tải chi tiết sản phẩm...
+    Loading product details...
   </div>
 } @else if (errorMessage) {
   <div class="bg-red-50 border border-red-100 text-danger rounded-lg p-6">
@@ -14,7 +14,7 @@
   </div>
 } @else if (product) {
   <div class="mb-6">
-    <a routerLink="/" class="text-sm font-medium text-gray-500 hover:text-gray-900">← Quay lại danh sách</a>
+    <a routerLink="/" class="text-sm font-medium text-gray-500 hover:text-gray-900">← Back to list</a>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8">
@@ -36,14 +36,14 @@
           <p>{{ visibleDescription }}</p>
           @if (shouldCollapseDescription) {
             <button type="button" (click)="toggleDescription()" class="mt-2 text-sm font-semibold text-primary hover:text-primary-hover">
-              {{ descriptionExpanded ? 'Thu gọn' : 'Xem thêm' }}
+              {{ descriptionExpanded ? 'Show less' : 'Show more' }}
             </button>
           }
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
           <div>
-            <p class="text-gray-500">Danh mục</p>
+            <p class="text-gray-500">Category</p>
             <p class="font-semibold text-gray-900">{{ product.category }}</p>
           </div>
           <div>
@@ -51,29 +51,29 @@
             <p class="font-semibold text-gray-900">{{ product.barcode }}</p>
           </div>
           <div>
-            <p class="text-gray-500">Kích thước</p>
+            <p class="text-gray-500">Dimensions</p>
             <p class="font-semibold text-gray-900">{{ dimensions() }}</p>
           </div>
           <div>
-            <p class="text-gray-500">Khối lượng</p>
+            <p class="text-gray-500">Weight</p>
             <p class="font-semibold text-gray-900">{{ product.weight }} kg</p>
           </div>
           <div>
-            <p class="text-gray-500">Tồn kho</p>
+            <p class="text-gray-500">In Stock</p>
             <p class="font-semibold text-gray-900">{{ product.quantityInStock }}</p>
           </div>
         </div>
 
         <div class="border-t border-gray-100 pt-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-500">Giá bán</p>
-            <p class="text-3xl font-bold text-primary">{{ productPrice() | number:'1.0-0' }} đ</p>
+            <p class="text-sm font-medium text-gray-500">Sale Price</p>
+            <p class="text-3xl font-bold text-primary">{{ productPrice() | number:'1.0-0' }} VND</p>
             @if (hasOriginalPrice()) {
               <p class="text-sm text-gray-500">
-                Giá gốc <span class="line-through">{{ originalPrice() | number:'1.0-0' }} đ</span>
+                Original price <span class="line-through">{{ originalPrice() | number:'1.0-0' }} VND</span>
               </p>
             }
-            <p class="text-xs text-gray-400">(chưa bao gồm VAT)</p>
+            <p class="text-xs text-gray-400">(excl. VAT)</p>
           </div>
 
           <div class="flex flex-col sm:items-end gap-2">
@@ -104,7 +104,7 @@
                 [disabled]="product.quantityInStock <= 0 || quantityInvalid"
                 class="bg-primary text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:bg-primary-hover transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {{ product.quantityInStock > 0 ? 'Thêm vào giỏ' : 'Hết hàng' }}
+                {{ product.quantityInStock > 0 ? 'Add to Cart' : 'Out of Stock' }}
               </button>
             </div>
             @if (quantityErrorMessage) {
@@ -115,34 +115,34 @@
       </section>
 
       <section class="bg-white border border-gray-100 rounded-lg p-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Thông tin chi tiết</h2>
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Detailed Information</h2>
 
         @if (product.mediaType === 'BOOK' && product.book) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div><dt class="text-gray-500">Tác giả</dt><dd class="font-semibold text-gray-900">{{ product.book.authors }}</dd></div>
-            <div><dt class="text-gray-500">Loại bìa</dt><dd class="font-semibold text-gray-900">{{ product.book.coverType }}</dd></div>
-            <div><dt class="text-gray-500">Nhà xuất bản</dt><dd class="font-semibold text-gray-900">{{ product.book.publisher }}</dd></div>
-            <div><dt class="text-gray-500">Ngày xuất bản</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.book.publicationDate) }}</dd></div>
-            <div><dt class="text-gray-500">Số trang</dt><dd class="font-semibold text-gray-900">{{ product.book.numPages || 'Không có' }}</dd></div>
-            <div><dt class="text-gray-500">Ngôn ngữ</dt><dd class="font-semibold text-gray-900">{{ product.book.language || 'Không có' }}</dd></div>
-            <div><dt class="text-gray-500">Thể loại</dt><dd class="font-semibold text-gray-900">{{ product.book.genre || 'Không có' }}</dd></div>
+            <div><dt class="text-gray-500">Author(s)</dt><dd class="font-semibold text-gray-900">{{ product.book.authors }}</dd></div>
+            <div><dt class="text-gray-500">Cover Type</dt><dd class="font-semibold text-gray-900">{{ product.book.coverType }}</dd></div>
+            <div><dt class="text-gray-500">Publisher</dt><dd class="font-semibold text-gray-900">{{ product.book.publisher }}</dd></div>
+            <div><dt class="text-gray-500">Publication Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.book.publicationDate) }}</dd></div>
+            <div><dt class="text-gray-500">Pages</dt><dd class="font-semibold text-gray-900">{{ product.book.numPages || 'N/A' }}</dd></div>
+            <div><dt class="text-gray-500">Language</dt><dd class="font-semibold text-gray-900">{{ product.book.language || 'N/A' }}</dd></div>
+            <div><dt class="text-gray-500">Genre</dt><dd class="font-semibold text-gray-900">{{ product.book.genre || 'N/A' }}</dd></div>
           </dl>
         } @else if (product.mediaType === 'NEWSPAPER' && product.newspaper) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div><dt class="text-gray-500">Tổng biên tập</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.editorInChief }}</dd></div>
-            <div><dt class="text-gray-500">Nhà xuất bản</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.publisher }}</dd></div>
-            <div><dt class="text-gray-500">Ngày xuất bản</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.newspaper.publicationDate) }}</dd></div>
-            <div><dt class="text-gray-500">Số phát hành</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.issueNumber || 'Không có' }}</dd></div>
-            <div><dt class="text-gray-500">Tần suất</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.frequency || 'Không có' }}</dd></div>
-            <div><dt class="text-gray-500">ISSN</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.issn || 'Không có' }}</dd></div>
-            <div class="sm:col-span-2"><dt class="text-gray-500">Mục bài viết</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.sections || 'Không có' }}</dd></div>
+            <div><dt class="text-gray-500">Editor-in-Chief</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.editorInChief }}</dd></div>
+            <div><dt class="text-gray-500">Publisher</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.publisher }}</dd></div>
+            <div><dt class="text-gray-500">Publication Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.newspaper.publicationDate) }}</dd></div>
+            <div><dt class="text-gray-500">Issue Number</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.issueNumber || 'N/A' }}</dd></div>
+            <div><dt class="text-gray-500">Frequency</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.frequency || 'N/A' }}</dd></div>
+            <div><dt class="text-gray-500">ISSN</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.issn || 'N/A' }}</dd></div>
+            <div class="sm:col-span-2"><dt class="text-gray-500">Sections</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.sections || 'N/A' }}</dd></div>
           </dl>
         } @else if (product.mediaType === 'CD' && product.cd) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
-            <div><dt class="text-gray-500">Nghệ sĩ</dt><dd class="font-semibold text-gray-900">{{ product.cd.artists }}</dd></div>
-            <div><dt class="text-gray-500">Hãng đĩa</dt><dd class="font-semibold text-gray-900">{{ product.cd.recordLabel }}</dd></div>
-            <div><dt class="text-gray-500">Thể loại</dt><dd class="font-semibold text-gray-900">{{ product.cd.genre }}</dd></div>
-            <div><dt class="text-gray-500">Ngày phát hành</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.cd.releaseDate) }}</dd></div>
+            <div><dt class="text-gray-500">Artist(s)</dt><dd class="font-semibold text-gray-900">{{ product.cd.artists }}</dd></div>
+            <div><dt class="text-gray-500">Record Label</dt><dd class="font-semibold text-gray-900">{{ product.cd.recordLabel }}</dd></div>
+            <div><dt class="text-gray-500">Genre</dt><dd class="font-semibold text-gray-900">{{ product.cd.genre }}</dd></div>
+            <div><dt class="text-gray-500">Release Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.cd.releaseDate) }}</dd></div>
           </dl>
           @if (product.cd.tracks?.length) {
             <div class="border border-gray-100 rounded-lg divide-y divide-gray-100">
@@ -156,17 +156,17 @@
           }
         } @else if (product.mediaType === 'DVD' && product.dvd) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div><dt class="text-gray-500">Loại đĩa</dt><dd class="font-semibold text-gray-900">{{ product.dvd.discType }}</dd></div>
-            <div><dt class="text-gray-500">Đạo diễn</dt><dd class="font-semibold text-gray-900">{{ product.dvd.director }}</dd></div>
-            <div><dt class="text-gray-500">Thời lượng</dt><dd class="font-semibold text-gray-900">{{ product.dvd.runtimeMinutes }} phút</dd></div>
+            <div><dt class="text-gray-500">Disc Type</dt><dd class="font-semibold text-gray-900">{{ product.dvd.discType }}</dd></div>
+            <div><dt class="text-gray-500">Director</dt><dd class="font-semibold text-gray-900">{{ product.dvd.director }}</dd></div>
+            <div><dt class="text-gray-500">Runtime</dt><dd class="font-semibold text-gray-900">{{ product.dvd.runtimeMinutes }} min</dd></div>
             <div><dt class="text-gray-500">Studio</dt><dd class="font-semibold text-gray-900">{{ product.dvd.studio }}</dd></div>
-            <div><dt class="text-gray-500">Ngôn ngữ</dt><dd class="font-semibold text-gray-900">{{ product.dvd.language }}</dd></div>
-            <div><dt class="text-gray-500">Phụ đề</dt><dd class="font-semibold text-gray-900">{{ product.dvd.subtitles }}</dd></div>
-            <div><dt class="text-gray-500">Thể loại</dt><dd class="font-semibold text-gray-900">{{ product.dvd.genre || 'Không có' }}</dd></div>
-            <div><dt class="text-gray-500">Ngày phát hành</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.dvd.releaseDate) }}</dd></div>
+            <div><dt class="text-gray-500">Language</dt><dd class="font-semibold text-gray-900">{{ product.dvd.language }}</dd></div>
+            <div><dt class="text-gray-500">Subtitles</dt><dd class="font-semibold text-gray-900">{{ product.dvd.subtitles }}</dd></div>
+            <div><dt class="text-gray-500">Genre</dt><dd class="font-semibold text-gray-900">{{ product.dvd.genre || 'N/A' }}</dd></div>
+            <div><dt class="text-gray-500">Release Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(product.dvd.releaseDate) }}</dd></div>
           </dl>
         } @else {
-          <p class="text-sm text-gray-500">Chưa có thông tin chi tiết cho sản phẩm này.</p>
+          <p class="text-sm text-gray-500">No detailed information available for this product.</p>
         }
       </section>
     </div>

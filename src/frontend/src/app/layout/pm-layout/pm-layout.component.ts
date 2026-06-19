@@ -33,6 +33,16 @@ export class PmLayoutComponent {
     return this.authService.getCurrentUser();
   }
 
+  get isAdmin(): boolean {
+    return this.authService.hasRole('ADMIN');
+  }
+
+  switchToAdmin(event: Event) {
+    event.preventDefault();
+    this.isProfileDropdownOpen = false;
+    this.router.navigate(['/admin/users']);
+  }
+
   logout(event: Event) {
     event.preventDefault();
     this.isProfileDropdownOpen = false;

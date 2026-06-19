@@ -196,7 +196,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           this.shippingFee = Number(result.shippingFee);
         },
         error: () => {
-          this.shippingError = 'Khong the tinh phi van chuyen. Vui long thu lai.';
+          this.shippingError = 'Unable to calculate shipping fee. Please try again.';
         },
       });
   }
@@ -237,18 +237,18 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         const response = error.error as { message?: string | string[]; issues?: StockIssue[] } | undefined;
         if (error.status === 400) {
           if (Array.isArray(response?.issues) && response.issues.length > 0) {
-            this.errorMessage = 'Một số sản phẩm không đủ tồn kho. Vui lòng quay lại giỏ hàng để cập nhật số lượng.';
+            this.errorMessage = 'Some items are out of stock. Please return to cart to update quantities.';
             this.stockIssues = response.issues;
           } else if (response?.message) {
             const msg = Array.isArray(response.message) ? response.message.join(', ') : response.message;
-            this.errorMessage = `Thông tin đặt hàng không hợp lệ: ${msg}`;
+            this.errorMessage = `Invalid order information: ${msg}`;
             this.stockIssues = [];
           } else {
-            this.errorMessage = 'Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+            this.errorMessage = 'Invalid request. Please check your information and try again.';
             this.stockIssues = [];
           }
         } else {
-          this.errorMessage = 'Không thể đặt hàng. Hãy kiểm tra backend API và thử lại.';
+          this.errorMessage = 'Unable to place order. Please try again later.';
           this.stockIssues = [];
         }
       },
@@ -260,7 +260,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   stockIssueTitle(issue: StockIssue): string {
-    return this.cartItems.find((item) => item.id === issue.productId)?.title ?? `Sản phẩm #${issue.productId}`;
+    return this.cartItems.find((item) => item.id === issue.productId)?.title ?? `Product #${issue.productId}`;
   }
 
   private extractStockIssues(error: HttpErrorResponse): StockIssue[] {
@@ -283,7 +283,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loadingOrder = false;
-          this.errorMessage = 'Khong the tai thong tin don hang de chinh sua.';
+          this.errorMessage = 'Unable to load order details for editing.';
           this.refreshView();
         },
       }),
@@ -303,7 +303,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.shippingFee = Number(order.invoice?.shippingFee ?? order.shippingFee ?? 0);
     this.cartItems = (order.orderItems ?? []).map((item) => ({
       id: item.product?.productID ?? 0,
-      title: item.product?.title ?? 'San pham',
+      title: item.product?.title ?? 'Product',
       price: Number(item.unitPrice),
       imageUrl: item.product?.imageUrl || 'https://placehold.co/300x400/e2e8f0/475569?text=AIMS',
       quantity: item.quantity,

@@ -59,7 +59,7 @@ export class OrderDetailComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Lỗi khi lấy thông tin đơn hàng:', err);
+        console.error('Error loading order details:', err);
         this.orderLoaded.set(true);
       }
     });
@@ -79,7 +79,7 @@ export class OrderDetailComponent implements OnInit {
   canCancel(): boolean {
     const currentOrder = this.order();
     if (!currentOrder) return false;
-    // Khách hàng được phép hủy khi đơn hàng ở trạng thái PENDING hoặc PENDING_PROCESSING
+    // Customer can cancel when order is PENDING or PENDING_PROCESSING
     return ['PENDING', 'PENDING_PROCESSING'].includes(currentOrder.status);
   }
 
@@ -107,10 +107,10 @@ export class OrderDetailComponent implements OnInit {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);
           this.openModal(
-            'Hủy đơn hàng thành công',
+            'Order Cancelled Successfully',
             res.status === 'REFUND_PENDING'
-              ? 'Đơn hàng đã được hủy. Hoàn tiền VietQR đang chờ quản trị viên xác nhận.'
-              : 'Đơn hàng đã được hủy và trạng thái hoàn tiền đã được cập nhật.',
+              ? 'Your order has been cancelled. VietQR refund is pending admin approval.'
+              : 'Your order has been cancelled and refund status updated.',
             'success'
           );
           this.loadOrderDetails();
@@ -119,8 +119,8 @@ export class OrderDetailComponent implements OnInit {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);
           this.openModal(
-            'Không thể hủy đơn hàng',
-            `Có lỗi xảy ra khi hủy đơn hàng.\nChi tiết lỗi: ${err.error?.message || err.message}`,
+            'Unable to Cancel Order',
+            `An error occurred while cancelling the order.\nError: ${err.error?.message || err.message}`,
             'error'
           );
         }
@@ -129,14 +129,14 @@ export class OrderDetailComponent implements OnInit {
     }
 
     if (paymentMethod === 'PAYPAL') {
-      // Đơn hàng thanh toán bằng PayPal -> Phải hoàn tiền tự động qua PayPal thành công mới cho hủy đơn
+      // PayPal orders: must successfully refund via PayPal before cancellation
       this.paymentService.refundOrder(id).subscribe({
         next: (res) => {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);
           this.openModal(
-            'Hủy đơn hàng thành công',
-            'Đơn hàng đã được hủy và tiền đã hoàn lại tự động về tài khoản PayPal của bạn.',
+            'Order Cancelled Successfully',
+            'Your order has been cancelled and the amount has been automatically refunded to your PayPal account.',
             'success'
           );
           this.loadOrderDetails();
@@ -145,28 +145,28 @@ export class OrderDetailComponent implements OnInit {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);
           this.openModal(
-            'Lỗi hoàn tiền PayPal',
-            `Không thể hoàn tiền đơn hàng qua PayPal. Hủy đơn thất bại!\nChi tiết lỗi: ${err.error?.message || err.message || 'Lỗi kết nối cổng thanh toán.'}`,
+            'PayPal Refund Error',
+            `Unable to refund the order via PayPal. Cancellation failed!\nError: ${err.error?.message || err.message || 'Payment gateway connection error.'}`,
             'error'
           );
         }
       });
     } else {
-      // Đơn hàng thanh toán bằng VietQR hoặc chưa thanh toán -> Gọi API hủy đơn thường
+      // VietQR or unpaid orders: use standard cancel API
       this.paymentService.cancelOrder(id).subscribe({
         next: () => {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);
           if (paymentMethod === 'VIETQR') {
             this.openModal(
-              'Hủy đơn hàng thành công',
-              'Đơn hàng đã được hủy thành công. Do đơn hàng được thanh toán bằng VietQR, ban quản trị sẽ liên hệ hoàn tiền thủ công cho bạn trong thời gian sớm nhất.',
+              'Order Cancelled Successfully',
+              'Your order has been successfully cancelled. Since payment was made via VietQR, our admin team will contact you for a manual refund as soon as possible.',
               'success'
             );
           } else {
             this.openModal(
-              'Hủy đơn hàng thành công',
-              'Đơn hàng của bạn đã được hủy thành công trên hệ thống.',
+              'Order Cancelled Successfully',
+              'Your order has been successfully cancelled.',
               'success'
             );
           }
@@ -176,8 +176,8 @@ export class OrderDetailComponent implements OnInit {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);
           this.openModal(
-            'Không thể hủy đơn hàng',
-            `Có lỗi xảy ra khi hủy đơn hàng.\nChi tiết lỗi: ${err.error?.message || err.message}`,
+            'Unable to Cancel Order',
+            `An error occurred while cancelling the order.\nError: ${err.error?.message || err.message}`,
             'error'
           );
         }

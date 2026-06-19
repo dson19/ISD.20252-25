@@ -26,17 +26,17 @@ interface PriceFilter {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   categories: CategoryFilter[] = [
-    { label: 'Sách', value: 'BOOK' },
+    { label: 'Book', value: 'BOOK' },
     { label: 'CD', value: 'CD' },
     { label: 'DVD', value: 'DVD' },
-    { label: 'Báo chí', value: 'NEWSPAPER' },
+    { label: 'Newspaper', value: 'NEWSPAPER' },
   ];
 
   priceFilters: PriceFilter[] = [
-    { label: 'Dưới 100,000', maxPrice: 100000 },
+    { label: 'Under 100,000', maxPrice: 100000 },
     { label: '100,000 - 500,000', minPrice: 100000, maxPrice: 500000 },
     { label: '500,000 - 1,000,000', minPrice: 500000, maxPrice: 1000000 },
-    { label: 'Trên 1,000,000', minPrice: 1000000 },
+    { label: 'Over 1,000,000', minPrice: 1000000 },
   ];
 
   readonly batchSize = 20;
@@ -103,7 +103,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   addToCart(product: Product): void {
     const quantity = this.getProductQuantity(product);
     this.cartService.addToCart(product, quantity);
-    this.showToast(`Đã thêm ${quantity} "${product.title}" vào giỏ hàng.`);
+    this.showToast(`Added ${quantity} × "${product.title}" to cart.`);
   }
 
   get visibleProducts(): Product[] {
@@ -162,8 +162,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   mediaTypeLabel(mediaType: string): string {
     const labels: Record<string, string> = {
-      BOOK: 'Sách',
-      NEWSPAPER: 'Báo chí',
+      BOOK: 'Book',
+      NEWSPAPER: 'Newspaper',
       CD: 'CD',
       DVD: 'DVD',
     };
@@ -182,7 +182,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.productsSubscription = request$
       .pipe(
         catchError(() => {
-          this.errorMessage = 'Không thể tải danh sách sản phẩm. Hãy kiểm tra backend API.';
+          this.errorMessage = 'Unable to load products. Please try again later.';
           return of([]);
         }),
         finalize(() => {

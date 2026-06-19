@@ -110,7 +110,7 @@ export class CartComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.stockIssuesByProductId.clear();
-          this.stockCheckError = 'Không thể kiểm tra tồn kho. Vui lòng thử lại sau.';
+          this.stockCheckError = 'Unable to check stock availability. Please try again later.';
         },
       });
   }

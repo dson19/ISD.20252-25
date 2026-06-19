@@ -1,10 +1,10 @@
 <div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
   <div class="flex-1">
     <div class="flex items-center space-x-2 mb-2">
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Thong tin giao hang</h1>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Shipping Information</h1>
     </div>
     <p class="text-gray-500 text-sm mb-8">
-      {{ editOrderId ? 'Chinh sua thong tin nhan hang cho don hang hien tai.' : 'Nhap thong tin nhan hang de tao don hang va hoa don tam thoi.' }}
+      {{ editOrderId ? 'Edit the delivery details for the current order.' : 'Enter delivery details to create an order and a provisional invoice.' }}
     </p>
 
     @if (errorMessage) {
@@ -14,8 +14,8 @@
           <ul class="space-y-1">
             @for (issue of stockIssues; track issue.productId) {
               <li>
-                {{ stockIssueTitle(issue) }}: yeu cau {{ issue.requestedQuantity }},
-                hien co {{ issue.availableQuantity }}.
+                {{ stockIssueTitle(issue) }}: requested {{ issue.requestedQuantity }},
+                available {{ issue.availableQuantity }}.
               </li>
             }
           </ul>
@@ -24,14 +24,14 @@
     }
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-8 mb-6">
-      <h2 class="text-lg font-bold text-gray-900 mb-6">Chi tiet giao hang</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-6">Delivery Details</h2>
 
       <form class="space-y-6" #checkoutForm="ngForm" (ngSubmit)="continueToPayment(checkoutForm)" novalidate>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Ho va ten nguoi nhan <span class="text-danger">*</span></label>
-          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" #receiverNameModel="ngModel" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: Nguyen Minh Anh" required>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Recipient Full Name <span class="text-danger">*</span></label>
+          <input type="text" name="receiverName" [(ngModel)]="deliveryInfo.receiverName" #receiverNameModel="ngModel" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="e.g. Jane Smith" required>
           @if (receiverNameModel.invalid && (receiverNameModel.dirty || receiverNameModel.touched || checkoutForm.submitted)) {
-            <div class="text-danger text-xs mt-1">Họ và tên người nhận là bắt buộc.</div>
+            <div class="text-danger text-xs mt-1">Recipient full name is required.</div>
           }
         </div>
 
@@ -41,30 +41,30 @@
           @if (emailModel.invalid && (emailModel.dirty || emailModel.touched || checkoutForm.submitted)) {
             <div class="text-danger text-xs mt-1">
               @if (emailModel.errors?.['required']) {
-                Email là bắt buộc.
+                Email is required.
               } @else if (emailModel.errors?.['email']) {
-                Email không đúng định dạng.
+                Email format is invalid.
               }
             </div>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">So dien thoai <span class="text-danger">*</span></label>
-          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" #phoneModel="ngModel" pattern="^(0|\+84)[3|5|7|8|9][0-9]{8}$" required class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: 0987654321">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number <span class="text-danger">*</span></label>
+          <input type="tel" name="phoneNumber" [(ngModel)]="deliveryInfo.phoneNumber" #phoneModel="ngModel" pattern="^(0|\+84)[3|5|7|8|9][0-9]{8}$" required class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="e.g. 0987654321">
           @if (phoneModel.invalid && (phoneModel.dirty || phoneModel.touched || checkoutForm.submitted)) {
             <div class="text-danger text-xs mt-1">
               @if (phoneModel.errors?.['required']) {
-                Số điện thoại là bắt buộc.
+                Phone number is required.
               } @else if (phoneModel.errors?.['pattern']) {
-                Số điện thoại không đúng định dạng.
+                Phone number format is invalid.
               }
             </div>
           }
         </div>
 
         <div class="relative">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tinh / Thanh pho <span class="text-danger">*</span></label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Province / City <span class="text-danger">*</span></label>
           <input
             type="text"
             name="provinceSearch"
@@ -73,12 +73,12 @@
             (focus)="openProvinceOptions()"
             (blur)="closeProvinceOptions()"
             class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors text-gray-900"
-            placeholder="Tìm tỉnh/thành phố"
+            placeholder="Search province/city"
             autocomplete="off"
             required
           >
           @if (!provinceValid && (provinceSearch || checkoutForm.submitted)) {
-            <div class="text-danger text-xs mt-1">Vui lòng chọn Tỉnh / Thành phố từ danh sách hợp lệ.</div>
+            <div class="text-danger text-xs mt-1">Please select a Province / City from the valid list.</div>
           }
           @if (provinceOptionsOpen) {
             <div class="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
@@ -91,23 +91,23 @@
                   {{ province }}
                 </button>
               } @empty {
-                <div class="px-4 py-3 text-sm text-gray-500">Không tìm thấy tỉnh/thành phố phù hợp.</div>
+                <div class="px-4 py-3 text-sm text-gray-500">No matching province/city found.</div>
               }
             </div>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Dia chi chi tiet <span class="text-danger">*</span></label>
-          <textarea name="address" [(ngModel)]="deliveryInfo.address" #addressModel="ngModel" (ngModelChange)="calculateShippingFee()" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="So nha, ten duong, phuong/xa, quan/huyen" required></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Street Address <span class="text-danger">*</span></label>
+          <textarea name="address" [(ngModel)]="deliveryInfo.address" #addressModel="ngModel" (ngModelChange)="calculateShippingFee()" rows="3" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="House number, street, ward/commune, district" required></textarea>
           @if (addressModel.invalid && (addressModel.dirty || addressModel.touched || checkoutForm.submitted)) {
-            <div class="text-danger text-xs mt-1">Địa chỉ chi tiết là bắt buộc.</div>
+            <div class="text-danger text-xs mt-1">Street address is required.</div>
           }
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chu giao hang <span class="text-gray-400 font-normal">(Tuy chon)</span></label>
-          <textarea name="deliveryNotes" [(ngModel)]="deliveryInfo.deliveryNotes" rows="2" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="Vi du: Giao gio hanh chinh, goi truoc khi giao"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Notes <span class="text-gray-400 font-normal">(Optional)</span></label>
+          <textarea name="deliveryNotes" [(ngModel)]="deliveryInfo.deliveryNotes" rows="2" class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary transition-colors" placeholder="e.g. Deliver during business hours, call before delivery"></textarea>
         </div>
 
         <div class="flex items-center justify-between">
@@ -116,14 +116,14 @@
             [queryParams]="editOrderId ? { orderId: editOrderId } : null"
             class="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center transition-colors"
           >
-            {{ editOrderId ? 'Quay lai hoa don' : 'Quay lai gio hang' }}
+            {{ editOrderId ? 'Back to Invoice' : 'Back to Cart' }}
           </a>
           <button
             type="submit"
             [disabled]="loadingOrder || submitting || calculatingShipping || cartItems.length === 0"
             class="bg-primary text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {{ submitting ? (editOrderId ? 'Dang cap nhat...' : 'Dang tao don hang...') : (editOrderId ? 'Cap nhat hoa don' : 'Xac nhan dat hang') }}
+            {{ submitting ? (editOrderId ? 'Updating...' : 'Creating order...') : (editOrderId ? 'Update Invoice' : 'Confirm Order') }}
           </button>
         </div>
       </form>
@@ -132,7 +132,7 @@
 
   <div class="lg:w-80 flex-shrink-0">
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sticky top-24">
-      <h2 class="text-lg font-bold text-gray-900 mb-6">Tom tat don hang</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-6">Order Summary</h2>
 
       <div class="space-y-4 mb-6">
         @for (item of cartItems; track item.id) {
@@ -142,7 +142,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <h4 class="text-xs font-bold text-gray-900 line-clamp-2 mb-1">{{ item.title }}</h4>
-              <p class="text-[10px] text-gray-500">SL: {{ item.quantity }}</p>
+              <p class="text-[10px] text-gray-500">Qty: {{ item.quantity }}</p>
               <p class="text-xs font-semibold text-gray-900 mt-1">{{ itemTotal(item) | number:'1.0-0' }} VND</p>
             </div>
           </div>
@@ -152,7 +152,7 @@
       <div class="border-t border-gray-100 pt-4 mb-4">
         <div class="space-y-3 text-sm">
           <div class="flex justify-between text-gray-600">
-            <span>Tam tinh</span>
+            <span>Subtotal</span>
             <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} VND</span>
           </div>
           <div class="flex justify-between text-gray-600">
@@ -160,9 +160,9 @@
             <span class="font-medium text-gray-900">{{ vat | number:'1.0-0' }} VND</span>
           </div>
           <div class="flex justify-between text-gray-600">
-            <span>Phi van chuyen</span>
+            <span>Shipping Fee</span>
             <span class="font-medium text-gray-900">
-              {{ calculatingShipping ? 'Dang tinh...' : ((shippingFee | number:'1.0-0') + ' VND') }}
+              {{ calculatingShipping ? 'Calculating...' : ((shippingFee | number:'1.0-0') + ' VND') }}
             </span>
           </div>
           @if (shippingError) {
@@ -173,7 +173,7 @@
 
       <div class="border-t border-gray-100 pt-4">
         <div class="flex justify-between items-center">
-          <span class="font-semibold text-gray-900">Tong thanh toan</span>
+          <span class="font-semibold text-gray-900">Total Payment</span>
           <span class="text-xl font-bold text-primary">{{ total | number:'1.0-0' }} VND</span>
         </div>
       </div>

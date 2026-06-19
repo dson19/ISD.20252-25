@@ -5,11 +5,11 @@
     <div class="space-y-1">
       <div class="flex items-center space-x-2">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
-          Quản lý danh mục
+          Catalog Management
         </span>
       </div>
-      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Kho sản phẩm</h1>
-      <p class="text-sm text-gray-500">Quản lý catalog, kiểm kho tài sản số và điều chỉnh tồn kho vật lý.</p>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Product Inventory</h1>
+      <p class="text-sm text-gray-500">Manage the catalog, audit digital assets, and adjust physical stock levels.</p>
     </div>
     
     <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -20,7 +20,7 @@
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
         </svg>
-        Tạo sản phẩm
+        Create Product
       </button>
 
       <button
@@ -34,7 +34,7 @@
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
         </svg>
-        Ngừng bán @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
+        Deactivate @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
       </button>
 
       <button
@@ -48,14 +48,14 @@
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        Xóa @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
+        Delete @if (getSelectedCount() > 0) { ({{ getSelectedCount() }}) }
       </button>
     </div>
   </div>
 
-  <!-- Dashboard Metrics Panel (Mới) -->
+  <!-- Dashboard Metrics Panel -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-    <!-- Card 1: Tổng đầu sản phẩm -->
+    <!-- Card 1: Total products -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,12 +63,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TỔNG SẢN PHẨM</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TOTAL PRODUCTS</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ totalProductsCount }}</p>
       </div>
     </div>
 
-    <!-- Card 2: Đang bán hàng -->
+    <!-- Card 2: Active for sale -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,12 +76,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐANG BÁN HÀNG</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ACTIVE FOR SALE</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ activeProductsCount }}</p>
       </div>
     </div>
 
-    <!-- Card 4: Tạm ngưng bán -->
+    <!-- Card 4: Deactivated -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-slate-100 text-slate-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,7 +89,7 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TẠM NGƯNG BÁN</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">DEACTIVATED</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ deactivatedCount }}</p>
       </div>
     </div>
@@ -111,7 +111,7 @@
           [(ngModel)]="keyword"
           (ngModelChange)="onFilterChange()"
           class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all"
-          placeholder="Tìm theo tiêu đề, tác giả hoặc mã vạch..."
+          placeholder="Search by title, author, or barcode..."
         />
       </div>
       
@@ -122,7 +122,7 @@
           (ngModelChange)="onFilterChange()"
           class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
-          <option value="">Tất cả danh mục</option>
+          <option value="">All categories</option>
           <option value="Sách">Sách</option>
           <option value="CD">CD</option>
           <option value="DVD">DVD</option>
@@ -135,11 +135,11 @@
           (ngModelChange)="onFilterChange()"
           class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
-          <option value="">Tất cả loại tài liệu</option>
-          <option value="BOOK">Sách (BOOK)</option>
-          <option value="CD">Đĩa nhạc (CD)</option>
-          <option value="DVD">Đĩa phim (DVD)</option>
-          <option value="NEWSPAPER">Báo / Ấn phẩm</option>
+          <option value="">All media types</option>
+          <option value="BOOK">Book (BOOK)</option>
+          <option value="CD">Music Disc (CD)</option>
+          <option value="DVD">Film Disc (DVD)</option>
+          <option value="NEWSPAPER">Newspaper / Publication</option>
         </select>
         
         <!-- Status filter -->
@@ -148,16 +148,16 @@
           (ngModelChange)="onFilterChange()"
           class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang hoạt động</option>
-          <option value="DEACTIVATED">Ngừng hoạt động</option>
+          <option value="">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="DEACTIVATED">Deactivated</option>
         </select>
         
         <!-- Reload button -->
         <button
           (click)="fetchProducts()"
           class="p-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-2xl transition-all shadow-sm focus:outline-none flex items-center justify-center"
-          title="Tải lại sản phẩm"
+          title="Reload products"
         >
           <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -172,13 +172,13 @@
         <thead>
           <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
             <th class="p-5 pl-8 w-12 text-center"></th>
-            <th class="p-5 w-32">MÃ VẠCH</th>
-            <th class="p-5">THÔNG TIN SẢN PHẨM</th>
-            <th class="p-5 text-center w-28">LOẠI TÀI LIỆU</th>
-            <th class="p-5 text-center w-28">TỒN KHO HÀNG</th>
-            <th class="p-5 text-right w-36">GIÁ NIÊM YẾT (VND)</th>
-            <th class="p-5 text-center w-28">TRẠNG THÁI</th>
-            <th class="p-5 text-center w-36">THAO TÁC</th>
+            <th class="p-5 w-32">BARCODE</th>
+            <th class="p-5">PRODUCT INFO</th>
+            <th class="p-5 text-center w-28">MEDIA TYPE</th>
+            <th class="p-5 text-center w-28">STOCK QTY</th>
+            <th class="p-5 text-right w-36">LIST PRICE (VND)</th>
+            <th class="p-5 text-center w-28">STATUS</th>
+            <th class="p-5 text-center w-36">ACTIONS</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -190,7 +190,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span class="text-sm">Đang tải danh sách sản phẩm từ kho dữ liệu...</span>
+                  <span class="text-sm">Loading product list from data store...</span>
                 </div>
               </td>
             </tr>
@@ -201,7 +201,7 @@
                   <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  <span class="text-sm">Không tìm thấy sản phẩm nào khớp với bộ lọc hiện tại.</span>
+                  <span class="text-sm">No products found matching the current filters.</span>
                 </div>
               </td>
             </tr>
@@ -230,7 +230,7 @@
                     </div>
                     <div class="ml-4 flex-1 min-w-0">
                       <p class="text-sm font-extrabold text-gray-900 line-clamp-3 group-hover:text-primary transition-colors leading-snug">{{ product.title }}</p>
-                      <p class="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-1">Danh mục: {{ product.category }}</p>
+                      <p class="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-1">Category: {{ product.category }}</p>
                     </div>
                   </div>
                 </td>
@@ -260,12 +260,12 @@
                   @if (product.status === 'ACTIVE') {
                     <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
                       <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse"></span>
-                      Đang bán
+                      Active
                     </span>
                   } @else {
                     <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
                       <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>
-                      Tạm ngưng
+                      Deactivated
                     </span>
                   }
                 </td>
@@ -275,7 +275,7 @@
                       (click)="openEditModal(product)"
                       [disabled]="loadingProductId === product.productID"
                       class="w-8 h-8 rounded-xl border border-gray-200 hover:border-blue-100 text-gray-500 hover:text-primary hover:bg-blue-50 flex items-center justify-center transition-all shadow-sm focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Sửa sản phẩm"
+                      title="Edit product"
                     >
                       @if (loadingProductId === product.productID) {
                         <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -291,9 +291,9 @@
                     <button
                       (click)="openStockModal(product)"
                       class="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:text-primary bg-slate-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-100 rounded-xl transition-all shadow-sm focus:outline-none"
-                      title="Điều chỉnh kho hàng"
+                      title="Adjust stock"
                     >
-                      Nhập/Xuất
+                      In/Out
                     </button>
                   </div>
                 </td>
@@ -309,21 +309,21 @@
       <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
         <!-- Page size selector -->
         <div class="flex items-center space-x-2.5">
-          <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Hiển thị</span>
+          <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Show</span>
           <select
             [(ngModel)]="pageSize"
             (ngModelChange)="onPageSizeChange()"
             class="py-2 pl-3 pr-8 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-extrabold cursor-pointer transition-all"
           >
-            <option [value]="10">10 dòng</option>
-            <option [value]="15">15 dòng</option>
-            <option [value]="20">20 dòng</option>
-            <option [value]="50">50 dòng</option>
+            <option [value]="10">10 rows</option>
+            <option [value]="15">15 rows</option>
+            <option [value]="20">20 rows</option>
+            <option [value]="50">50 rows</option>
           </select>
         </div>
 
         <p class="text-xs text-gray-500 font-semibold">
-          Đang xem <span class="font-extrabold text-gray-900">{{ pageStart }} - {{ pageEnd }}</span> trên <span class="font-extrabold text-gray-900">{{ products.length }}</span> kết quả (Tổng kho: {{ totalDatabaseProductsCount }})
+          Showing <span class="font-extrabold text-gray-900">{{ pageStart }} - {{ pageEnd }}</span> of <span class="font-extrabold text-gray-900">{{ products.length }}</span> results (Total in DB: {{ totalDatabaseProductsCount }})
         </p>
       </div>
       
@@ -334,7 +334,7 @@
           [disabled]="currentPage === 1"
           [ngClass]="currentPage === 1 ? 'text-gray-300 bg-gray-50/50 cursor-not-allowed border-transparent' : 'text-gray-600 hover:bg-gray-50 hover:text-primary border-gray-200 cursor-pointer'"
           class="w-9 h-9 rounded-xl border flex items-center justify-center transition-all focus:outline-none"
-          title="Trang trước"
+          title="Previous page"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
@@ -362,7 +362,7 @@
           [disabled]="currentPage === totalPages"
           [ngClass]="currentPage === totalPages ? 'text-gray-300 bg-gray-50/50 cursor-not-allowed border-transparent' : 'text-gray-600 hover:bg-gray-50 hover:text-primary border-gray-200 cursor-pointer'"
           class="w-9 h-9 rounded-xl border flex items-center justify-center transition-all focus:outline-none"
-          title="Trang tiếp theo"
+          title="Next page"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
@@ -379,8 +379,8 @@
         <!-- Header -->
         <div class="p-6 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h3 class="text-xl font-bold text-gray-900">{{ isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới' }}</h3>
-            <p class="text-xs text-gray-500 font-medium">Nhập đầy đủ thông tin chung và các thông tin đặc thù theo từng loại sản phẩm.</p>
+            <h3 class="text-xl font-bold text-gray-900">{{ isEditMode ? 'Edit Product' : 'Add New Product' }}</h3>
+            <p class="text-xs text-gray-500 font-medium">Fill in the general information and the type-specific details for this product.</p>
           </div>
           <button (click)="closeProductModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -402,36 +402,36 @@
 
           <!-- Block 1: MediaType Selection -->
           <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <h4 class="text-sm font-bold text-gray-800 border-l-4 border-primary pl-2.5">Loại tài liệu sản phẩm</h4>
+            <h4 class="text-sm font-bold text-gray-800 border-l-4 border-primary pl-2.5">Product Media Type</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div [class.md:col-span-2]="!isEditMode">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Loại sản phẩm</label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Type</label>
                 <select
                   [(ngModel)]="productForm.mediaType"
                   (ngModelChange)="onMediaTypeChange($event)"
                   [disabled]="isEditMode"
                   class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"
                 >
-                  <option value="BOOK">SÁCH (Book)</option>
+                  <option value="BOOK">BOOK</option>
                   <option value="CD">CD (Compact Disc)</option>
                   <option value="DVD">DVD (Digital Video Disc)</option>
-                  <option value="NEWSPAPER">BÁO CHÍ (Newspaper)</option>
+                  <option value="NEWSPAPER">NEWSPAPER</option>
                 </select>
                 @if (isEditMode) {
-                  <span class="text-[10px] text-gray-400 font-bold block mt-1">Lưu ý: Không được đổi Loại sản phẩm sau khi đã tạo lập.</span>
+                  <span class="text-[10px] text-gray-400 font-bold block mt-1">Note: The product type cannot be changed after creation.</span>
                 }
               </div>
               
               @if (isEditMode) {
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái bán</label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Sale Status</label>
                   <select
                     [(ngModel)]="productForm.status"
                     [disabled]="isEditMode"
                     class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
-                    <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-                    <option value="DEACTIVATED">Ngừng hoạt động (DEACTIVATED)</option>
+                    <option value="ACTIVE">Active (ACTIVE)</option>
+                    <option value="DEACTIVATED">Deactivated (DEACTIVATED)</option>
                   </select>
                 </div>
               }
@@ -440,67 +440,67 @@
  
           <!-- Block 2: General Information -->
           <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <h4 class="text-sm font-bold text-gray-800 border-l-4 border-primary pl-2.5">Thông tin chung sản phẩm</h4>
+            <h4 class="text-sm font-bold text-gray-800 border-l-4 border-primary pl-2.5">General Product Information</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="md:col-span-2">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tiêu đề sản phẩm <span class="text-danger">*</span></label>
-                <input type="text" [(ngModel)]="productForm.title" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Ví dụ: Mũ nồi xanh Việt Nam..." />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Title <span class="text-danger">*</span></label>
+                <input type="text" [(ngModel)]="productForm.title" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="e.g. The Great Gatsby..." />
               </div>
  
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Thể loại / Danh mục chi tiết <span class="text-danger">*</span></label>
-                <input type="text" [(ngModel)]="productForm.category" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Ví dụ: Văn học, Khoa học, Nhạc trẻ, Phim hành động..." />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Genre / Detailed Category <span class="text-danger">*</span></label>
+                <input type="text" [(ngModel)]="productForm.category" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="e.g. Literature, Science, Pop Music, Action Film..." />
               </div>
  
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mã vạch (Barcode) <span class="text-danger">*</span></label>
-                <input type="text" [(ngModel)]="productForm.barcode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-mono font-medium" placeholder="Ví dụ: BK-VN2024-01" />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Barcode <span class="text-danger">*</span></label>
+                <input type="text" [(ngModel)]="productForm.barcode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-mono font-medium" placeholder="e.g. BK-VN2024-01" />
               </div>
  
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Giá gốc (VND) <span class="text-danger">*</span></label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Original Price (VND) <span class="text-danger">*</span></label>
                 <input type="text" [ngModel]="productForm.originalPrice" (ngModelChange)="onOriginalPriceChange($event)" [disabled]="isEditMode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold placeholder-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed" placeholder="0" />
               </div>
  
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Giá bán hiện tại (VND) <span class="text-danger">*</span></label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Current Sale Price (VND) <span class="text-danger">*</span></label>
                 <input type="text" [ngModel]="productForm.currentPrice" (ngModelChange)="onCurrentPriceChange($event)" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold placeholder-gray-400" placeholder="0" />
-                <span class="text-[10px] text-gray-400 font-bold block mt-1">Yêu cầu: Nằm trong khoảng 30% - 150% của giá gốc.</span>
+                <span class="text-[10px] text-gray-400 font-bold block mt-1">Requirement: Must be between 30% and 150% of the original price.</span>
               </div>
  
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Số lượng tồn kho ban đầu <span class="text-danger">*</span></label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Initial Stock Quantity <span class="text-danger">*</span></label>
                 <input type="number" [(ngModel)]="productForm.quantityInStock" [disabled]="isEditMode" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-bold disabled:bg-gray-100" />
               </div>
  
               <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Khối lượng (KG) <span class="text-danger">*</span></label>
-                <input type="number" step="any" [(ngModel)]="productForm.weight" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Ví dụ: 0.5, 1.2..." />
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Weight (KG) <span class="text-danger">*</span></label>
+                <input type="number" step="any" [(ngModel)]="productForm.weight" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="e.g. 0.5, 1.2..." />
               </div>
 
               <div class="grid grid-cols-3 gap-2 md:col-span-2">
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Dài (cm)</label>
-                  <input type="number" [(ngModel)]="productForm.length" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Dài" />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Length (cm)</label>
+                  <input type="number" [(ngModel)]="productForm.length" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Length" />
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Rộng (cm)</label>
-                  <input type="number" [(ngModel)]="productForm.width" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Rộng" />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Width (cm)</label>
+                  <input type="number" [(ngModel)]="productForm.width" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Width" />
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cao (cm)</label>
-                  <input type="number" [(ngModel)]="productForm.height" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Cao" />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Height (cm)</label>
+                  <input type="number" [(ngModel)]="productForm.height" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold" placeholder="Height" />
                 </div>
               </div>
 
               <div class="md:col-span-2">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Đường dẫn ảnh sản phẩm (ImageUrl)</label>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Image URL (ImageUrl)</label>
                 <input type="text" [(ngModel)]="productForm.imageUrl" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-mono" placeholder="http://example.com/image.jpg" />
               </div>
 
               <div class="md:col-span-2">
-                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mô tả sản phẩm</label>
-                <textarea [(ngModel)]="productForm.description" rows="3" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Nhập tóm tắt mô tả sản phẩm..."></textarea>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Description</label>
+                <textarea [(ngModel)]="productForm.description" rows="3" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary placeholder-gray-400 font-medium" placeholder="Enter a brief product description..."></textarea>
               </div>
             </div>
           </div>
@@ -509,41 +509,41 @@
           <!-- 3.1: BOOK SUB-FORM -->
           @if (productForm.mediaType === 'BOOK') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-              <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">Thông tin đặc thù SÁCH</h4>
+              <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">BOOK-Specific Information</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tác giả <span class="text-danger">*</span></label>
-                  <input type="text" [(ngModel)]="productForm.book.authors" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Nhập các tác giả..." />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Author(s) <span class="text-danger">*</span></label>
+                  <input type="text" [(ngModel)]="productForm.book.authors" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Enter author name(s)..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Loại bìa <span class="text-danger">*</span></label>
-                  <input type="text" [(ngModel)]="productForm.book.coverType" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Bìa mềm, Bìa cứng..." />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Type <span class="text-danger">*</span></label>
+                  <input type="text" [(ngModel)]="productForm.book.coverType" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Paperback, Hardcover..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nhà xuất bản <span class="text-danger">*</span></label>
-                  <input type="text" [(ngModel)]="productForm.book.publisher" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="NXB Kim Đồng, Trẻ..." />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Publisher <span class="text-danger">*</span></label>
+                  <input type="text" [(ngModel)]="productForm.book.publisher" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="e.g. Penguin, HarperCollins..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ngày xuất bản <span class="text-danger">*</span></label>
-                  <input type="text" [(ngModel)]="productForm.book.publicationDate" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400" placeholder="Ví dụ: 2026-06-01 hoặc 01/06/2026" />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Publication Date <span class="text-danger">*</span></label>
+                  <input type="text" [(ngModel)]="productForm.book.publicationDate" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400" placeholder="e.g. 2026-06-01 or 01/06/2026" />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Số trang</label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Number of Pages</label>
                   <input type="number" [(ngModel)]="productForm.book.numPages" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success" />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ngôn ngữ</label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Language</label>
                   <input type="text" [(ngModel)]="productForm.book.language" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" />
                 </div>
 
                 <div class="md:col-span-2">
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Thể loại sách</label>
-                  <input type="text" [(ngModel)]="productForm.book.genre" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Trinh thám, Khoa học..." />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Book Genre</label>
+                  <input type="text" [(ngModel)]="productForm.book.genre" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Mystery, Science, Fantasy..." />
                 </div>
               </div>
             </div>
@@ -552,39 +552,39 @@
           <!-- 3.2: CD SUB-FORM -->
           @if (productForm.mediaType === 'CD') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-              <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">Thông tin đặc thù đĩa âm nhạc CD</h4>
+              <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">CD-Specific Information</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ca sĩ / Nghệ sĩ biểu diễn <span class="text-danger">*</span></label>
-                  <input type="text" [(ngModel)]="productForm.cd.artists" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Nhập tên nghệ sĩ..." />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Singer / Performing Artist <span class="text-danger">*</span></label>
+                  <input type="text" [(ngModel)]="productForm.cd.artists" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Enter artist name(s)..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Hãng đĩa ghi âm <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Record Label <span class="text-danger">*</span></label>
                   <input type="text" [(ngModel)]="productForm.cd.recordLabel" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Ví dụ: Sony Music, Universal..." />
                 </div>
 
                 <div class="md:col-span-2">
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Thể loại âm nhạc <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Music Genre <span class="text-danger">*</span></label>
                   <input type="text" [(ngModel)]="productForm.cd.genre" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Pop, Rock, Ballad, Classical..." />
                 </div>
 
                 <!-- Dynamic CD Track List Row Adder -->
                 <div class="md:col-span-2 space-y-3">
                   <div class="flex justify-between items-center">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">Danh sách bài hát trong CD <span class="text-danger">*</span></label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">Track List <span class="text-danger">*</span></label>
                     <button
                       type="button"
                       (click)="addTrack()"
                       class="px-3 py-1.5 bg-success text-white rounded-xl text-xs font-bold hover:bg-green-600 transition-colors focus:outline-none flex items-center shadow-sm"
                     >
-                      + Thêm bài hát
+                      + Add Track
                     </button>
                   </div>
 
                   <div class="space-y-2 max-h-60 overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50/50 shadow-inner">
                     @if (!productForm.cd.tracks || productForm.cd.tracks.length === 0) {
-                      <p class="text-center text-xs text-gray-400 font-medium p-4">Chưa có bài hát nào được thiết lập. Hãy nhấn Thêm bài hát.</p>
+                      <p class="text-center text-xs text-gray-400 font-medium p-4">No tracks added yet. Click Add Track.</p>
                     }
                     @for (track of productForm.cd.tracks; track $index) {
                       <div class="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm animate-in fade-in duration-100">
@@ -593,15 +593,15 @@
                           type="text"
                           [(ngModel)]="track.title"
                           class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-success placeholder-gray-400 font-bold"
-                          placeholder="Tên bài hát..."
+                          placeholder="Track title..."
                         />
                         <input
                           type="number"
                           [(ngModel)]="track.lengthSeconds"
                           class="w-24 px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-success font-extrabold text-center"
-                          placeholder="Thời lượng (s)"
+                          placeholder="Duration (s)"
                         />
-                        <span class="text-[10px] text-gray-400 font-semibold whitespace-nowrap">giây</span>
+                        <span class="text-[10px] text-gray-400 font-semibold whitespace-nowrap">sec</span>
                         <button
                           type="button"
                           (click)="removeTrack($index)"
@@ -622,35 +622,35 @@
           <!-- 3.3: DVD SUB-FORM -->
           @if (productForm.mediaType === 'DVD') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-              <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">Thông tin đặc thù phim DVD</h4>
+              <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">DVD-Specific Information</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Loại đĩa phim <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Disc Type <span class="text-danger">*</span></label>
                   <input type="text" [(ngModel)]="productForm.dvd.discType" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="DVD-5, DVD-9, Blu-ray..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Đạo diễn phim <span class="text-danger">*</span></label>
-                  <input type="text" [(ngModel)]="productForm.dvd.director" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Nhập tên đạo diễn..." />
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Director <span class="text-danger">*</span></label>
+                  <input type="text" [(ngModel)]="productForm.dvd.director" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Enter director name..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Thời lượng (phút) <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Runtime (minutes) <span class="text-danger">*</span></label>
                   <input type="number" [(ngModel)]="productForm.dvd.runtimeMinutes" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success font-semibold" />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Hãng phim sản xuất <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Production Studio <span class="text-danger">*</span></label>
                   <input type="text" [(ngModel)]="productForm.dvd.studio" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" placeholder="Warner Bros, Marvel Studio..." />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ngôn ngữ thoại đĩa <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Audio Language <span class="text-danger">*</span></label>
                   <input type="text" [(ngModel)]="productForm.dvd.language" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" />
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ngôn ngữ phụ đề đĩa <span class="text-danger">*</span></label>
+                  <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Subtitle Language <span class="text-danger">*</span></label>
                   <input type="text" [(ngModel)]="productForm.dvd.subtitles" class="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-success placeholder-gray-400 font-medium" />
                 </div>
               </div>

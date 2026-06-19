@@ -233,7 +233,7 @@ export class ProductsComponent implements OnInit {
 
   fetchProducts() {
     this.isLoading = true;
-    console.log('[ProductsComponent] fetchProducts() bat dau goi API...');
+    console.log('[ProductsComponent] fetchProducts() fetching products...');
     
     const params: ProductSearchParams = {
       keyword: this.keyword,
@@ -242,12 +242,12 @@ export class ProductsComponent implements OnInit {
       status: 'ALL'
     };
     
-    console.log('[ProductsComponent] fetchProducts() gui params:', params);
+    console.log('[ProductsComponent] fetchProducts() params:', params);
     console.log('[ProductsComponent] Token trong localStorage:', localStorage.getItem('aims_token'));
 
     this.productService.searchProducts(params).subscribe({
       next: (data) => {
-        console.log('[ProductsComponent] fetchProducts() nhan du lieu thanh cong:', data);
+        console.log('[ProductsComponent] fetchProducts() received data:', data);
         // Enforce frontend status filter client-side if selected
         if (this.statusFilter) {
           this.products = data.filter(p => p.status === this.statusFilter);
@@ -265,7 +265,7 @@ export class ProductsComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('[ProductsComponent] fetchProducts() gap loi khi goi API:', err);
+        console.error('[ProductsComponent] fetchProducts() error fetching products:', err);
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -486,7 +486,7 @@ export class ProductsComponent implements OnInit {
         publisher: '',
         publicationDate: '',
         numPages: null,
-        language: 'Tiếng Việt',
+        language: 'Vietnamese',
         genre: ''
       },
       cd: {
@@ -500,8 +500,8 @@ export class ProductsComponent implements OnInit {
         director: '',
         runtimeMinutes: 120,
         studio: '',
-        language: 'Tiếng Việt',
-        subtitles: 'Tiếng Việt'
+        language: 'Vietnamese',
+        subtitles: 'Vietnamese'
       },
       newspaper: {
         editorInChief: '',
@@ -509,7 +509,7 @@ export class ProductsComponent implements OnInit {
         publicationDate: ''
       }
     };
-    
+
     this.isProductModalOpen = true;
     this.cdr.detectChanges();
   }
@@ -550,7 +550,7 @@ export class ProductsComponent implements OnInit {
             publisher: '',
             publicationDate: '',
             numPages: null,
-            language: 'Tiếng Việt',
+            language: 'Vietnamese',
             genre: ''
           },
           cd: fullProduct.cd || {
@@ -564,8 +564,8 @@ export class ProductsComponent implements OnInit {
             director: '',
             runtimeMinutes: 120,
             studio: '',
-            language: 'Tiếng Việt',
-            subtitles: 'Tiếng Việt'
+            language: 'Vietnamese',
+            subtitles: 'Vietnamese'
           },
           newspaper: fullProduct.newspaper ? {
             ...fullProduct.newspaper,
@@ -589,7 +589,7 @@ export class ProductsComponent implements OnInit {
       error: (err) => {
         this.loadingProductId = null;
         this.cdr.detectChanges();
-        this.showAlert('Lỗi tải dữ liệu', err.error?.message || 'Không thể tải chi tiết sản phẩm', 'error');
+        this.showAlert('Load Error', err.error?.message || 'Unable to load product details', 'error');
       }
     });
   }
@@ -615,35 +615,35 @@ export class ProductsComponent implements OnInit {
   // Validate form before submitting
   validateForm(): boolean {
     if (!this.productForm.title?.trim()) {
-      this.errorMessage = 'Tiêu đề không được để trống';
+      this.errorMessage = 'Title is required';
       return false;
     }
     if (!this.productForm.category?.trim()) {
-      this.errorMessage = 'Danh mục chung không được để trống';
+      this.errorMessage = 'Category is required';
       return false;
     }
     if (!this.productForm.barcode?.trim()) {
-      this.errorMessage = 'Mã vạch (Barcode) không được để trống';
+      this.errorMessage = 'Barcode is required';
       return false;
     }
     if (this.productForm.weight <= 0) {
-      this.errorMessage = 'Khối lượng phải lớn hơn 0';
+      this.errorMessage = 'Weight must be greater than 0';
       return false;
     }
     if (this.productForm.length !== null && this.productForm.length <= 0) {
-      this.errorMessage = 'Chiều dài phải lớn hơn 0';
+      this.errorMessage = 'Length must be greater than 0';
       return false;
     }
     if (this.productForm.width !== null && this.productForm.width <= 0) {
-      this.errorMessage = 'Chiều rộng phải lớn hơn 0';
+      this.errorMessage = 'Width must be greater than 0';
       return false;
     }
     if (this.productForm.height !== null && this.productForm.height <= 0) {
-      this.errorMessage = 'Chiều cao phải lớn hơn 0';
+      this.errorMessage = 'Height must be greater than 0';
       return false;
     }
     if (this.productForm.quantityInStock < 0 || !Number.isInteger(this.productForm.quantityInStock)) {
-      this.errorMessage = 'Tồn kho phải là số nguyên không âm';
+      this.errorMessage = 'Stock quantity must be a non-negative integer';
       return false;
     }
 
@@ -651,11 +651,11 @@ export class ProductsComponent implements OnInit {
     const origPrice = this.parsePrice(this.productForm.originalPrice);
     const currPrice = this.parsePrice(this.productForm.currentPrice);
     if (origPrice <= 0) {
-      this.errorMessage = 'Giá gốc phải lớn hơn 0';
+      this.errorMessage = 'Original price must be greater than 0';
       return false;
     }
     if (currPrice < origPrice * 0.3 || currPrice > origPrice * 1.5) {
-      this.errorMessage = 'Giá bán phải nằm trong khoảng từ 30% đến 150% của giá gốc';
+      this.errorMessage = 'Sale price must be between 30% and 150% of the original price';
       return false;
     }
 
@@ -664,100 +664,100 @@ export class ProductsComponent implements OnInit {
     if (type === 'BOOK') {
       const book = this.productForm.book;
       if (!book.authors?.trim()) {
-        this.errorMessage = 'Tác giả sách không được để trống';
+        this.errorMessage = 'Book author is required';
         return false;
       }
       if (!book.coverType?.trim()) {
-        this.errorMessage = 'Loại bìa sách không được để trống';
+        this.errorMessage = 'Book cover type is required';
         return false;
       }
       if (!book.publisher?.trim()) {
-        this.errorMessage = 'Nhà xuất bản không được để trống';
+        this.errorMessage = 'Publisher is required';
         return false;
       }
       const pubDate = book.publicationDate;
       if (!pubDate || (typeof pubDate === 'string' && !pubDate.trim())) {
-        this.errorMessage = 'Ngày xuất bản không được để trống';
+        this.errorMessage = 'Publication date is required';
         return false;
       }
       const normalized = this.normalizeDate(String(pubDate));
       if (!normalized) {
-        this.errorMessage = 'Ngày xuất bản không đúng định dạng (Yêu cầu: YYYY-MM-DD hoặc DD/MM/YYYY)';
+        this.errorMessage = 'Invalid publication date format (expected: YYYY-MM-DD or DD/MM/YYYY)';
         return false;
       }
       book.publicationDate = normalized;
       if (book.numPages !== null && book.numPages <= 0) {
-        this.errorMessage = 'Số trang phải lớn hơn 0';
+        this.errorMessage = 'Number of pages must be greater than 0';
         return false;
       }
     } else if (type === 'CD') {
       const cd = this.productForm.cd;
       if (!cd.artists?.trim()) {
-        this.errorMessage = 'Nghệ sĩ CD không được để trống';
+        this.errorMessage = 'CD artist is required';
         return false;
       }
       if (!cd.recordLabel?.trim()) {
-        this.errorMessage = 'Hãng đĩa CD không được để trống';
+        this.errorMessage = 'CD record label is required';
         return false;
       }
       if (!cd.genre?.trim()) {
-        this.errorMessage = 'Thể loại CD không được để trống';
+        this.errorMessage = 'CD genre is required';
         return false;
       }
       if (!cd.tracks || cd.tracks.length === 0) {
-        this.errorMessage = 'CD phải có ít nhất một bài hát';
+        this.errorMessage = 'CD must have at least one track';
         return false;
       }
       for (let i = 0; i < cd.tracks.length; i++) {
         if (!cd.tracks[i].title?.trim()) {
-          this.errorMessage = `Bài hát số ${i + 1} không được để trống tiêu đề`;
+          this.errorMessage = `Track ${i + 1} title is required`;
           return false;
         }
         if (cd.tracks[i].lengthSeconds <= 0) {
-          this.errorMessage = `Thời lượng bài hát số ${i + 1} phải lớn hơn 0 giây`;
+          this.errorMessage = `Track ${i + 1} duration must be greater than 0 seconds`;
           return false;
         }
       }
     } else if (type === 'DVD') {
       const dvd = this.productForm.dvd;
       if (!dvd.discType?.trim()) {
-        this.errorMessage = 'Loại đĩa DVD không được để trống';
+        this.errorMessage = 'DVD disc type is required';
         return false;
       }
       if (!dvd.director?.trim()) {
-        this.errorMessage = 'Đạo diễn DVD không được để trống';
+        this.errorMessage = 'DVD director is required';
         return false;
       }
       if (dvd.runtimeMinutes <= 0) {
-        this.errorMessage = 'Thời lượng DVD phải lớn hơn 0 phút';
+        this.errorMessage = 'DVD runtime must be greater than 0 minutes';
         return false;
       }
       if (!dvd.studio?.trim()) {
-        this.errorMessage = 'Studio sản xuất DVD không được để trống';
+        this.errorMessage = 'DVD studio is required';
         return false;
       }
       if (!dvd.language?.trim()) {
-        this.errorMessage = 'Ngôn ngữ DVD không được để trống';
+        this.errorMessage = 'DVD language is required';
         return false;
       }
     } else if (type === 'NEWSPAPER') {
       const np = this.productForm.newspaper;
       if (!np.editorInChief?.trim()) {
-        this.errorMessage = 'Tổng biên tập báo không được để trống';
+        this.errorMessage = 'Newspaper editor-in-chief is required';
         return false;
       }
       if (!np.publisher?.trim()) {
-        this.errorMessage = 'Nhà xuất bản báo không được để trống';
+        this.errorMessage = 'Newspaper publisher is required';
         return false;
       }
       const pubDate = np.publicationDate;
       if (!pubDate || (typeof pubDate === 'string' && !pubDate.trim())) {
-        this.errorMessage = 'Ngày xuất bản báo không được để trống';
+        this.errorMessage = 'Newspaper publication date is required';
         return false;
       }
       const normalized = this.normalizeDate(String(pubDate));
       if (!normalized) {
-        this.errorMessage = 'Ngày xuất bản báo không đúng định dạng (Yêu cầu: YYYY-MM-DD hoặc DD/MM/YYYY)';
+        this.errorMessage = 'Invalid newspaper publication date format (expected: YYYY-MM-DD or DD/MM/YYYY)';
         return false;
       }
       np.publicationDate = normalized;
@@ -807,7 +807,7 @@ export class ProductsComponent implements OnInit {
           this.fetchTotalProductsCount();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Không thể cập nhật sản phẩm';
+          this.errorMessage = err.error?.message || 'Unable to update product';
         }
       });
     } else {
@@ -818,7 +818,7 @@ export class ProductsComponent implements OnInit {
           this.fetchTotalProductsCount();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Không thể tạo sản phẩm';
+          this.errorMessage = err.error?.message || 'Unable to create product';
         }
       });
     }
@@ -830,18 +830,18 @@ export class ProductsComponent implements OnInit {
       .map((id) => +id);
 
     if (selectedIds.length === 0) {
-      this.showAlert('Yêu cầu chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để xóa', 'warning');
+      this.showAlert('Selection Required', 'Please select at least one product to delete', 'warning');
       return;
     }
 
     if (selectedIds.length > 10) {
-      this.showAlert('Vượt giới hạn', 'Hệ thống giới hạn xóa tối đa 10 sản phẩm trong một lần xóa hàng loạt', 'warning');
+      this.showAlert('Limit Exceeded', 'You can delete at most 10 products at once', 'warning');
       return;
     }
 
     this.showConfirm(
-      'Xác nhận xóa hàng loạt',
-      `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đã chọn hay không?\n\n(Lưu ý: Hệ thống sẽ tự động Xóa đối với sản phẩm có tồn kho bằng 0, và tự động chuyển sang trạng thái Ngừng hoạt động đối với sản phẩm còn tồn kho > 0).`,
+      'Confirm Bulk Delete',
+      `Are you sure you want to delete ${selectedIds.length} selected product(s)?\n\n(Note: Products with zero stock will be permanently deleted; products with stock > 0 will be deactivated instead.)`,
       'danger',
       () => {
         this.productService.deleteProducts(selectedIds).subscribe({
@@ -850,19 +850,19 @@ export class ProductsComponent implements OnInit {
             
             res.results.forEach((item: any) => {
               if (item.status === 'DELETED') {
-                details.push(`ID ${item.id} (Tồn kho = 0): Đã xóa thành công khỏi danh sách.`);
+                details.push(`ID ${item.id} (stock = 0): Permanently deleted.`);
               } else if (item.status === 'DEACTIVATED_ORDERED') {
-                details.push(`ID ${item.id} (Đã có đơn hàng): Tự động chuyển thành NGỪNG HOẠT ĐỘNG để bảo toàn lịch sử giao dịch.`);
+                details.push(`ID ${item.id} (has orders): Automatically deactivated to preserve transaction history.`);
               } else if (item.status === 'DEACTIVATED') {
-                details.push(`ID ${item.id} (Tồn kho > 0): Tự động chuyển thành NGỪNG HOẠT ĐỘNG.`);
+                details.push(`ID ${item.id} (stock > 0): Automatically deactivated.`);
               } else {
-                details.push(`ID ${item.id}: Không tìm thấy sản phẩm.`);
+                details.push(`ID ${item.id}: Product not found.`);
               }
             });
 
             this.showAlert(
-              'Thao tác thành công',
-              `Đã hoàn thành xử lý xóa cho ${selectedIds.length} sản phẩm đã chọn:`,
+              'Operation Successful',
+              `Processed ${selectedIds.length} selected product(s):`,
               'success',
               details
             );
@@ -871,7 +871,7 @@ export class ProductsComponent implements OnInit {
             this.fetchTotalProductsCount();
           },
           error: (err) => {
-            this.showAlert('Lỗi thực thi', err.error?.message || 'Không thể xóa sản phẩm', 'error');
+            this.showAlert('Execution Error', err.error?.message || 'Unable to delete products', 'error');
           }
         });
       }
@@ -884,18 +884,18 @@ export class ProductsComponent implements OnInit {
       .map((id) => +id);
 
     if (selectedIds.length === 0) {
-      this.showAlert('Yêu cầu chọn sản phẩm', 'Vui lòng chọn ít nhất một sản phẩm để ngừng bán', 'warning');
+      this.showAlert('Selection Required', 'Please select at least one product to deactivate', 'warning');
       return;
     }
 
     if (selectedIds.length > 10) {
-      this.showAlert('Vượt giới hạn', 'Hệ thống giới hạn ngừng bán tối đa 10 sản phẩm trong một lần xử lý hàng loạt', 'warning');
+      this.showAlert('Limit Exceeded', 'You can deactivate at most 10 products at once', 'warning');
       return;
     }
 
     this.showConfirm(
-      'Xác nhận ngừng bán hàng loạt',
-      `Bạn có chắc chắn muốn ngừng bán ${selectedIds.length} sản phẩm đã chọn hay không?`,
+      'Confirm Bulk Deactivation',
+      `Are you sure you want to deactivate ${selectedIds.length} selected product(s)?`,
       'warning',
       () => {
         this.productService.deactivateProducts(selectedIds).subscribe({
@@ -904,15 +904,15 @@ export class ProductsComponent implements OnInit {
             
             res.results.forEach((item: any) => {
               if (item.status === 'DEACTIVATED') {
-                details.push(`ID ${item.id}: Đã ngừng bán thành công.`);
+                details.push(`ID ${item.id}: Successfully deactivated.`);
               } else {
-                details.push(`ID ${item.id}: Không tìm thấy sản phẩm.`);
+                details.push(`ID ${item.id}: Product not found.`);
               }
             });
 
             this.showAlert(
-              'Thao tác thành công',
-              `Đã hoàn thành ngừng bán cho ${selectedIds.length} sản phẩm đã chọn:`,
+              'Operation Successful',
+              `Processed ${selectedIds.length} selected product(s) for deactivation:`,
               'success',
               details
             );
@@ -921,7 +921,7 @@ export class ProductsComponent implements OnInit {
             this.fetchTotalProductsCount();
           },
           error: (err) => {
-            this.showAlert('Lỗi thực thi', err.error?.message || 'Không thể ngừng bán sản phẩm', 'error');
+            this.showAlert('Execution Error', err.error?.message || 'Unable to deactivate products', 'error');
           }
         });
       }

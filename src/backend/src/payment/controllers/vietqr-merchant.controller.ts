@@ -34,11 +34,16 @@ export class VietqrMerchantController {
 
   @Post('bank/api/transaction-callback')
   async handleTransactionCallback(@Body() payload: Record<string, unknown>) {
-    return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
+    return await this.processTransactionPayload(payload);
   }
 
+  // VietQR sandbox calls this URL (registered in merchant portal as transaction-sync)
   @Post('bank/api/transaction-sync')
   async handleTransactionSync(@Body() payload: Record<string, unknown>) {
+    return await this.processTransactionPayload(payload);
+  }
+
+  private async processTransactionPayload(payload: Record<string, unknown>) {
     return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
   }
 

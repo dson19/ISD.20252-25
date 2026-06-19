@@ -42,7 +42,7 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    loadComponent: () => import('./pages/admin/login/login.component').then(m => m.LoginComponent)
+    loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'admin',
@@ -67,15 +67,15 @@ export const routes: Routes = [
     children: [
       {
         path: 'orders',
-        loadComponent: () => import('./pages/admin/orders/orders.component').then(m => m.OrdersComponent)
+        loadComponent: () => import('./pages/pm/orders/orders.component').then(m => m.OrdersComponent)
       },
       {
         path: 'products',
-        loadComponent: () => import('./pages/admin/products/products.component').then(m => m.ProductsComponent)
+        loadComponent: () => import('./pages/pm/products/products.component').then(m => m.ProductsComponent)
       },
       {
         path: 'logs',
-        loadComponent: () => import('./pages/admin/logs/logs.component').then(m => m.LogsComponent)
+        loadComponent: () => import('./pages/pm/logs/logs.component').then(m => m.LogsComponent)
       },
       {
         path: '',

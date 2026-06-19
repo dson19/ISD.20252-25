@@ -1,9 +1,9 @@
 <div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
   <div class="flex-1">
     <div class="flex items-center space-x-2 mb-6">
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Giỏ hàng của bạn</h1>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Your Cart</h1>
     </div>
-    <p class="text-gray-500 text-sm mb-6">Kiểm tra sản phẩm đã chọn trước khi đặt hàng.</p>
+    <p class="text-gray-500 text-sm mb-6">Review your selected products before placing an order.</p>
 
     @if (stockCheckError) {
       <div class="bg-red-50 border border-red-100 text-danger rounded-lg p-4 mb-6 text-sm">
@@ -17,9 +17,9 @@
           <svg class="mx-auto h-12 w-12 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          <h3 class="text-sm font-medium text-gray-900">Giỏ hàng trống</h3>
-          <p class="mt-1 text-sm text-gray-500">Bạn chưa thêm sản phẩm nào vào giỏ hàng.</p>
-          <a routerLink="/" class="inline-flex mt-4 text-sm font-semibold text-primary hover:text-primary-hover">Tiếp tục mua sắm</a>
+          <h3 class="text-sm font-medium text-gray-900">Your cart is empty</h3>
+          <p class="mt-1 text-sm text-gray-500">You haven't added any products to your cart yet.</p>
+          <a routerLink="/" class="inline-flex mt-4 text-sm font-semibold text-primary hover:text-primary-hover">Continue Shopping</a>
         </div>
       }
 
@@ -34,17 +34,17 @@
             <div class="flex justify-between items-start mb-2 gap-4">
               <div>
                 <a [routerLink]="['/product', item.id]" class="font-bold text-gray-900 text-lg leading-tight mb-1 hover:text-primary">{{ item.title }}</a>
-                <p class="text-sm text-gray-500">Tồn kho trong cart: {{ item.quantityInStock }}</p>
+                <p class="text-sm text-gray-500">Stock available: {{ item.quantityInStock }}</p>
               </div>
               <div class="text-right whitespace-nowrap">
-                <p class="font-bold text-gray-900">{{ item.price | number:'1.0-0' }} đ</p>
-                <p class="text-xs text-gray-500">Tổng: {{ itemTotal(item) | number:'1.0-0' }} đ</p>
+                <p class="font-bold text-gray-900">{{ item.price | number:'1.0-0' }} VND</p>
+                <p class="text-xs text-gray-500">Total: {{ itemTotal(item) | number:'1.0-0' }} VND</p>
               </div>
             </div>
 
             @if (stockIssueFor(item); as issue) {
               <div class="bg-red-50 border border-red-100 text-danger rounded-lg px-3 py-2 text-xs font-medium mb-4">
-                Không đủ số lượng trong kho. Hiện tại chỉ còn {{ issue.availableQuantity }} sản phẩm.
+                Insufficient stock. Only {{ issue.availableQuantity }} units available.
               </div>
             }
 
@@ -65,7 +65,7 @@
                 <svg class="w-4 h-4 mr-1 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Xóa
+                Remove
               </button>
             </div>
           </div>
@@ -76,24 +76,24 @@
 
   <div class="lg:w-80 flex-shrink-0">
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sticky top-24">
-      <h2 class="text-lg font-bold text-gray-900 mb-6">Tóm tắt chi phí</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-6">Cost Summary</h2>
 
       <div class="space-y-4 mb-6 text-sm">
         <div class="flex justify-between text-gray-600">
-          <span>Giá (chưa bao gồm VAT)</span>
-          <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} đ</span>
+          <span>Price (excl. VAT)</span>
+          <span class="font-medium text-gray-900">{{ subtotal | number:'1.0-0' }} VND</span>
         </div>
         <div class="flex justify-between text-gray-600">
-          <span>Kiểm tra tồn kho</span>
+          <span>Stock Check</span>
           <span class="font-medium" [class.text-warning]="checkingStock" [class.text-danger]="hasStockIssues || stockCheckError" [class.text-success]="canPlaceOrder">
             @if (checkingStock) {
-              Đang kiểm tra
+              Checking...
             } @else if (hasStockIssues) {
-              Thiếu hàng
+              Out of Stock
             } @else if (stockCheckError) {
-              Lỗi
+              Error
             } @else {
-              Hợp lệ
+              Valid
             }
           </span>
         </div>
@@ -109,7 +109,7 @@
       </button>
 
       <button routerLink="/" class="w-full bg-white text-gray-600 border border-gray-200 py-3 rounded-lg font-medium text-sm hover:bg-gray-50 hover:text-gray-900 transition-colors">
-        Tiếp tục mua sắm
+        Continue Shopping
       </button>
     </div>
   </div>

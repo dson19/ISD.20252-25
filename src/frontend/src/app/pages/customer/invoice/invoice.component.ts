@@ -47,7 +47,7 @@ export class InvoiceComponent implements OnInit, OnDestroy {
             this.order = order;
           },
           error: () => {
-            this.errorMessage = 'Khong the tai hoa don. Vui long kiem tra backend API va thu lai.';
+            this.errorMessage = 'Unable to load invoice. Please check the backend API and try again.';
           },
         }),
     );

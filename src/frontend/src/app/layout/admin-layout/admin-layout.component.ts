@@ -33,6 +33,16 @@ export class AdminLayoutComponent {
     return this.authService.getCurrentUser();
   }
 
+  get isPM(): boolean {
+    return this.authService.hasRole('PRODUCT_MANAGER');
+  }
+
+  switchToPM(event: Event) {
+    event.preventDefault();
+    this.isProfileDropdownOpen = false;
+    this.router.navigate(['/pm/orders']);
+  }
+
   logout(event: Event) {
     event.preventDefault();
     this.isProfileDropdownOpen = false;

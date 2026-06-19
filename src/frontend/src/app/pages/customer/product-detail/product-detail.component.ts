@@ -36,7 +36,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const productId = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isFinite(productId)) {
       this.loading = false;
-      this.errorMessage = 'Mã sản phẩm không hợp lệ.';
+      this.errorMessage = 'Invalid product ID.';
       this.refreshView();
       return;
     }
@@ -50,7 +50,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           this.refreshView();
         },
         error: () => {
-          this.errorMessage = 'Không thể tải chi tiết sản phẩm.';
+          this.errorMessage = 'Unable to load product details.';
           this.loading = false;
           this.refreshView();
         },
@@ -73,7 +73,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
     const quantity = this.normalizedQuantity();
     this.cartService.addToCart(this.product, quantity);
-    this.showToast(`Đã thêm ${quantity} sản phẩm vào giỏ hàng.`);
+    this.showToast(`Added ${quantity} item(s) to cart.`);
   }
 
   decreaseQuantity(): void {
@@ -102,18 +102,18 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   get quantityErrorMessage(): string {
     if (!Number.isFinite(this.selectedQuantity) || this.selectedQuantity < 1) {
-      return 'Số lượng phải lớn hơn hoặc bằng 1.';
+      return 'Quantity must be at least 1.';
     }
 
     if (Math.floor(this.selectedQuantity) !== this.selectedQuantity) {
-      return 'Số lượng phải là số nguyên.';
+      return 'Quantity must be a whole number.';
     }
 
     return '';
   }
 
   get productDescription(): string {
-    return this.product?.description?.trim() || 'Chưa có mô tả.';
+    return this.product?.description?.trim() || 'No description available.';
   }
 
   get shouldCollapseDescription(): boolean {
@@ -147,25 +147,25 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   dimensions(): string {
     if (!this.product) {
-      return 'Không có';
+      return 'N/A';
     }
 
     const values = [this.product.length, this.product.width, this.product.height]
       .filter((value): value is number => value !== null && value !== undefined);
-    return values.length ? `${values.join(' x ')} cm` : 'Không có';
+    return values.length ? `${values.join(' x ')} cm` : 'N/A';
   }
 
   formatDate(value?: string | null): string {
     if (!value) {
-      return 'Không có';
+      return 'N/A';
     }
-    return new Intl.DateTimeFormat('vi-VN').format(new Date(value));
+    return new Intl.DateTimeFormat('en-US').format(new Date(value));
   }
 
   mediaTypeLabel(mediaType: string): string {
     const labels: Record<string, string> = {
-      BOOK: 'Sách',
-      NEWSPAPER: 'Báo chí',
+      BOOK: 'Book',
+      NEWSPAPER: 'Newspaper',
       CD: 'CD',
       DVD: 'DVD',
     };

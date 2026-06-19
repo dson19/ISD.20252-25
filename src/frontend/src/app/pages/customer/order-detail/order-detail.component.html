@@ -1,7 +1,7 @@
 @if (!orderLoaded()) {
   <div class="flex flex-col items-center justify-center min-h-[400px] text-center">
     <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4"></div>
-    <p class="text-gray-500 font-semibold">Đang tải chi tiết đơn hàng...</p>
+    <p class="text-gray-500 font-semibold">Loading order details...</p>
   </div>
 } @else {
   <div class="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -9,48 +9,48 @@
     @if (!order()) {
       <div class="bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm">
         <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-        <h2 class="text-xl font-bold text-gray-900 mb-2">Không tìm thấy đơn hàng</h2>
-        <p class="text-gray-500 mb-6 text-sm">Vui lòng kiểm tra lại mã đơn hàng từ liên kết trong email của bạn.</p>
-        <a routerLink="/" class="text-primary font-semibold hover:underline text-sm">Quay về trang chủ</a>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
+        <p class="text-gray-500 mb-6 text-sm">Please check the order ID from the link in your email.</p>
+        <a routerLink="/" class="text-primary font-semibold hover:underline text-sm">Back to Home</a>
       </div>
     } @else {
       
       <!-- Top Title Bar -->
       <div class="flex justify-between items-center mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Chi tiết đơn hàng #{{ order().orderID }}</h1>
-          <p class="text-xs text-gray-500 mt-1">Ngày tạo: {{ order().createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Order Details #{{ order().orderID }}</h1>
+          <p class="text-xs text-gray-500 mt-1">Created: {{ order().createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
         </div>
         
         <div>
           @if (order().status === 'PENDING') {
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-100">
               <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span>
-              Chờ duyệt
+              Pending Approval
             </span>
           }
           @if (order().status === 'PENDING_PROCESSING') {
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
               <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
-              Đã thanh toán (Chờ xử lý)
+              Paid (Pending Processing)
             </span>
           }
           @if (order().status === 'APPROVED') {
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-              Đã chấp nhận
+              Approved
             </span>
           }
           @if (order().status === 'REJECTED') {
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">
               <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
-              Bị từ chối
+              Rejected
             </span>
           }
           @if (order().status === 'CANCELLED') {
             <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gray-50 text-gray-600 border border-gray-100">
               <span class="w-1.5 h-1.5 rounded-full bg-gray-500 mr-1.5"></span>
-              Đã hủy
+              Cancelled
             </span>
           }
         </div>
@@ -60,7 +60,7 @@
         
         <!-- Products Summary -->
         <div class="p-6 border-b border-gray-100">
-          <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Sản phẩm đặt mua</h3>
+          <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Ordered Products</h3>
           <div class="divide-y divide-gray-100">
             @for (item of order().orderItems; track item.orderItemID) {
               <div class="py-3 flex justify-between items-center text-sm">
@@ -69,11 +69,11 @@
                     {{ item.product?.productType || 'ITEM' }}
                   </div>
                   <div>
-                    <p class="font-semibold text-gray-900">{{ item.product?.title || 'Sản phẩm thử nghiệm' }}</p>
-                    <p class="text-xs text-gray-500">Số lượng: {{ item.quantity }} x {{ item.unitPrice | number:'1.0-0' }} đ</p>
+                    <p class="font-semibold text-gray-900">{{ item.product?.title || 'Test product' }}</p>
+                    <p class="text-xs text-gray-500">Qty: {{ item.quantity }} x {{ item.unitPrice | number:'1.0-0' }} VND</p>
                   </div>
                 </div>
-                <p class="font-bold text-gray-900">{{ (item.quantity * item.unitPrice) | number:'1.0-0' }} đ</p>
+                <p class="font-bold text-gray-900">{{ (item.quantity * item.unitPrice) | number:'1.0-0' }} VND</p>
               </div>
             }
           </div>
@@ -81,51 +81,51 @@
 
         <!-- Delivery & Address Info -->
         <div class="p-6 border-b border-gray-100 bg-gray-50/50">
-          <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Thông tin giao nhận</h3>
+          <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Delivery Information</h3>
           @if (order().deliveryInfo) {
             <div class="text-sm text-gray-700 space-y-2">
               <div class="flex justify-between">
-                <span class="text-gray-500">Họ tên người nhận</span>
+                <span class="text-gray-500">Recipient Name</span>
                 <span class="font-semibold text-gray-900">{{ order().deliveryInfo.receiverName }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500">Số điện thoại</span>
+                <span class="text-gray-500">Phone Number</span>
                 <span class="font-semibold text-gray-900">{{ order().deliveryInfo.phoneNumber }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500">Địa chỉ giao hàng</span>
+                <span class="text-gray-500">Delivery Address</span>
                 <span class="font-semibold text-gray-900 text-right">{{ order().deliveryInfo.address }}, {{ order().deliveryInfo.province }}</span>
               </div>
               @if (order().deliveryInfo.deliveryNotes) {
                 <div class="flex justify-between pt-2 border-t border-gray-200/50">
-                  <span class="text-gray-500">Ghi chú giao hàng</span>
+                  <span class="text-gray-500">Delivery Notes</span>
                   <span class="italic text-gray-600">{{ order().deliveryInfo.deliveryNotes }}</span>
                 </div>
               }
             </div>
           } @else {
-            <p class="text-xs text-gray-400 italic">Không có thông tin giao hàng.</p>
+            <p class="text-xs text-gray-400 italic">No delivery information available.</p>
           }
         </div>
 
         <!-- Invoice / Fees Breakdown -->
         <div class="p-6">
-          <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Chi tiết hóa đơn</h3>
+          <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Invoice Details</h3>
           <div class="text-sm text-gray-700 space-y-2.5">
             <div class="flex justify-between">
-              <span class="text-gray-500">Tạm tính (chưa VAT)</span>
-              <span>{{ order().subTotal | number:'1.0-0' }} đ</span>
+              <span class="text-gray-500">Subtotal (excl. VAT)</span>
+              <span>{{ order().subTotal | number:'1.0-0' }} VND</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-500">Thuế VAT (10%)</span>
-              <span>{{ order().tax | number:'1.0-0' }} đ</span>
+              <span class="text-gray-500">VAT (10%)</span>
+              <span>{{ order().tax | number:'1.0-0' }} VND</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-500">Phí giao hàng</span>
-              <span>{{ order().shippingFee | number:'1.0-0' }} đ</span>
+              <span class="text-gray-500">Shipping Fee</span>
+              <span>{{ order().shippingFee | number:'1.0-0' }} VND</span>
             </div>
             <div class="flex justify-between pt-3 border-t border-gray-100 text-base font-bold">
-              <span class="text-gray-900">Tổng tiền đã thanh toán</span>
+              <span class="text-gray-900">Total Amount Paid</span>
               <span class="text-primary">{{ order().totalPayment | number:'1.0-0' }} VND</span>
             </div>
           </div>
@@ -136,16 +136,16 @@
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
         <a routerLink="/" class="text-sm text-gray-500 hover:text-gray-900 underline underline-offset-2 transition-colors">
-          Quay lại Trang chủ
+          Back to Home
         </a>
 
         @if (canCancel()) {
           <button (click)="showConfirmCancel()" [disabled]="cancelLoading()" class="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-50">
             @if (cancelLoading()) {
               <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-              Đang xử lý hủy đơn...
+              Processing cancellation...
             } @else {
-              Hủy đơn hàng & Hoàn tiền
+              Cancel Order & Refund
             }
           </button>
         }
@@ -156,7 +156,7 @@
   </div>
 }
 
-<!-- Custom Alert Modal -->
+<!-- Alert Modal -->
 @if (showModal()) {
   <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100 transform scale-100 transition-all text-center animate-fade-in">
@@ -176,13 +176,13 @@
       <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modalTitle() }}</h3>
       <p class="text-sm text-gray-500 mb-6 whitespace-pre-line leading-relaxed">{{ modalMessage() }}</p>
       <button (click)="closeModal()" class="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary-hover shadow-md hover:shadow-lg transition-all">
-        Đồng ý
+        OK
       </button>
     </div>
   </div>
 }
 
-<!-- Custom Confirmation Modal -->
+<!-- Confirmation Modal -->
 @if (showConfirmModal()) {
   <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100 transform scale-100 transition-all animate-fade-in">
@@ -191,34 +191,34 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
-      <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">Xác nhận hủy đơn hàng</h3>
-      
+      <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">Confirm Order Cancellation</h3>
+
       <div class="text-sm text-gray-500 mb-6 text-center space-y-2">
-        <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+        <p>Are you sure you want to cancel this order?</p>
         @if (order()?.paymentMethod === 'PAYPAL') {
           <div class="bg-blue-50/50 text-blue-750 p-3.5 rounded-2xl border border-blue-100/50 text-xs text-left mt-2">
-            <span class="font-bold block mb-1">💡 Thông tin hoàn tiền:</span>
-            Số tiền <strong>{{ order().totalPayment | number:'1.0-0' }} đ</strong> sẽ được <strong>hoàn trả tự động</strong> vào tài khoản PayPal của bạn sau khi hủy thành công.
+            <span class="font-bold block mb-1">💡 Refund information:</span>
+            The amount <strong>{{ order().totalPayment | number:'1.0-0' }} VND</strong> will be <strong>automatically refunded</strong> to your PayPal account after successful cancellation.
           </div>
         }
         @if (order()?.paymentMethod === 'VIETQR') {
           <div class="bg-amber-50/50 text-amber-700 p-3.5 rounded-2xl border border-amber-100/50 text-xs text-left mt-2">
-            <span class="font-bold block mb-1">💡 Thông tin hoàn tiền:</span>
-            Do thanh toán qua VietQR, ban quản trị sẽ liên hệ để thực hiện <strong>hoàn tiền thủ công</strong> số tiền <strong>{{ order().totalPayment | number:'1.0-0' }} đ</strong> cho bạn.
+            <span class="font-bold block mb-1">💡 Refund information:</span>
+            Since payment was made via VietQR, our administrator will contact you to process a <strong>manual refund</strong> of <strong>{{ order().totalPayment | number:'1.0-0' }} VND</strong>.
           </div>
         }
       </div>
 
       <div class="flex flex-col sm:flex-row gap-3">
         <button (click)="closeConfirmModal()" [disabled]="cancelLoading()" class="flex-1 order-2 sm:order-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-50">
-          Quay lại
+          Go Back
         </button>
         <button (click)="executeCancelOrder()" [disabled]="cancelLoading()" class="flex-1 order-1 sm:order-2 bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-50">
           @if (cancelLoading()) {
             <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-            Đang hủy...
+            Cancelling...
           } @else {
-            Xác nhận hủy
+            Confirm Cancellation
           }
         </button>
       </div>
