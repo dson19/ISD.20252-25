@@ -53,7 +53,8 @@ export class VietqrPaymentService {
 
   async createPayment(dto: CreateVietqrPaymentDto): Promise<VietqrPaymentResponse> {
     this.validateOrderIdForVietqr(dto.orderId);
-    this.validateAmount(dto.amount);
+    const amount = Math.round(dto.amount);
+    this.validateAmount(amount);
     const content = this.validateAndNormalizeContent(dto.content);
 
     const order = await this.orderRepository.findOne({
@@ -65,16 +66,16 @@ export class VietqrPaymentService {
     }
 
     // Check if there is an existing pending, non-expired VietQR transaction for this order and amount
-    const existingPending = await this.vietqrRepository.findPendingByOrderAndAmount(dto.orderId, dto.amount);
+    const existingPending = await this.vietqrRepository.findPendingByOrderAndAmount(dto.orderId, amount);
     if (existingPending) {
       return this.toPaymentResponse(existingPending, existingPending.paymentTransaction.transactionID);
     }
 
-    const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, dto.amount, 'VIETQR', content);
+    const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, amount, 'VIETQR', content);
     try {
       const qrResponse = await this.vietqrApiClient.generateQrCode({
         orderId: String(dto.orderId),
-        amount: Math.round(dto.amount),
+        amount,
         content,
       });
       const expiredAt = this.calculateExpiredAt();
@@ -82,7 +83,7 @@ export class VietqrPaymentService {
       const vietqrTransaction = await this.vietqrRepository.createVietqrTransaction({
         paymentTransactionId: paymentTransaction.transactionID,
         orderId: dto.orderId,
-        amount: dto.amount,
+        amount,
         content,
         qrCode: qrResponse.qrCode,
         qrLink: qrResponse.qrLink,
@@ -276,9 +277,6 @@ export class VietqrPaymentService {
   private validateAmount(amount: number): void {
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new BadRequestException('amount must be positive');
-    }
-    if (!Number.isInteger(amount)) {
-      throw new BadRequestException('VietQR amount must be a whole number (no decimals)');
     }
   }
 
