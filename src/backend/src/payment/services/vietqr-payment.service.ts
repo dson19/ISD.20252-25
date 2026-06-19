@@ -102,74 +102,49 @@ export class VietqrPaymentService {
     }
   }
 
-  async getStatusByPaymentId(paymentId: number, simulate = false): Promise<VietqrPaymentResponse> {
+  async getStatusByPaymentId(paymentId: number): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
-    }
-
-    const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
-    if (
-      simulate &&
-      vietqrTransaction.status === 'PENDING' &&
-      (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development')
-    ) {
-      await this.handleCallback({
-        bankaccount: process.env.VIETQR_BANK_ACCOUNT || '0398277899',
-        amount: Number(vietqrTransaction.amount),
-        transType: 'C',
-        content: vietqrTransaction.content,
-        transactionid: `MOCK-TX-${vietqrTransaction.orderId}-${Date.now()}`,
-        transactiontime: Date.now(),
-        referencenumber: vietqrTransaction.transactionRefId || `MOCK-REF-${vietqrTransaction.orderId}`,
-        orderId: String(vietqrTransaction.orderId),
-      }).catch((err) => {
-        console.error('Failed to auto-simulate callback on status check:', err);
-      });
-
-      const updated = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
-      if (updated) {
-        return this.toPaymentResponse(updated, paymentId);
-      }
     }
 
     await this.expireIfNeeded(vietqrTransaction);
     return this.toPaymentResponse(vietqrTransaction, paymentId);
   }
 
-  async getStatusByTransactionRef(transactionRef: string, simulate = false): Promise<VietqrPaymentResponse> {
+  async getStatusByTransactionRef(transactionRef: string): Promise<VietqrPaymentResponse> {
     const vietqrTransaction = await this.vietqrRepository.findByTransactionRefId(transactionRef);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR transaction reference ${transactionRef} was not found`);
     }
 
-    const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
-    if (
-      simulate &&
-      vietqrTransaction.status === 'PENDING' &&
-      (apiBaseUrl.includes('dev.vietqr.org') || process.env.NODE_ENV === 'development')
-    ) {
-      await this.handleCallback({
-        bankaccount: process.env.VIETQR_BANK_ACCOUNT || '0398277899',
-        amount: Number(vietqrTransaction.amount),
-        transType: 'C',
-        content: vietqrTransaction.content,
-        transactionid: `MOCK-TX-${vietqrTransaction.orderId}-${Date.now()}`,
-        transactiontime: Date.now(),
-        referencenumber: transactionRef,
-        orderId: String(vietqrTransaction.orderId),
-      }).catch((err) => {
-        console.error('Failed to auto-simulate callback on status check by ref:', err);
-      });
-
-      const updated = await this.vietqrRepository.findByTransactionRefId(transactionRef);
-      if (updated) {
-        return this.toPaymentResponse(updated, updated.paymentTransaction.transactionID);
-      }
-    }
-
     await this.expireIfNeeded(vietqrTransaction);
     return this.toPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
+  }
+
+  async triggerTestCallback(paymentId: number): Promise<{ status: string }> {
+    const apiBaseUrl = process.env.VIETQR_API_BASE_URL || 'https://dev.vietqr.org';
+    if (!apiBaseUrl.includes('dev.vietqr.org')) {
+      throw new BadRequestException('Test callback is only available in the dev/sandbox environment');
+    }
+
+    const vietqrTransaction = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
+    if (!vietqrTransaction) {
+      throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
+    }
+
+    if (vietqrTransaction.status !== 'PENDING') {
+      throw new BadRequestException(`Payment is already ${vietqrTransaction.status}`);
+    }
+
+    await this.vietqrApiClient.triggerTestCallback({
+      bankAccount: process.env.VIETQR_BANK_ACCOUNT || '',
+      content: vietqrTransaction.content,
+      amount: Number(vietqrTransaction.amount),
+      bankCode: process.env.VIETQR_BANK_CODE || '',
+    });
+
+    return { status: 'SUCCESS' };
   }
 
   async handleCallback(dto: VietqrCallbackDto): Promise<VietqrCallbackResult> {

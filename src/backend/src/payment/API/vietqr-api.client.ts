@@ -48,6 +48,31 @@ export class VietqrApiClient {
     return { apiBaseUrl, username, password, bankCode, bankAccount, userBankName };
   }
 
+  async triggerTestCallback(request: { bankAccount: string; content: string; amount: number; bankCode: string }): Promise<void> {
+    const config = this.getConfig();
+    const token = await this.requestAccessToken(config);
+
+    const response = await fetch(`${config.apiBaseUrl}/vqr/bank/api/test/transaction-callback`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bankAccount: request.bankAccount,
+        content: request.content,
+        amount: request.amount,
+        bankCode: request.bankCode,
+        transType: 'C',
+      }),
+    });
+
+    const data: any = await response.json().catch(() => ({}));
+    if (!response.ok || data.status === 'FAILED') {
+      throw new BadRequestException(`VietQR test callback failed: ${data.message || response.statusText}`);
+    }
+  }
+
   async generateQrCode(request: GenerateVietqrCodeRequest): Promise<GenerateVietqrCodeResponse> {
     const config = this.getConfig();
     const token = await this.requestAccessToken(config);

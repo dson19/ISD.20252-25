@@ -72,15 +72,15 @@ export class PmLayoutComponent {
 
   submitChangePassword() {
     if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
-      this.pwdErrorMessage = 'Vui lòng điền đầy đủ các trường';
+      this.pwdErrorMessage = 'Please fill in all fields';
       return;
     }
     if (this.newPassword.length < 6) {
-      this.pwdErrorMessage = 'Mật khẩu mới phải có tối thiểu 6 ký tự';
+      this.pwdErrorMessage = 'New password must be at least 6 characters';
       return;
     }
     if (this.newPassword !== this.confirmPassword) {
-      this.pwdErrorMessage = 'Xác nhận mật khẩu mới không khớp';
+      this.pwdErrorMessage = 'New password confirmation does not match';
       return;
     }
 
@@ -91,14 +91,14 @@ export class PmLayoutComponent {
     this.authService.changePassword(this.oldPassword, this.newPassword).subscribe({
       next: (res) => {
         this.pwdLoading = false;
-        this.pwdSuccessMessage = 'Đổi mật khẩu thành công!';
+        this.pwdSuccessMessage = 'Password changed successfully!';
         setTimeout(() => {
           this.closeChangePasswordModal();
         }, 1500);
       },
       error: (err) => {
         this.pwdLoading = false;
-        this.pwdErrorMessage = err.error?.message || 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu cũ.';
+        this.pwdErrorMessage = err.error?.message || 'Failed to change password. Please check your old password.';
       }
     });
   }

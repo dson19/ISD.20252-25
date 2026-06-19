@@ -54,10 +54,11 @@ export class PaymentService {
     });
   }
 
-  getVietqrPaymentStatus(paymentId: number, simulate = false): Observable<any> {
-    const url = simulate
-      ? `${this.baseUrl}/api/vietqr/payments/${paymentId}/status?simulate=true`
-      : `${this.baseUrl}/api/vietqr/payments/${paymentId}/status`;
-    return this.http.get(url);
+  getVietqrPaymentStatus(paymentId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/vietqr/payments/${paymentId}/status`);
+  }
+
+  triggerVietqrTestCallback(paymentId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/vietqr/payments/${paymentId}/trigger-callback`, {});
   }
 }

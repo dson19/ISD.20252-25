@@ -4,17 +4,17 @@
     <div class="space-y-1">
       <div class="flex items-center space-x-2">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
-          Bán hàng & Vận đơn
+          Sales & Shipping
         </span>
       </div>
-      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Danh sách đơn hàng</h1>
-      <p class="text-sm text-gray-500">Quản lý, theo dõi các đơn đặt hàng và xử lý đối soát cổng thanh toán.</p>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Order List</h1>
+      <p class="text-sm text-gray-500">Manage and track orders and reconcile payment gateways.</p>
     </div>
   </div>
 
   <!-- Dashboard Metrics Panel -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <!-- Card 1: Tổng đơn hàng -->
+    <!-- Card 1: Total orders -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-75">
       <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -22,12 +22,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TỔNG ĐƠN HÀNG</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TOTAL ORDERS</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ totalOrdersCount }}</p>
       </div>
     </div>
 
-    <!-- Card 2: Chờ xử lý -->
+    <!-- Card 2: Pending -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-100">
       <div class="p-3.5 bg-amber-50 text-amber-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,12 +35,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">CHỜ XỬ LÝ</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">PENDING</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ pendingOrdersCount }}</p>
       </div>
     </div>
 
-    <!-- Card 3: Đã thanh toán -->
+    <!-- Card 3: Paid -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-150">
       <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,12 +48,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐÃ THANH TOÁN</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">PAID</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ paidOrdersCount }}</p>
       </div>
     </div>
 
-    <!-- Card 4: Đang xử lý / Đang giao -->
+    <!-- Card 4: Processing / Shipping -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 duration-300 delay-200">
       <div class="p-3.5 bg-blue-50 text-blue-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -62,7 +62,7 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">ĐANG GIAO HÀNG</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">SHIPPING</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ processingOrdersCount }}</p>
       </div>
     </div>
@@ -78,7 +78,7 @@
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
-      <span>Đơn hàng chờ xử lý</span>
+      <span>Pending Orders</span>
     </button>
     <button 
       (click)="setTab('refund')" 
@@ -88,7 +88,7 @@
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span>Yêu cầu hoàn tiền VietQR</span>
+      <span>VietQR Refund Requests</span>
     </button>
   </div>
 
@@ -108,7 +108,7 @@
           [(ngModel)]="searchQuery"
           (keyup.enter)="applyFilters()"
           class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all" 
-          placeholder="Tìm theo tên khách hàng hoặc mã đơn..."
+          placeholder="Search by customer name or order ID..."
         />
       </div>
       
@@ -118,10 +118,10 @@
           [(ngModel)]="dateRange"
           class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
-          <option value="ALL">Lọc theo ngày: Tất cả</option>
-          <option value="TODAY">Hôm nay</option>
-          <option value="WEEK">7 ngày gần đây</option>
-          <option value="MONTH">Tháng này</option>
+          <option value="ALL">Date: All</option>
+          <option value="TODAY">Today</option>
+          <option value="WEEK">Last 7 days</option>
+          <option value="MONTH">This month</option>
         </select>
         
         <select
@@ -129,23 +129,23 @@
           [(ngModel)]="paymentMethod"
           class="block py-3 pl-3 pr-9 text-xs border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 font-bold tracking-wide cursor-pointer transition-all"
         >
-          <option value="ALL">Phương thức: Tất cả</option>
+          <option value="ALL">Method: All</option>
           <option value="PAYPAL" [disabled]="activeTab === 'refund'">PayPal</option>
           <option value="VIETQR">VietQR</option>
-          <option value="UNPAID" [disabled]="activeTab === 'refund'">Chưa thanh toán</option>
+          <option value="UNPAID" [disabled]="activeTab === 'refund'">Unpaid</option>
         </select>
 
         <button
           (click)="applyFilters()"
           class="bg-primary text-white px-5 py-3 rounded-2xl font-extrabold text-sm hover:bg-primary-hover shadow-md shadow-blue-500/10 transition-all cursor-pointer hover:-translate-y-0.5 active:scale-95 duration-200"
         >
-          Áp dụng bộ lọc
+          Apply Filters
         </button>
         <button
           (click)="clearFilters()"
           class="bg-white text-gray-600 border border-gray-200 px-5 py-3 rounded-2xl font-extrabold text-sm hover:bg-gray-50 shadow-sm transition-all cursor-pointer active:scale-95 duration-200"
         >
-          Xóa lọc
+          Clear
         </button>
       </div>
     </div>
@@ -155,20 +155,20 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-            <th class="p-5 pl-8 w-44">MÃ ĐƠN HÀNG</th>
-            <th class="p-5">KHÁCH HÀNG</th>
-            <th class="p-5 text-right w-44">TỔNG TIỀN</th>
-            <th class="p-5 w-44">THANH TOÁN</th>
-            <th class="p-5 w-44">NGÀY TẠO</th>
-            <th class="p-5 text-center w-36">TRẠNG THÁI</th>
-            <th class="p-5 text-center w-40">THAO TÁC</th>
+            <th class="p-5 pl-8 w-44">ORDER ID</th>
+            <th class="p-5">CUSTOMER</th>
+            <th class="p-5 text-right w-44">TOTAL</th>
+            <th class="p-5 w-44">PAYMENT</th>
+            <th class="p-5 w-44">CREATED</th>
+            <th class="p-5 text-center w-36">STATUS</th>
+            <th class="p-5 text-center w-40">ACTIONS</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           @if (orders.length === 0 && !isLoading) {
             <tr>
               <td colspan="7" class="p-8 text-center text-sm font-semibold text-gray-400">
-                Không có đơn hàng nào cần hiển thị.
+                No orders to display.
               </td>
             </tr>
           }
@@ -176,7 +176,7 @@
             <tr>
               <td colspan="7" class="p-8 text-center text-sm font-semibold text-primary flex items-center justify-center space-x-2">
                 <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                <span>Đang tải đơn hàng...</span>
+                <span>Loading orders...</span>
               </td>
             </tr>
           }
@@ -219,7 +219,7 @@
                     <span class="text-xs font-extrabold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded border border-blue-100">PayPal</span>
                   }
                   @if (!order.paymentMethod) {
-                    <span class="text-xs font-bold text-gray-400">Chưa thanh toán</span>
+                    <span class="text-xs font-bold text-gray-400">Unpaid</span>
                   }
                 </div>
               </td>
@@ -232,38 +232,38 @@
                 @if (order.status === 'PENDING') {
                   <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 shadow-sm">
                     <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span>
-                    Chờ xử lý
+                    Pending
                   </span>
                 }
                 @if (order.status === 'PENDING_PROCESSING') {
                   <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-success bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
                     <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5 animate-pulse"></span>
-                    Đã thanh toán
+                    Paid
                   </span>
                 }
                 @if (order.status === 'APPROVED' || order.status === 'PROCESSING') {
                   <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-primary bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100 shadow-sm">
                     <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5 animate-pulse"></span>
-                    Đang giao hàng
+                    Shipping
                   </span>
                 }
                 @if (order.status === 'REFUND_PENDING') {
                   <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100 shadow-sm">
                     <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5 animate-bounce"></span>
-                    Chờ hoàn tiền
+                    Refund Pending
                   </span>
                 }
                 @if (order.status === 'REFUNDED') {
                   <span class="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
                     <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5"></span>
-                    Đã hoàn tiền
+                    Refunded
                   </span>
                 }
               </td>
               <!-- Actions -->
               <td class="p-5 text-center">
                 <button (click)="viewDetails(order.orderID)" class="px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-primary hover:text-white bg-blue-50 hover:bg-primary border border-blue-100 rounded-xl transition-all shadow-sm focus:outline-none flex items-center justify-center mx-auto hover:-translate-y-0.5 active:scale-95 duration-200 cursor-pointer">
-                  Xem chi tiết
+                  View Details
                   <svg class="w-3 h-3 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
                   </svg>
@@ -278,7 +278,7 @@
     <!-- Pagination -->
     <div class="p-6 border-t border-gray-100 bg-gray-50/40 flex flex-col lg:flex-row items-center justify-between gap-4">
       <p class="text-xs text-gray-500 font-bold">
-        Hiển thị <span class="font-extrabold text-gray-900">{{ orders.length }}</span> trên <span class="font-extrabold text-gray-900">{{ totalItems }}</span> đơn hàng
+        Showing <span class="font-extrabold text-gray-900">{{ orders.length }}</span> of <span class="font-extrabold text-gray-900">{{ totalItems }}</span> orders
       </p>
       
       <div class="flex items-center space-x-2 bg-white p-1 rounded-2xl border border-gray-150 shadow-sm">
@@ -292,7 +292,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span class="text-xs font-bold px-3 text-gray-700">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
+        <span class="text-xs font-bold px-3 text-gray-700">Page {{ currentPage }} / {{ totalPages || 1 }}</span>
         <button 
           [disabled]="currentPage >= totalPages" 
           (click)="goToPage(currentPage + 1)"
@@ -314,8 +314,8 @@
         <!-- Modal Header -->
         <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>
-            <h3 class="text-lg font-extrabold text-gray-900">Chi tiết đơn hàng #{{ selectedOrder.orderID }}</h3>
-            <p class="text-xs text-gray-500 mt-0.5">Ngày đặt: {{ selectedOrder.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+            <h3 class="text-lg font-extrabold text-gray-900">Order Details #{{ selectedOrder.orderID }}</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Order date: {{ selectedOrder.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
           <button (click)="closeDetailModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -329,18 +329,18 @@
           <!-- Customer & Shipping Info -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Thông tin người nhận</h4>
+              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Recipient Info</h4>
               <p class="text-sm font-extrabold text-gray-900">{{ selectedOrder.deliveryInfo?.receiverName }}</p>
-              <p class="text-xs text-gray-600 mt-1">SĐT: {{ selectedOrder.deliveryInfo?.phoneNumber }}</p>
+              <p class="text-xs text-gray-600 mt-1">Phone: {{ selectedOrder.deliveryInfo?.phoneNumber }}</p>
               <p class="text-xs text-gray-600">Email: {{ selectedOrder.deliveryInfo?.email }}</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Địa chỉ giao hàng</h4>
+              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Delivery Address</h4>
               <p class="text-xs text-gray-700 font-semibold leading-relaxed">{{ selectedOrder.deliveryInfo?.address }}</p>
-              <p class="text-xs text-gray-700 font-bold mt-1">Tỉnh/Thành phố: {{ selectedOrder.deliveryInfo?.province }}</p>
+              <p class="text-xs text-gray-700 font-bold mt-1">Province/City: {{ selectedOrder.deliveryInfo?.province }}</p>
               @if (selectedOrder.deliveryInfo?.deliveryNotes) {
                 <p class="text-xs text-amber-600 font-semibold mt-1">
-                  Ghi chú: {{ selectedOrder.deliveryInfo.deliveryNotes }}
+                  Notes: {{ selectedOrder.deliveryInfo.deliveryNotes }}
                 </p>
               }
             </div>
@@ -348,15 +348,15 @@
 
           <!-- Items List -->
           <div>
-            <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-3">Danh sách sản phẩm</h4>
+            <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-3">Product List</h4>
             <div class="border border-gray-100 rounded-2xl overflow-hidden">
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-gray-50 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                    <th class="p-3 pl-4">Sản phẩm</th>
-                    <th class="p-3 text-center w-20">SL</th>
-                    <th class="p-3 text-right w-28">Đơn giá</th>
-                    <th class="p-3 text-right w-28 pr-4">Thành tiền</th>
+                    <th class="p-3 pl-4">Product</th>
+                    <th class="p-3 text-center w-20">Qty</th>
+                    <th class="p-3 text-right w-28">Unit Price</th>
+                    <th class="p-3 text-right w-28 pr-4">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -370,7 +370,7 @@
                                class="w-10 h-10 object-cover rounded-lg border border-gray-100 mr-2.5 shadow-sm"
                              />
                            }
-                           <span class="font-extrabold text-gray-900">{{ item.product?.title || 'Sản phẩm không khả dụng' }}</span>
+                           <span class="font-extrabold text-gray-900">{{ item.product?.title || 'Product unavailable' }}</span>
                          </div>
                       </td>
                       <td class="p-3 text-center font-mono font-bold">{{ item.quantity }}</td>
@@ -386,10 +386,10 @@
           <!-- Financial Summary & Payment Info -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
             <div>
-              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Thanh toán & Trạng thái</h4>
+              <h4 class="text-xs font-black uppercase text-gray-400 tracking-wider mb-2">Payment & Status</h4>
               <div class="space-y-1.5 text-xs">
                 <p class="font-semibold text-gray-700">
-                  Phương thức: 
+                  Method:
                   @if (selectedOrder.paymentMethod === 'VIETQR') {
                     <span class="font-bold text-gray-900">VietQR Bank Transfer</span>
                   }
@@ -397,11 +397,11 @@
                     <span class="font-bold text-gray-900">PayPal Checkout</span>
                   }
                   @if (!selectedOrder.paymentMethod) {
-                    <span class="font-bold text-gray-400">Chưa thanh toán</span>
+                    <span class="font-bold text-gray-400">Unpaid</span>
                   }
                 </p>
                 <p class="font-semibold text-gray-700 flex items-center">
-                  Trạng thái: 
+                  Status:
                   <span class="ml-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
                         [ngClass]="{
                           'text-orange-700 bg-orange-50': selectedOrder.status === 'PENDING',
@@ -418,19 +418,19 @@
             
             <div class="bg-gray-50/75 p-4 rounded-2xl border border-gray-100 space-y-2 text-xs font-semibold text-gray-600">
               <div class="flex justify-between">
-                <span>Tiền hàng gốc:</span>
+                <span>Subtotal:</span>
                 <span class="font-mono text-gray-900">{{ selectedOrder.subTotal | number:'1.0-0' }} đ</span>
               </div>
               <div class="flex justify-between">
-                <span>Thuế (VAT 10%):</span>
+                <span>Tax (VAT 10%):</span>
                 <span class="font-mono text-gray-900">{{ selectedOrder.tax | number:'1.0-0' }} đ</span>
               </div>
               <div class="flex justify-between">
-                <span>Phí vận chuyển:</span>
+                <span>Shipping Fee:</span>
                 <span class="font-mono text-gray-900">{{ selectedOrder.shippingFee | number:'1.0-0' }} đ</span>
               </div>
               <div class="flex justify-between pt-2 border-t border-gray-250 text-sm font-black text-gray-900">
-                <span>Tổng thanh toán:</span>
+                <span>Total Payment:</span>
                 <span class="font-mono text-primary">{{ selectedOrder.totalPayment | number:'1.0-0' }} đ</span>
               </div>
             </div>
@@ -443,7 +443,7 @@
             (click)="closeDetailModal()" 
             class="px-5 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
           >
-            Đóng
+            Close
           </button>
 
           <!-- Actions for Pending/Processing status -->
@@ -452,19 +452,19 @@
               (click)="cancelOrder(selectedOrder.orderID)"
               class="px-5 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-sm rounded-xl border border-rose-150 transition-colors focus:outline-none cursor-pointer"
             >
-              Hủy đơn
+              Cancel Order
             </button>
             <button 
               (click)="rejectOrder(selectedOrder.orderID)"
               class="px-5 py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-sm rounded-xl border border-amber-150 transition-colors focus:outline-none cursor-pointer"
             >
-              Từ chối
+              Reject
             </button>
             <button 
               (click)="approveOrder(selectedOrder.orderID)"
               class="px-5 py-3 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-md transition-colors focus:outline-none cursor-pointer"
             >
-              Duyệt đơn
+              Approve
             </button>
           }
 
@@ -474,7 +474,7 @@
               (click)="confirmVietqrRefund(selectedOrder.orderID)"
               class="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl shadow-md transition-colors focus:outline-none cursor-pointer"
             >
-              Xác nhận đã hoàn tiền VietQR
+              Confirm VietQR Refund
             </button>
           }
         </div>
@@ -518,7 +518,7 @@
               (click)="closeConfirm()"
               class="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-2xl hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
             >
-              Hủy bỏ
+              Cancel
             </button>
             <button
               (click)="triggerConfirmAction()"
@@ -529,7 +529,7 @@
               }"
               class="flex-1 px-4 py-3 font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
             >
-              Xác nhận
+              Confirm
             </button>
           </div>
         </div>
@@ -585,7 +585,7 @@
               }"
               class="w-full py-3 text-white font-bold text-sm rounded-2xl shadow-md transition-colors focus:outline-none cursor-pointer"
             >
-              Đồng ý
+              OK
             </button>
           </div>
         </div>

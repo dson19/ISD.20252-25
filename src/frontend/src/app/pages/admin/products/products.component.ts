@@ -37,7 +37,7 @@ export class ProductsComponent implements OnInit {
   stockDelta = 1;
   stockReason = '';
   stockActionType: 'IMPORT' | 'EXPORT' = 'IMPORT';
-  selectedPredefinedReason = 'Nhập thêm hàng từ nhà cung cấp';
+  selectedPredefinedReason = 'Restock from supplier';
   customStockReason = '';
 
   // Form State
@@ -120,7 +120,7 @@ export class ProductsComponent implements OnInit {
       publisher: '',
       publicationDate: '',
       numPages: null,
-      language: 'Tiếng Việt',
+      language: 'Vietnamese',
       genre: ''
     },
     cd: {
@@ -134,8 +134,8 @@ export class ProductsComponent implements OnInit {
       director: '',
       runtimeMinutes: 120,
       studio: '',
-      language: 'Tiếng Việt',
-      subtitles: 'Tiếng Việt'
+      language: 'Vietnamese',
+      subtitles: 'Vietnamese'
     },
     newspaper: {
       editorInChief: '',
@@ -208,10 +208,10 @@ export class ProductsComponent implements OnInit {
 
   onMediaTypeChange(type: string) {
     if (this.isEditMode) return;
-    if (type === 'BOOK') this.productForm.category = 'Sách';
+    if (type === 'BOOK') this.productForm.category = 'Books';
     else if (type === 'CD') this.productForm.category = 'CD';
     else if (type === 'DVD') this.productForm.category = 'DVD';
-    else if (type === 'NEWSPAPER') this.productForm.category = 'Báo chí';
+    else if (type === 'NEWSPAPER') this.productForm.category = 'Newspaper';
   }
 
   ngOnInit() {
@@ -226,7 +226,7 @@ export class ProductsComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Lỗi khi lấy tổng số sản phẩm:', err);
+        console.error('Error fetching total product count:', err);
       }
     });
   }
@@ -390,7 +390,7 @@ export class ProductsComponent implements OnInit {
     this.selectedProductForStock = product;
     this.stockDelta = 1;
     this.stockActionType = 'IMPORT';
-    this.selectedPredefinedReason = 'Nhập thêm hàng từ nhà cung cấp';
+    this.selectedPredefinedReason = 'Restock from supplier';
     this.customStockReason = '';
     this.stockReason = '';
     this.isStockModalOpen = true;
@@ -405,9 +405,9 @@ export class ProductsComponent implements OnInit {
 
   onStockActionTypeChange() {
     if (this.stockActionType === 'IMPORT') {
-      this.selectedPredefinedReason = 'Nhập thêm hàng từ nhà cung cấp';
+      this.selectedPredefinedReason = 'Restock from supplier';
     } else {
-      this.selectedPredefinedReason = 'Hàng hóa bị hư hỏng / lỗi';
+      this.selectedPredefinedReason = 'Damaged / defective goods';
     }
   }
 
@@ -421,26 +421,26 @@ export class ProductsComponent implements OnInit {
     if (!this.selectedProductForStock) return;
     
     if (this.stockDelta <= 0 || !Number.isInteger(this.stockDelta)) {
-      this.showAlert('Thông báo', 'Vui lòng nhập số lượng hợp lệ (> 0)', 'warning');
+      this.showAlert('Notice', 'Please enter a valid quantity (> 0)', 'warning');
       return;
     }
 
     const actualDelta = this.stockActionType === 'IMPORT' ? this.stockDelta : -this.stockDelta;
     if (this.stockActionType === 'EXPORT' && this.stockDelta > this.selectedProductForStock.quantityInStock) {
       this.showAlert(
-        'Vượt quá số lượng tồn kho',
-        `Không thể xuất kho vượt quá số lượng hàng hiện có trong kho (Tồn kho hiện tại: ${this.selectedProductForStock.quantityInStock} sản phẩm).`,
+        'Exceeds Stock Quantity',
+        `Cannot export more than the available stock (Current stock: ${this.selectedProductForStock.quantityInStock} items).`,
         'warning'
       );
       return;
     }
 
-    const actualReason = this.selectedPredefinedReason === 'Khác' 
-      ? this.customStockReason.trim() 
+    const actualReason = this.selectedPredefinedReason === 'Other'
+      ? this.customStockReason.trim()
       : this.selectedPredefinedReason;
 
     if (!actualReason) {
-      this.showAlert('Thiếu thông tin', 'Vui lòng chọn hoặc nhập lý do điều chỉnh kho', 'warning');
+      this.showAlert('Missing Information', 'Please select or enter a stock adjustment reason', 'warning');
       return;
     }
 
@@ -453,7 +453,7 @@ export class ProductsComponent implements OnInit {
           this.fetchTotalProductsCount();
         },
         error: (err) => {
-          this.showAlert('Lỗi điều chỉnh', err.error?.message || 'Không thể điều chỉnh tồn kho', 'error');
+          this.showAlert('Adjustment Error', err.error?.message || 'Unable to adjust stock', 'error');
         }
       });
   }
@@ -482,7 +482,7 @@ export class ProductsComponent implements OnInit {
       status: 'ACTIVE',
       book: {
         authors: '',
-        coverType: 'Bìa mềm',
+        coverType: 'Paperback',
         publisher: '',
         publicationDate: '',
         numPages: null,
@@ -546,7 +546,7 @@ export class ProductsComponent implements OnInit {
             publicationDate: fullProduct.book.publicationDate ? String(fullProduct.book.publicationDate).slice(0, 10) : ''
           } : {
             authors: '',
-            coverType: 'Bìa mềm',
+            coverType: 'Paperback',
             publisher: '',
             publicationDate: '',
             numPages: null,

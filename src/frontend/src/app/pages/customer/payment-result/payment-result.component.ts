@@ -31,7 +31,7 @@ export class PaymentResultComponent implements OnInit {
       const errorParam = params['error'];
 
       this.isSuccess.set(successParam === 'true');
-      this.errorMessage.set(errorParam || 'Giao dịch không thành công hoặc đã bị hủy.');
+      this.errorMessage.set(errorParam || 'Transaction failed or was cancelled.');
 
       if (orderIdParam) {
         const id = Number(orderIdParam);
@@ -45,7 +45,7 @@ export class PaymentResultComponent implements OnInit {
             this.orderLoaded.set(true);
           },
           error: (err) => {
-            console.error('Lỗi khi lấy thông tin đơn hàng:', err);
+            console.error('Error fetching order details:', err);
             this.orderLoaded.set(true);
           }
         });

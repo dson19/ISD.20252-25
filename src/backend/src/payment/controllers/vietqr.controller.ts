@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UsePipes, ValidationPipe } from '@nestjs/common';
 import { CreateVietqrPaymentDto } from '../dto/create-vietqr-payment.dto';
 import { VietqrCallbackDto } from '../dto/vietqr-callback.dto';
 import { VietqrPaymentService } from '../services/vietqr-payment.service';
@@ -14,19 +14,18 @@ export class VietqrController {
   }
 
   @Get(':paymentId/status')
-  async getStatusByPaymentId(
-    @Param('paymentId', ParseIntPipe) paymentId: number,
-    @Query('simulate') simulate?: string,
-  ) {
-    return await this.vietqrPaymentService.getStatusByPaymentId(paymentId, simulate === 'true');
+  async getStatusByPaymentId(@Param('paymentId', ParseIntPipe) paymentId: number) {
+    return await this.vietqrPaymentService.getStatusByPaymentId(paymentId);
   }
 
   @Get('by-ref/:transactionRef/status')
-  async getStatusByTransactionRef(
-    @Param('transactionRef') transactionRef: string,
-    @Query('simulate') simulate?: string,
-  ) {
-    return await this.vietqrPaymentService.getStatusByTransactionRef(transactionRef, simulate === 'true');
+  async getStatusByTransactionRef(@Param('transactionRef') transactionRef: string) {
+    return await this.vietqrPaymentService.getStatusByTransactionRef(transactionRef);
+  }
+
+  @Post(':paymentId/trigger-callback')
+  async triggerTestCallback(@Param('paymentId', ParseIntPipe) paymentId: number) {
+    return await this.vietqrPaymentService.triggerTestCallback(paymentId);
   }
 
   @Post('callback')

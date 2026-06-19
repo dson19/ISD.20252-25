@@ -39,7 +39,7 @@ export class LoginComponent implements OnInit {
 
   onSubmit() {
     if (!this.email || !this.password) {
-      this.errorMessage = 'Vui lòng nhập đầy đủ email và mật khẩu';
+      this.errorMessage = 'Please enter both email and password';
       return;
     }
 
@@ -63,7 +63,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản.';
+        this.errorMessage = err.error?.message || 'Login failed. Please check your credentials.';
         this.cdr.detectChanges();
       }
     });

@@ -64,10 +64,13 @@ export class PaymentComponent implements OnInit, OnDestroy {
           next: (order) => {
             this.totalAmount.set(Number(order.totalPayment));
             this.orderLoaded.set(true);
+            if (this.paymentMethod() === 'QR') {
+              this.loadOrCreateVietqrPayment();
+            }
           },
           error: (err) => {
             this.orderLoaded.set(true);
-            console.error('Lỗi khi lấy thông tin đơn hàng:', err);
+            console.error('Error fetching order details:', err);
           }
         });
       } else {
@@ -79,16 +82,15 @@ export class PaymentComponent implements OnInit, OnDestroy {
           queryParams: {
             success: 'false',
             orderId: this.orderId(),
-            error: 'Người dùng đã hủy giao dịch trên PayPal.'
+            error: 'User cancelled the PayPal transaction.'
           }
         });
         return;
       }
 
-      // Trường hợp nhận callback từ PayPal chuyển hướng về
       if (paypalToken && success === 'true' && this.orderId()) {
         this.loading.set(true);
-        this.statusMessage.set('Đang xác thực giao dịch PayPal, vui lòng không đóng trình duyệt...');
+        this.statusMessage.set('Verifying PayPal transaction, please do not close the browser...');
 
         this.paymentService.captureOrder(paypalToken, this.orderId()!).subscribe({
           next: () => {
@@ -105,7 +107,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
               queryParams: {
                 success: 'false',
                 orderId: this.orderId(),
-                error: err.error?.message || err.message || 'Xác thực thanh toán PayPal thất bại.'
+                error: err.error?.message || err.message || 'PayPal payment verification failed.'
               }
             });
           }
@@ -126,6 +128,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
     if (method === 'QR') {
       if (this.paymentId() && !this.isExpired()) {
         this.startStatusPolling(this.paymentId()!);
+      } else if (!this.paymentId() || this.isExpired()) {
+        this.loadOrCreateVietqrPayment();
       }
     } else {
       this.stopStatusPolling();
@@ -146,7 +150,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     }
 
     this.loading.set(true);
-    this.statusMessage.set('Đang tạo mã thanh toán VietQR...');
+    this.statusMessage.set('Creating VietQR payment code...');
     
     const content = `AIMS ${orderId}`;
 
@@ -178,7 +182,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.loading.set(false);
-        this.showAlert('Lỗi VietQR', err.error?.message || 'Không thể tạo mã QR thanh toán.', 'error');
+        this.showAlert('VietQR Error', err.error?.message || 'Unable to create QR payment code.', 'error');
       }
     });
   }
@@ -218,10 +222,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
       clearInterval(this.pollingSubscription);
     }
 
-    // Immediate check, then check every 5 seconds
-    this.checkPaymentStatus(paymentId, false);
+    this.checkPaymentStatus(paymentId);
     this.pollingSubscription = setInterval(() => {
-      this.checkPaymentStatus(paymentId, false);
+      this.checkPaymentStatus(paymentId);
     }, 5000);
   }
 
@@ -232,18 +235,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
     }
   }
 
-  checkPaymentStatus(paymentId: number, showLoading = true) {
-    if (showLoading) {
-      this.loading.set(true);
-      this.statusMessage.set('Đang kiểm tra trạng thái thanh toán...');
-    }
-
-    this.paymentService.getVietqrPaymentStatus(paymentId, showLoading).subscribe({
+  checkPaymentStatus(paymentId: number) {
+    this.paymentService.getVietqrPaymentStatus(paymentId).subscribe({
       next: (res) => {
-        if (showLoading) {
-          this.loading.set(false);
-        }
-
         if (res.status === 'PAID') {
           this.stopStatusPolling();
           if (this.timerSubscription) {
@@ -260,39 +254,39 @@ export class PaymentComponent implements OnInit, OnDestroy {
           }
           this.isExpired.set(true);
           this.qrTimeLeft.set('00:00');
-          if (showLoading) {
-            this.showAlert('Thanh toán thất bại', 'Giao dịch đã hết hạn hoặc bị lỗi.', 'error');
-          }
-        } else if (showLoading) {
-          this.showAlert('Thông báo', 'Hệ thống chưa nhận được khoản thanh toán của bạn. Vui lòng thử lại sau ít giây.', 'info');
         }
       },
-      error: (err) => {
-        if (showLoading) {
-          this.loading.set(false);
-          this.showAlert('Lỗi kết nối', 'Không thể kiểm tra trạng thái thanh toán lúc này.', 'error');
-        }
-      }
+      error: () => {}
     });
   }
 
   confirmPayment() {
     const currentOrderId = this.orderId();
     if (!currentOrderId) {
-      this.showAlert('Lỗi đơn hàng', 'Không tìm thấy ID đơn hàng hợp lệ!', 'error');
+      this.showAlert('Order Error', 'No valid order ID found!', 'error');
       return;
     }
 
     if (this.paymentMethod() === 'QR') {
       const pId = this.paymentId();
       if (pId) {
-        this.checkPaymentStatus(pId, true);
+        this.loading.set(true);
+        this.statusMessage.set('Confirming payment with VietQR...');
+        this.paymentService.triggerVietqrTestCallback(pId).subscribe({
+          next: () => {
+            this.loading.set(false);
+          },
+          error: (err) => {
+            this.loading.set(false);
+            this.showAlert('Payment Error', err.error?.message || 'Failed to confirm payment.', 'error');
+          }
+        });
       } else {
         this.loadOrCreateVietqrPayment();
       }
     } else {
       this.loading.set(true);
-      this.statusMessage.set('Đang chuẩn bị giao dịch PayPal...');
+      this.statusMessage.set('Preparing PayPal transaction...');
 
       this.paymentService.createOrder(currentOrderId).subscribe({
         next: (res) => {
@@ -300,14 +294,14 @@ export class PaymentComponent implements OnInit, OnDestroy {
             window.location.href = res.approveUrl;
           } else {
             this.loading.set(false);
-            this.showAlert('Lỗi PayPal', 'Không nhận được link thanh toán từ PayPal.', 'error');
+            this.showAlert('PayPal Error', 'No payment link received from PayPal.', 'error');
           }
         },
         error: (err) => {
           this.loading.set(false);
           this.showAlert(
-            'Lỗi kết nối',
-            err.error?.message || 'Lỗi khi kết nối với cổng thanh toán PayPal.',
+            'Connection Error',
+            err.error?.message || 'Error connecting to PayPal payment gateway.',
             'error'
           );
         }
@@ -317,9 +311,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
-      this.showAlert('Đã sao chép', `Đã sao chép "${text}" vào bộ nhớ tạm.`, 'success');
+      this.showAlert('Copied', `Copied "${text}" to clipboard.`, 'success');
     }).catch(err => {
-      console.error('Không thể sao chép:', err);
+      console.error('Unable to copy:', err);
     });
   }
 

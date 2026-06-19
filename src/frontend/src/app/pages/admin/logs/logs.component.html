@@ -7,10 +7,10 @@
         <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
-        BẢO MẬT & ĐỐI SOÁT
+        SECURITY & AUDIT
       </div>
-      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Nhật ký kho hàng</h1>
-      <p class="text-sm text-gray-500">Bản ghi bất biến ghi nhận mọi thay đổi danh mục, cập nhật giá bán và điều chỉnh tồn kho.</p>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Inventory Logs</h1>
+      <p class="text-sm text-gray-500">An immutable record of every catalog change, price update, and stock adjustment.</p>
     </div>
     
     <div class="flex gap-2 w-full md:w-auto">
@@ -21,14 +21,15 @@
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
         </svg>
-        Tải lại log
+        Reload logs
       </button>
     </div>
   </div>
 
-  <!-- Dashboard Metrics Panel (Mới) -->
+  <!-- Dashboard Metrics Panel -->
+
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <!-- Card 1: Tổng số bản ghi -->
+    <!-- Card 1: Total records -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-blue-50 text-primary rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,12 +37,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TỔNG SỐ NHẬT KÝ</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TOTAL LOGS</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ totalLogsCount }}</p>
       </div>
     </div>
 
-    <!-- Card 2: Lượt tạo mới -->
+    <!-- Card 2: New creations -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,12 +50,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">TẠO SẢN PHẨM MỚI</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">NEW PRODUCTS</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ createLogsCount }}</p>
       </div>
     </div>
 
-    <!-- Card 3: Điều chỉnh kho -->
+    <!-- Card 3: Stock adjustments -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-amber-50 text-amber-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -62,12 +63,12 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">BIẾN ĐỘNG TỒN KHO</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">STOCK CHANGES</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ stockLogsCount }}</p>
       </div>
     </div>
 
-    <!-- Card 4: Lượt xoá / Ngưng bán -->
+    <!-- Card 4: Deletions / Deactivations -->
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4 hover:shadow-md hover:border-gray-200 transition-all duration-200">
       <div class="p-3.5 bg-rose-50 text-rose-600 rounded-2xl">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,7 +76,7 @@
         </svg>
       </div>
       <div>
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">NGỪNG BÁN / XOÁ BỎ</p>
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">DEACTIVATED / DELETED</p>
         <p class="text-2xl font-extrabold text-gray-900 leading-none">{{ deleteLogsCount }}</p>
       </div>
     </div>
@@ -91,9 +92,9 @@
           (ngModelChange)="applyFilter()"
           class="block py-3 pl-3 pr-9 text-xs font-bold border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 tracking-wide cursor-pointer transition-all animate-in fade-in"
         >
-          <option value="ALL">TẤT CẢ THỜI GIAN</option>
-          <option value="24H">24 Giờ qua</option>
-          <option value="7D">7 Ngày qua</option>
+          <option value="ALL">ALL TIME</option>
+          <option value="24H">Last 24 hours</option>
+          <option value="7D">Last 7 days</option>
         </select>
         
         <select
@@ -101,12 +102,12 @@
           (ngModelChange)="applyFilter()"
           class="block py-3 pl-3 pr-9 text-xs font-bold border border-gray-200 bg-white rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm text-gray-700 tracking-wide cursor-pointer transition-all animate-in fade-in"
         >
-          <option value="">TẤT CẢ HÀNH ĐỘNG</option>
-          <option value="CREATE">Đã tạo mới (CREATE)</option>
-          <option value="UPDATE">Đã cập nhật (UPDATE)</option>
-          <option value="DEACTIVATE">Ngừng bán (DEACTIVATE)</option>
-          <option value="DELETE">Xóa cứng (DELETE)</option>
-          <option value="STOCK_ADJUST">Điều chỉnh tồn kho (STOCK_ADJUST)</option>
+          <option value="">ALL ACTIONS</option>
+          <option value="CREATE">Created (CREATE)</option>
+          <option value="UPDATE">Updated (UPDATE)</option>
+          <option value="DEACTIVATE">Deactivated (DEACTIVATE)</option>
+          <option value="DELETE">Hard deleted (DELETE)</option>
+          <option value="STOCK_ADJUST">Stock adjusted (STOCK_ADJUST)</option>
         </select>
       </div>
 
@@ -121,7 +122,7 @@
           [(ngModel)]="searchQuery"
           (ngModelChange)="applyFilter()"
           class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm placeholder-gray-400 font-medium transition-all"
-          placeholder="Tìm theo tên sản phẩm, mã vạch hoặc người thực hiện..."
+          placeholder="Search by product name, barcode, or performer..."
         />
       </div>
     </div>
@@ -131,13 +132,13 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-gray-50/70 border-b border-gray-200 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">
-            <th class="p-5 pl-8 w-44">THỜI GIAN KHỞI TẠO</th>
-            <th class="p-5 w-32">MÃ VẠCH SP</th>
-            <th class="p-5">SẢN PHẨM BỊ TÁC ĐỘNG</th>
-            <th class="p-5 w-36">HÀNH ĐỘNG</th>
-            <th class="p-5 w-44">NGƯỜI THỰC HIỆN</th>
-            <th class="p-5 w-56">LÝ DO ĐIỀU CHỈNH</th>
-            <th class="p-5 pr-8 text-center w-28">CHI TIẾT</th>
+            <th class="p-5 pl-8 w-44">TIMESTAMP</th>
+            <th class="p-5 w-32">BARCODE</th>
+            <th class="p-5">AFFECTED PRODUCT</th>
+            <th class="p-5 w-36">ACTION</th>
+            <th class="p-5 w-44">PERFORMED BY</th>
+            <th class="p-5 w-56">REASON</th>
+            <th class="p-5 pr-8 text-center w-28">DETAILS</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -149,7 +150,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span class="text-sm">Đang tải nhật ký kho hàng từ hệ thống...</span>
+                  <span class="text-sm">Loading inventory logs from the system...</span>
                 </div>
               </td>
             </tr>
@@ -160,7 +161,7 @@
                   <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span class="text-sm">Không tìm thấy bản ghi nhật ký nào phù hợp.</span>
+                  <span class="text-sm">No matching log records found.</span>
                 </div>
               </td>
             </tr>
@@ -183,7 +184,7 @@
                       <p class="text-sm font-extrabold text-gray-900 line-clamp-3 group-hover:text-primary transition-colors leading-snug">{{ log.product.title }}</p>
                       <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">{{ log.product.mediaType }}</p>
                     } @else {
-                      <p class="text-sm font-bold text-gray-400 italic">Sản phẩm đã bị xóa cứng</p>
+                      <p class="text-sm font-bold text-gray-400 italic">Product has been hard deleted</p>
                     }
                   </div>
                 </td>
@@ -210,7 +211,7 @@
                     (click)="openDiffModal(log)"
                     class="px-3 py-1.5 bg-blue-50 hover:bg-primary hover:text-white border border-blue-100 hover:border-primary rounded-xl text-xs font-bold text-primary transition-all focus:outline-none shadow-sm cursor-pointer"
                   >
-                    Đối chiếu
+                    Compare
                   </button>
                 </td>
             }
@@ -227,8 +228,8 @@
         <!-- Header -->
         <div class="p-6 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h3 class="text-lg font-bold text-gray-900">Chi tiết đối chiếu thay đổi (JSON Audit Trail)</h3>
-            <p class="text-xs text-gray-500 font-medium">Bản ghi nhật ký #{{ selectedLogForDiff.logID }} | Thực hiện bởi: {{ selectedLogForDiff.performedBy }}</p>
+            <h3 class="text-lg font-bold text-gray-900">Change Comparison Details (JSON Audit Trail)</h3>
+            <p class="text-xs text-gray-500 font-medium">Log record #{{ selectedLogForDiff.logID }} | Performed by: {{ selectedLogForDiff.performedBy }}</p>
           </div>
           <button (click)="closeDiffModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,15 +243,15 @@
           <!-- Action & Reason Block -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-              <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Loại hành động</div>
+              <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Action Type</div>
               <div class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-50 text-primary border border-blue-100 uppercase">
                 {{ selectedLogForDiff.actionType }}
               </div>
             </div>
             
             <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-              <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Lý do điều chỉnh ghi nhận</div>
-              <div class="text-xs text-gray-700 font-semibold">{{ selectedLogForDiff.reason || 'Không ghi nhận lý do riêng biệt.' }}</div>
+              <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Recorded Reason</div>
+              <div class="text-xs text-gray-700 font-semibold">{{ selectedLogForDiff.reason || 'No specific reason recorded.' }}</div>
             </div>
           </div>
 
@@ -260,7 +261,7 @@
               <!-- Before state (if exists) -->
               <div class="p-6 space-y-4">
                 <h4 class="text-xs font-extrabold text-danger bg-red-50 px-3 py-1.5 rounded-full border border-red-100 inline-block uppercase tracking-wider">
-                  Trạng thái trước cập nhật (BEFORE)
+                  State Before Update (BEFORE)
                 </h4>
                 
                 @if (parsedBeforeFields) {
@@ -273,14 +274,14 @@
                     }
                   </div>
                 } @else {
-                  <p class="text-xs text-gray-400 font-medium italic p-4 text-center">Không có bản ghi trạng thái trước thay đổi (sản phẩm mới tạo).</p>
+                  <p class="text-xs text-gray-400 font-medium italic p-4 text-center">No prior state record (newly created product).</p>
                 }
               </div>
 
               <!-- After state -->
               <div class="p-6 space-y-4">
                 <h4 class="text-xs font-extrabold text-success bg-green-50 px-3 py-1.5 rounded-full border border-green-100 inline-block uppercase tracking-wider">
-                  Trạng thái sau cập nhật (AFTER)
+                  State After Update (AFTER)
                 </h4>
 
                 @if (parsedAfterFields) {
@@ -293,7 +294,7 @@
                     }
                   </div>
                 } @else {
-                  <p class="text-xs text-gray-400 font-medium italic p-4 text-center">Không có bản ghi trạng thái sau thay đổi (sản phẩm bị xóa cứng).</p>
+                  <p class="text-xs text-gray-400 font-medium italic p-4 text-center">No post-change state record (product was hard deleted).</p>
                 }
               </div>
             </div>
@@ -306,7 +307,7 @@
             (click)="closeDiffModal()"
             class="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-md transition-all transform hover:-translate-y-0.5 text-center focus:outline-none"
           >
-            Hoàn tất đối chiếu
+            Done
           </button>
         </div>
       </div>

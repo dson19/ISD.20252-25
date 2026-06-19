@@ -94,7 +94,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.showAlert('Lỗi', 'Không thể tải danh sách đơn hàng từ hệ thống.', 'error');
+        this.showAlert('Error', 'Unable to load the order list from the system.', 'error');
         this.cdr.detectChanges();
       }
     });
@@ -127,7 +127,7 @@ export class OrdersComponent implements OnInit {
     };
   }
 
-  // Thao tác xem chi tiết đơn hàng
+  // View order details
   viewDetails(orderId: number) {
     this.detailLoading = true;
     this.orderService.getOrderDetail(orderId).subscribe({
@@ -139,7 +139,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         this.detailLoading = false;
-        this.showAlert('Lỗi', 'Không thể tải chi tiết đơn hàng này.', 'error');
+        this.showAlert('Error', 'Unable to load this order detail.', 'error');
         this.cdr.detectChanges();
       }
     });
@@ -151,21 +151,21 @@ export class OrdersComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Thao tác xử lý đơn hàng
+  // Order processing actions
   approveOrder(orderId: number) {
     this.showConfirm(
-      'Xác nhận duyệt đơn',
-      `Bạn có chắc chắn muốn duyệt và chuẩn bị giao cho đơn hàng #${orderId}?`,
+      'Confirm Approval',
+      `Are you sure you want to approve and prepare order #${orderId} for delivery?`,
       'info',
       () => {
         this.orderService.approveOrder(orderId).subscribe({
           next: () => {
-            this.showAlert('Thành công', `Đã duyệt đơn hàng #${orderId} thành công!`, 'success');
+            this.showAlert('Success', `Order #${orderId} approved successfully!`, 'success');
             this.closeDetailModal();
             this.loadOrders();
           },
           error: (err) => {
-            this.showAlert('Lỗi', err.error?.message || 'Không thể duyệt đơn hàng.', 'error');
+            this.showAlert('Error', err.error?.message || 'Unable to approve the order.', 'error');
           }
         });
       }
@@ -174,22 +174,22 @@ export class OrdersComponent implements OnInit {
 
   rejectOrder(orderId: number) {
     this.showConfirm(
-      'Xác nhận từ chối đơn',
-      `Bạn có chắc chắn muốn từ chối đơn hàng #${orderId}?`,
+      'Confirm Rejection',
+      `Are you sure you want to reject order #${orderId}?`,
       'danger',
       () => {
         this.orderService.rejectOrder(orderId).subscribe({
           next: (res) => {
             if (res.status === 'REFUND_PENDING') {
-              this.showAlert('Chờ hoàn tiền', `Đơn hàng #${orderId} đã bị từ chối và chuyển sang trạng thái Chờ hoàn tiền VietQR thủ công.`, 'warning');
+              this.showAlert('Refund Pending', `Order #${orderId} has been rejected and moved to Manual VietQR Refund Pending status.`, 'warning');
             } else {
-              this.showAlert('Thành công', `Đã từ chối đơn hàng #${orderId} thành công!`, 'success');
+              this.showAlert('Success', `Order #${orderId} rejected successfully!`, 'success');
             }
             this.closeDetailModal();
             this.loadOrders();
           },
           error: (err) => {
-            this.showAlert('Lỗi', err.error?.message || 'Không thể từ chối đơn hàng.', 'error');
+            this.showAlert('Error', err.error?.message || 'Unable to reject the order.', 'error');
           }
         });
       }
@@ -198,22 +198,22 @@ export class OrdersComponent implements OnInit {
 
   cancelOrder(orderId: number) {
     this.showConfirm(
-      'Xác nhận hủy đơn',
-      `Bạn có chắc chắn muốn hủy đơn hàng #${orderId}?`,
+      'Confirm Cancellation',
+      `Are you sure you want to cancel order #${orderId}?`,
       'danger',
       () => {
         this.orderService.cancelOrder(orderId).subscribe({
           next: (res) => {
             if (res.status === 'REFUND_PENDING') {
-              this.showAlert('Chờ hoàn tiền', `Đơn hàng #${orderId} đã được hủy và chuyển sang trạng thái Chờ hoàn tiền VietQR thủ công.`, 'warning');
+              this.showAlert('Refund Pending', `Order #${orderId} has been cancelled and moved to Manual VietQR Refund Pending status.`, 'warning');
             } else {
-              this.showAlert('Thành công', `Đã hủy đơn hàng #${orderId} thành công!`, 'success');
+              this.showAlert('Success', `Order #${orderId} cancelled successfully!`, 'success');
             }
             this.closeDetailModal();
             this.loadOrders();
           },
           error: (err) => {
-            this.showAlert('Lỗi', err.error?.message || 'Không thể hủy đơn hàng.', 'error');
+            this.showAlert('Error', err.error?.message || 'Unable to cancel the order.', 'error');
           }
         });
       }
@@ -222,18 +222,18 @@ export class OrdersComponent implements OnInit {
 
   confirmVietqrRefund(orderId: number) {
     this.showConfirm(
-      'Xác nhận đã hoàn tiền VietQR',
-      `Bạn có chắc chắn muốn xác nhận đã chuyển khoản hoàn tiền cho đơn hàng #${orderId}? Trạng thái đơn hàng sẽ chuyển sang Đã hoàn tiền (REFUNDED).`,
+      'Confirm VietQR Refund',
+      `Are you sure you want to confirm the refund transfer for order #${orderId}? The order status will change to Refunded (REFUNDED).`,
       'warning',
       () => {
         this.orderService.confirmVietqrRefund(orderId).subscribe({
           next: () => {
-            this.showAlert('Thành công', `Đã xác nhận hoàn tiền VietQR cho đơn hàng #${orderId}!`, 'success');
+            this.showAlert('Success', `VietQR refund confirmed for order #${orderId}!`, 'success');
             this.closeDetailModal();
             this.loadOrders();
           },
           error: (err) => {
-            this.showAlert('Lỗi', err.error?.message || 'Không thể xác nhận hoàn tiền đơn hàng.', 'error');
+            this.showAlert('Error', err.error?.message || 'Unable to confirm the order refund.', 'error');
           }
         });
       }

@@ -2,10 +2,10 @@
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div class="flex flex-col items-center">
       <span class="text-primary font-bold text-4xl tracking-tight leading-none mb-1">AIMS</span>
-      <span class="text-xs text-gray-500 font-medium uppercase tracking-widest">Hệ thống lưu trữ số</span>
+      <span class="text-xs text-gray-500 font-medium uppercase tracking-widest">Digital Archive System</span>
     </div>
     <h2 class="mt-8 text-center text-2xl font-bold text-gray-900">
-      Đăng nhập quản trị
+      Admin Login
     </h2>
   </div>
 
@@ -20,7 +20,7 @@
         }
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Tên đăng nhập hoặc Email</label>
+          <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Username or Email</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,8 +33,8 @@
 
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Mật khẩu</label>
-            <a href="#" class="text-xs font-medium text-primary hover:text-primary-hover">Quên mật khẩu?</a>
+            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Password</label>
+            <a href="#" class="text-xs font-medium text-primary hover:text-primary-hover">Forgot password?</a>
           </div>
           <div class="relative group">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -54,14 +54,14 @@
 
         <div>
           <button type="submit" [disabled]="isLoading" class="w-full flex justify-center py-3.5 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-primary hover:bg-primary-hover hover:shadow-lg transition-all transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-55">
-            {{ isLoading ? 'Đang xác thực...' : 'Đăng nhập' }}
+            {{ isLoading ? 'Authenticating...' : 'Log In' }}
           </button>
         </div>
       </form>
 
       <div class="mt-8 flex items-center justify-center space-x-2 text-xs font-medium text-success bg-green-50 p-2 rounded-lg">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
-        <span>KẾT NỐI AN TOÀN</span>
+        <span>SECURE CONNECTION</span>
       </div>
     </div>
   </div>

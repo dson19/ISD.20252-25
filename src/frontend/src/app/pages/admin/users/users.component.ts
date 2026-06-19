@@ -157,11 +157,11 @@ export class UsersComponent implements OnInit {
   // Toggle user active status
   toggleUserStatus(user: User) {
     const newStatus = user.status === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE';
-    const actionText = newStatus === 'ACTIVE' ? 'mở khóa' : 'khóa';
-    
+    const actionText = newStatus === 'ACTIVE' ? 'unlock' : 'lock';
+
     this.showConfirm(
-      'Xác nhận thay đổi trạng thái',
-      `Bạn có chắc chắn muốn ${actionText} tài khoản [${user.email}]?`,
+      'Confirm Status Change',
+      `Are you sure you want to ${actionText} the account [${user.email}]?`,
       newStatus === 'ACTIVE' ? 'info' : 'warning',
       () => {
         this.http
@@ -172,10 +172,10 @@ export class UsersComponent implements OnInit {
             next: (updatedUser) => {
               user.status = updatedUser.status;
               this.fetchUsers(); // Refresh to get updated audit logs
-              this.showAlert('Thành công', `Đã ${actionText} tài khoản [${user.email}] thành công.`, 'success');
+              this.showAlert('Success', `Successfully ${actionText}ed the account [${user.email}].`, 'success');
             },
             error: (err) => {
-              this.showAlert('Thao tác thất bại', err.error?.message || `Không thể ${actionText} tài khoản`, 'error');
+              this.showAlert('Action Failed', err.error?.message || `Unable to ${actionText} the account`, 'error');
             }
           });
       }
@@ -218,7 +218,7 @@ export class UsersComponent implements OnInit {
     );
 
     if (chosenRoles.length === 0) {
-      this.showAlert('Cảnh báo', 'Vui lòng chọn ít nhất một vai trò cho người dùng', 'warning');
+      this.showAlert('Warning', 'Please select at least one role for the user', 'warning');
       return;
     }
 
@@ -230,10 +230,10 @@ export class UsersComponent implements OnInit {
         next: (updatedUser) => {
           this.closeRolesModal();
           this.fetchUsers(); // Refresh to update list and logs
-          this.showAlert('Cập nhật thành công', 'Cập nhật vai trò người dùng thành công.', 'success');
+          this.showAlert('Update Successful', 'User roles updated successfully.', 'success');
         },
         error: (err) => {
-          this.showAlert('Lỗi cập nhật', err.error?.message || 'Không thể cập nhật vai trò người dùng', 'error');
+          this.showAlert('Update Error', err.error?.message || 'Unable to update user roles', 'error');
         }
       });
   }
@@ -243,8 +243,8 @@ export class UsersComponent implements OnInit {
     event.stopPropagation(); // Avoid triggering row click
     
     this.showConfirm(
-      'Xác nhận reset mật khẩu',
-      `Bạn có chắc chắn muốn reset mật khẩu cho tài khoản [${user.email}]? Mật khẩu mới sẽ được sinh ngẫu nhiên tạm thời.`,
+      'Confirm Password Reset',
+      `Are you sure you want to reset the password for [${user.email}]? A new temporary password will be randomly generated.`,
       'warning',
       () => {
         this.http
@@ -260,7 +260,7 @@ export class UsersComponent implements OnInit {
               this.fetchUsers(); // Refresh to get updated audit logs
             },
             error: (err) => {
-              this.showAlert('Reset thất bại', err.error?.message || 'Không thể reset mật khẩu người dùng', 'error');
+              this.showAlert('Reset Failed', err.error?.message || 'Unable to reset user password', 'error');
             }
           });
       }
