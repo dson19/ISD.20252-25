@@ -74,7 +74,7 @@ export class VietqrPaymentService {
     try {
       const qrResponse = await this.vietqrApiClient.generateQrCode({
         orderId: String(dto.orderId),
-        amount: dto.amount,
+        amount: Math.round(dto.amount),
         content,
       });
       const expiredAt = this.calculateExpiredAt();
@@ -140,7 +140,7 @@ export class VietqrPaymentService {
     await this.vietqrApiClient.triggerTestCallback({
       bankAccount: process.env.VIETQR_BANK_ACCOUNT || '',
       content: vietqrTransaction.content,
-      amount: Number(vietqrTransaction.amount),
+      amount: Math.round(Number(vietqrTransaction.amount)),
       bankCode: process.env.VIETQR_BANK_CODE || '',
     });
 
@@ -276,6 +276,9 @@ export class VietqrPaymentService {
   private validateAmount(amount: number): void {
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new BadRequestException('amount must be positive');
+    }
+    if (!Number.isInteger(amount)) {
+      throw new BadRequestException('VietQR amount must be a whole number (no decimals)');
     }
   }
 
