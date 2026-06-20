@@ -39,11 +39,8 @@ export class PaymentService {
     }
 
     const adapter = this.getAdapter(method);
-    const gatewayResponse = await adapter.createPaymentRequest(orderId, amount, options);
-
-    await this.paymentRepository.createTransaction(orderId, amount, method as 'PAYPAL' | 'VIETQR', `${method} payment for order ${orderId}`);
-
-    return gatewayResponse;
+    // Transaction creation is handled by each adapter's underlying service (PaypalService / VietqrPaymentService).
+    return adapter.createPaymentRequest(orderId, amount, options);
   }
 
   async processRefund(orderId: number, amount: number, method: string): Promise<any> {

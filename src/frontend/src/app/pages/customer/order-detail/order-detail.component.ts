@@ -130,7 +130,7 @@ export class OrderDetailComponent implements OnInit {
 
     if (paymentMethod === 'PAYPAL') {
       // PayPal orders: must successfully refund via PayPal before cancellation
-      this.paymentService.refundOrder(id).subscribe({
+      this.paymentService.refund(id, Number(this.order()?.totalPayment ?? 0), 'PAYPAL').subscribe({
         next: (res) => {
           this.cancelLoading.set(false);
           this.showConfirmModal.set(false);

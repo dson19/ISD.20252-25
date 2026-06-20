@@ -4,7 +4,7 @@ import { PaypalRepository } from '../repositories/paypal.repository';
 import { OrderRepository } from '../../order/order.repository';
 import { PaypalApiClient } from '../API/paypal-api-client';
 import { NotificationEventBus } from '../../notification/events/notification-event-bus';
-import { IPaypal } from '../interfaces/ipaypal.interface';
+
 
 /**
  * + Coupling/Cohesion level:
@@ -14,7 +14,7 @@ import { IPaypal } from '../interfaces/ipaypal.interface';
  *   - Delegating third-party REST client queries to a separate adapter class keeps the service clean, robust, and testable.
  */
 @Injectable()
-export class PaypalService implements IPaypal {
+export class PaypalService {
     constructor(
         private readonly paymentRepository: PaymentRepository,
         private readonly paypalRepository: PaypalRepository,
