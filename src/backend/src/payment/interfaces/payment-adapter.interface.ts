@@ -9,7 +9,7 @@
 export interface IPaymentAdapter {
   /** Discriminator used to resolve the adapter by payment method (e.g. 'PAYPAL', 'VIETQR'). */
   readonly method: string;
-  createPaymentRequest(orderId: number, amount: number, options?: Record<string, unknown>): Promise<any>;
+  createPaymentRequest(orderId: number, amount: number): Promise<any>;
 }
 
 /** Adapters for gateways that expose an automated refund API. */

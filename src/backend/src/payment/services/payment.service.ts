@@ -32,15 +32,18 @@ export class PaymentService {
     this.adapterMap = new Map(adapters.map((adapter) => [adapter.method, adapter]));
   }
 
-  async processPayment(orderId: number, amount: number, method: string, options?: Record<string, unknown>): Promise<any> {
+  async processPayment(orderId: number, amount: number, method: string): Promise<any> {
     const order = await this.dataSource.getRepository(Order).findOne({ where: { orderID: orderId } });
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
     }
 
     const adapter = this.getAdapter(method);
-    // Transaction creation is handled by each adapter's underlying service (PaypalService / VietqrPaymentService).
-    return adapter.createPaymentRequest(orderId, amount, options);
+    const gatewayResponse = await adapter.createPaymentRequest(orderId, amount);
+
+    await this.paymentRepository.createTransaction(orderId, amount, method as 'PAYPAL' | 'VIETQR', `${method} payment for order ${orderId}`);
+
+    return gatewayResponse;
   }
 
   async processRefund(orderId: number, amount: number, method: string): Promise<any> {

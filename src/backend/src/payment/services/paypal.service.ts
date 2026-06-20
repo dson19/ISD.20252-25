@@ -5,7 +5,6 @@ import { OrderRepository } from '../../order/order.repository';
 import { PaypalApiClient } from '../API/paypal-api-client';
 import { NotificationEventBus } from '../../notification/events/notification-event-bus';
 
-
 /**
  * + Coupling/Cohesion level:
  *   - Data Coupling: Interacts with PaypalApiClient and OrderRepository using primitive parameters.

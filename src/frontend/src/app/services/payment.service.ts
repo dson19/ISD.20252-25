@@ -3,33 +3,27 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../app.config';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class PaymentService {
   constructor(
     private readonly http: HttpClient,
-    @Inject(API_BASE_URL) private readonly baseUrl: string,
-  ) {}
+    @Inject(API_BASE_URL) private readonly baseUrl: string
+  ) { }
 
-  pay(orderId: number, amount: number, method: 'PAYPAL' | 'VIETQR', content?: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/payment/pay`, { orderId, amount, method, content });
+  createOrder(orderId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/paypal/order/create`, {
+      orderID: orderId
+    });
   }
 
-  capture(paypalOrderID: string, orderId: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/payment/capture`, { paypalOrderID, orderId });
+  captureOrder(paypalOrderID: string, orderId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/paypal/order/capture`, {
+      paypalOrderID,
+      orderID: orderId
+    });
   }
-
-  refund(orderId: number, amount: number, method: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/payment/refund`, { orderId, amount, method });
-  }
-
-  getVietqrStatus(paymentId: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/api/payment/${paymentId}/status`);
-  }
-
-  triggerVietqrTestCallback(paymentId: number): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/payment/${paymentId}/trigger-callback`, {});
-  }
-
   getOrderDetail(orderId: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/api/orders/${orderId}`);
   }
@@ -38,11 +32,33 @@ export class PaymentService {
     return this.http.get(`${this.baseUrl}/api/customer/orders/${orderId}?token=${encodeURIComponent(token)}`);
   }
 
+  refundOrder(orderId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/paypal/order/refund`, {
+      orderID: orderId
+    });
+  }
+
   cancelOrder(orderId: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/orders/${orderId}/cancel`, {});
   }
 
   cancelCustomerOrder(orderId: number, token: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/customer/orders/${orderId}/cancel?token=${encodeURIComponent(token)}`, {});
+  }
+
+  createVietqrPayment(orderId: number, amount: number, content: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/vietqr/payments`, {
+      orderId,
+      amount,
+      content
+    });
+  }
+
+  getVietqrPaymentStatus(paymentId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/api/vietqr/payments/${paymentId}/status`);
+  }
+
+  triggerVietqrTestCallback(paymentId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/vietqr/payments/${paymentId}/trigger-callback`, {});
   }
 }

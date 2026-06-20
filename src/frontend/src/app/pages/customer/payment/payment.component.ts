@@ -92,7 +92,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.loading.set(true);
         this.statusMessage.set('Verifying PayPal transaction, please do not close the browser...');
 
-        this.paymentService.capture(paypalToken, this.orderId()!).subscribe({
+        this.paymentService.captureOrder(paypalToken, this.orderId()!).subscribe({
           next: () => {
             // Xóa sạch giỏ hàng trong localStorage
             localStorage.removeItem('aims_cart');
@@ -153,7 +153,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.statusMessage.set('Creating VietQR payment code...');
     
     const content = `AIMS ${orderId}`;
-    this.paymentService.pay(orderId, amount, 'VIETQR', content).subscribe({
+
+    this.paymentService.createVietqrPayment(orderId, amount, content).subscribe({
       next: (res) => {
         this.loading.set(false);
         this.paymentId.set(res.paymentId);
@@ -235,7 +236,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   checkPaymentStatus(paymentId: number) {
-    this.paymentService.getVietqrStatus(paymentId).subscribe({
+    this.paymentService.getVietqrPaymentStatus(paymentId).subscribe({
       next: (res) => {
         if (res.status === 'PAID') {
           this.stopStatusPolling();
@@ -277,7 +278,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             setTimeout(() => {
-              this.paymentService.getVietqrStatus(pId).subscribe({
+              this.paymentService.getVietqrPaymentStatus(pId).subscribe({
                 next: (res) => {
                   this.loading.set(false);
                   if (res.status === 'PAID') {
@@ -306,7 +307,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       this.loading.set(true);
       this.statusMessage.set('Preparing PayPal transaction...');
 
-      this.paymentService.pay(currentOrderId, this.totalAmount(), 'PAYPAL').subscribe({
+      this.paymentService.createOrder(currentOrderId).subscribe({
         next: (res) => {
           if (res.approveUrl) {
             window.location.href = res.approveUrl;

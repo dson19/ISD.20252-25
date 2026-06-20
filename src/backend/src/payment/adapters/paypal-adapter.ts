@@ -12,7 +12,7 @@ export class PaypalAdapter implements IRefundableAdapter {
 
   constructor(private readonly paypalService: PaypalService) {}
 
-  async createPaymentRequest(orderId: number, _amount: number, _options?: Record<string, unknown>): Promise<any> {
+  async createPaymentRequest(orderId: number, _amount: number): Promise<any> {
     return this.paypalService.createOrderInPaypal(orderId);
   }
 

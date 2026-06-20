@@ -14,11 +14,11 @@ export class VietqrAdapter implements IPaymentAdapter {
 
   constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
 
-  async createPaymentRequest(orderId: number, amount: number, options?: Record<string, unknown>): Promise<any> {
+  async createPaymentRequest(orderId: number, amount: number): Promise<any> {
     return this.vietqrPaymentService.createPayment({
       orderId,
       amount,
-      content: typeof options?.content === 'string' ? options.content : `ORDER${orderId}`,
+      content: `ORDER${orderId}`,
     });
   }
 }

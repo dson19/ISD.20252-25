@@ -8,8 +8,7 @@ import { VietqrTransaction } from './entities/vietqr-transaction.entity';
 import { PaymentRepository } from './repositories/payment.repository';
 import { PaypalRepository } from './repositories/paypal.repository';
 import { PaypalService } from './services/paypal.service';
-import { PaypalOrderController } from './controllers/paypal.controller';
-import { PaymentController } from './payment.controller';
+import { PaymentController } from './controllers/paypal.controller';
 import { OrderModule } from '../order/order.module';
 import { VietqrController } from './controllers/vietqr.controller';
 import { VietqrMerchantController } from './controllers/vietqr-merchant.controller';
@@ -29,7 +28,7 @@ import { PAYMENT_ADAPTERS } from './interfaces/payment-adapter.interface';
     forwardRef(() => OrderModule),
     NotificationModule,
   ],
-  controllers: [PaymentController, PaypalOrderController, VietqrController, VietqrMerchantController],
+  controllers: [PaymentController, VietqrController, VietqrMerchantController],
   providers: [
     PaymentRepository,
     PaypalRepository,
