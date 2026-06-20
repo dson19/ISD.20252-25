@@ -13,13 +13,14 @@ import { ProductRepository } from './product.repository';
 import { ProductService } from './product.service';
 import {
   ProductValidatorFactory,
-  PRODUCT_VALIDATORS,
   BookValidator,
   CdValidator,
   DvdValidator,
   NewspaperValidator,
 } from './validators/product-validator.factory';
+import { PRODUCT_VALIDATORS } from './interfaces/product-validator.interface';
 import { BookHandler, CdHandler, DvdHandler, NewspaperHandler } from './handlers/concrete-handlers';
+import { ProductTypeHandlerFactory } from './handlers/product-type-handler.factory';
 import { PRODUCT_TYPE_HANDLERS } from './interfaces/product-type-handler.interface';
 
 @Module({
@@ -40,6 +41,7 @@ import { PRODUCT_TYPE_HANDLERS } from './interfaces/product-type-handler.interfa
     ProductRepository,
     ProductService,
     ProductValidatorFactory,
+    ProductTypeHandlerFactory,
     BookHandler,
     CdHandler,
     DvdHandler,

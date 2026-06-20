@@ -14,16 +14,9 @@ import {
   UpdateProductDto,
 } from '../dto/update-product.dto';
 import { Product } from '../entities/product.entity';
+import { PRODUCT_VALIDATORS, ProductValidator } from '../interfaces/product-validator.interface';
 
-export interface ProductValidator {
-  readonly productType: string;
-  readonly detailKey: string;
-  validateCreate(dto: CreateProductDto): void;
-  validateUpdate(dto: UpdateProductDto, existing: Product): void;
-}
-
-/** DI token carrying every registered product validator (composition root supplies the array). */
-export const PRODUCT_VALIDATORS = Symbol('PRODUCT_VALIDATORS');
+export { PRODUCT_VALIDATORS, ProductValidator };
 
 type DetailPayload =
   | CreateBookDetailDto

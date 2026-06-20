@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Between, Brackets, DataSource, In, Repository, Not } from 'typeorm';
+import { Between, Brackets, DataSource, EntityManager, In, Repository, Not } from 'typeorm';
 import { ProductLog } from './entities/product-audit-log.entity';
 import { Product } from './entities/product.entity';
 
@@ -180,6 +180,25 @@ export class ProductRepository {
     return this.auditLogRepository.find({
       relations: ['product'],
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  async saveAuditLog(
+    manager: EntityManager,
+    params: {
+      product: Product;
+      actionType: string;
+      changedFields: unknown;
+      performedBy: string;
+      reason?: string;
+    },
+  ): Promise<void> {
+    await manager.getRepository(ProductLog).save({
+      product: params.product,
+      actionType: params.actionType,
+      changedFields: params.changedFields,
+      performedBy: params.performedBy,
+      reason: params.reason,
     });
   }
 }

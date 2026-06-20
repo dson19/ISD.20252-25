@@ -1,19 +1,18 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { BatchDeleteProductsDto } from './dto/batch-delete-products.dto';
 import { ChangeStockDto } from './dto/change-stock.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductLog } from './entities/product-audit-log.entity';
 import { Product } from './entities/product.entity';
+import { ProductTypeHandlerFactory } from './handlers/product-type-handler.factory';
 import { ProductRepository } from './product.repository';
 import { ProductValidatorFactory } from './validators/product-validator.factory';
-import { PRODUCT_TYPE_HANDLERS, ProductTypeHandler } from './interfaces/product-type-handler.interface';
 
 type DeleteResultStatus = 'DEACTIVATED' | 'DELETED' | 'NOT_FOUND' | 'DEACTIVATED_ORDERED';
 
@@ -40,7 +39,7 @@ export class ProductService {
     private readonly dataSource: DataSource,
     private readonly productRepository: ProductRepository,
     private readonly validatorFactory: ProductValidatorFactory,
-    @Inject(PRODUCT_TYPE_HANDLERS) private readonly typeHandlers: ProductTypeHandler[],
+    private readonly handlerFactory: ProductTypeHandlerFactory,
   ) {}
 
   async searchProducts(params: {
@@ -71,7 +70,13 @@ export class ProductService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return this.attachDetail(product);
+    const detailKey = this.handlerFactory.getDetailKey(product.productType);
+    const detail = await this.handlerFactory.findDetail(product.productID, product.productType, this.dataSource);
+
+    return {
+      ...product,
+      [detailKey]: this.stripAndFlattenDetail(detail),
+    };
   }
 
   async createProduct(dto: CreateProductDto, managerId: string) {
@@ -83,13 +88,13 @@ export class ProductService {
         productRepo.create(this.buildProductPayload(dto)),
       );
 
-      await this.saveProductDetail(
-        manager,
-        savedProduct,
+      await this.handlerFactory.saveDetail(
+        savedProduct.productID,
         validator.productType,
         dto,
+        manager,
       );
-      await this.writeAuditLog(manager, {
+      await this.productRepository.saveAuditLog(manager, {
         product: savedProduct,
         actionType: 'CREATE',
         changedFields: { after: dto },
@@ -118,13 +123,13 @@ export class ProductService {
       productRepo.merge(product, productPatch);
       const savedProduct = await productRepo.save(product);
 
-      await this.saveProductDetail(
-        manager,
-        savedProduct,
+      await this.handlerFactory.saveDetail(
+        savedProduct.productID,
         validator.productType,
         dto,
+        manager,
       );
-      await this.writeAuditLog(manager, {
+      await this.productRepository.saveAuditLog(manager, {
         product: savedProduct,
         actionType: 'UPDATE',
         changedFields: { before: existing, after: dto },
@@ -178,7 +183,7 @@ export class ProductService {
 
         if (product.quantityInStock > 0) {
           await productRepo.update(id, { status: 'DEACTIVATED' });
-          await this.writeAuditLog(manager, {
+          await this.productRepository.saveAuditLog(manager, {
             product,
             actionType: 'DEACTIVATE',
             changedFields: {
@@ -200,7 +205,7 @@ export class ProductService {
           if (hasOrder) {
             // Nếu đã có đơn hàng, không xóa cứng mà tự động chuyển sang NGỪNG HOẠT ĐỘNG để bảo toàn dữ liệu lịch sử đặt hàng
             await productRepo.update(id, { status: 'DEACTIVATED' });
-            await this.writeAuditLog(manager, {
+            await this.productRepository.saveAuditLog(manager, {
               product,
               actionType: 'DEACTIVATE',
               changedFields: {
@@ -213,7 +218,7 @@ export class ProductService {
             output.push({ id, status: 'DEACTIVATED_ORDERED' });
           } else {
             // Nếu chưa có đơn hàng nào, tiến hành xóa mềm bằng cách cập nhật trạng thái thành DELETED
-            await this.writeAuditLog(manager, {
+            await this.productRepository.saveAuditLog(manager, {
               product,
               actionType: 'DELETE',
               changedFields: {
@@ -277,7 +282,7 @@ export class ProductService {
         }
 
         await productRepo.update(id, { status: 'DEACTIVATED' });
-        await this.writeAuditLog(manager, {
+        await this.productRepository.saveAuditLog(manager, {
           product,
           actionType: 'DEACTIVATE',
           changedFields: {
@@ -316,7 +321,7 @@ export class ProductService {
 
       product.quantityInStock = newQuantity;
       const savedProduct = await productRepo.save(product);
-      await this.writeAuditLog(manager, {
+      await this.productRepository.saveAuditLog(manager, {
         product: savedProduct,
         actionType: 'STOCK_ADJUST',
         changedFields: {
@@ -337,51 +342,6 @@ export class ProductService {
 
   async getAuditLogs(): Promise<ProductLog[]> {
     return this.productRepository.findAuditLogs();
-  }
-
-  private async attachDetail(product: Product) {
-    const productType = product.productType;
-    const detailKey = this.detailKeyForMediaType(productType);
-    const detail = await this.findDetail(product.productID, productType);
-
-    return {
-      ...product,
-      [detailKey]: this.stripAndFlattenDetail(detail),
-    };
-  }
-
-  private async findDetail(productID: number, productType: string) {
-    const handler = this.getHandler(productType);
-    return handler.findDetail(productID, this.dataSource);
-  }
-
-  private async saveProductDetail(
-    manager: EntityManager,
-    product: Product,
-    productType: string,
-    dto: CreateProductDto | UpdateProductDto,
-  ): Promise<void> {
-    const handler = this.getHandler(productType);
-    return handler.saveDetail(product.productID, dto, manager);
-  }
-
-  private async writeAuditLog(
-    manager: EntityManager,
-    params: {
-      product: Product;
-      actionType: string;
-      changedFields: unknown;
-      performedBy: string;
-      reason?: string;
-    },
-  ): Promise<void> {
-    await manager.getRepository(ProductLog).save({
-      product: params.product,
-      actionType: params.actionType,
-      changedFields: params.changedFields,
-      performedBy: params.performedBy,
-      reason: params.reason,
-    });
   }
 
   private buildProductPayload(dto: CreateProductDto | UpdateProductDto) {
@@ -418,20 +378,6 @@ export class ProductService {
     }
     const { product, ...payload } = detail;
     return payload;
-  }
-
-  private detailKeyForMediaType(productType: string): string {
-    return this.getHandler(productType).detailKey;
-  }
-
-  private getHandler(productType: string): ProductTypeHandler {
-    const handler = this.typeHandlers.find(
-      (h) => h.mediaType === productType?.toUpperCase(),
-    );
-    if (!handler) {
-      throw new BadRequestException(`Unsupported productType: ${productType}`);
-    }
-    return handler;
   }
 
   private getTodayRange(): { start: Date; end: Date } {
