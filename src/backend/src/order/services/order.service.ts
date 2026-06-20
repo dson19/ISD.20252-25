@@ -10,6 +10,7 @@ import { DeliveryInfo } from '../entities/delivery-info.entity';
 import { Invoice } from '../entities/invoice.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { Order } from '../entities/order.entity';
+import { OrderRepository } from '../order.repository';
 import { CartStockIssue, CartService } from './cart.service';
 import { ShippingCalculatorService } from './shipping-calculator.service';
 
@@ -25,7 +26,7 @@ export interface OrderListFilters {
  *   - Procedural Cohesion: Sequences complex order validations, shipping calculations, and entity persistence steps inside placeOrder().
  * + Reason why:
  *   - Delegating shipping calculations and cart validations to dedicated services ensures the ordering service maintains a clean, single procedural focus.
- * 
+ *
  * + SOLID Principles Review:
  *   - SRP Violation: OrderService is responsible for order processing calculations, stock validation coordination, workflow state transitions, and third-party payment refunds.
  *     Improvement: Split into OrderCalculatorService, StockReservationService, and OrderWorkflowService.
@@ -40,6 +41,7 @@ export class OrderService {
 
   constructor(
     private readonly dataSource: DataSource,
+    private readonly orderRepository: OrderRepository,
     private readonly cartService: CartService,
     private readonly shippingCalculatorService: ShippingCalculatorService,
     private readonly notificationEventBus: NotificationEventBus,
@@ -120,8 +122,7 @@ export class OrderService {
       );
       const totalPayment = this.roundMoney(subtotal + tax + shippingFee);
 
-      const order = await manager.save(
-        Order,
+      const order = await this.orderRepository.save(
         manager.create(Order, {
           subTotal: subtotal,
           tax,
@@ -130,6 +131,7 @@ export class OrderService {
           status: 'PENDING',
           customerAccessToken: this.generateCustomerAccessToken(),
         }),
+        manager,
       );
 
       const orderItems = mergedItems.map((item) => {
@@ -163,7 +165,7 @@ export class OrderService {
         }),
       );
 
-      return this.findOrderOrFail(manager, order.orderID);
+      return this.findOrderOrFail(order.orderID, manager);
     });
   }
 
@@ -204,8 +206,8 @@ export class OrderService {
   }
 
   async getOrderDetail(orderId: number): Promise<any> {
-    const order = await this.findOrderOrFail(this.dataSource.manager, orderId);
-    const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
+    const order = await this.findOrderOrFail(orderId);
+    const paymentInfo = await this.orderRepository.getSuccessfulPaymentInfo(orderId, this.dataSource.manager);
     return {
       ...order,
       paymentMethod: paymentInfo?.method ?? null,
@@ -219,7 +221,7 @@ export class OrderService {
 
   async updateDeliveryInfo(orderId: number, deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
-      const order = await this.findOrderOrFail(manager, orderId);
+      const order = await this.findOrderOrFail(orderId, manager);
       if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
         throw new BadRequestException(`Order ${orderId} cannot update delivery info from status ${order.status}`);
       }
@@ -238,7 +240,7 @@ export class OrderService {
 
       order.shippingFee = shippingFee;
       order.totalPayment = totalPayment;
-      await manager.save(Order, order);
+      await this.orderRepository.save(order, manager);
 
       const deliveryInfo = order.deliveryInfo ?? manager.create(DeliveryInfo, { order });
       Object.assign(deliveryInfo, {
@@ -258,19 +260,19 @@ export class OrderService {
       });
       await manager.save(Invoice, invoice);
 
-      return this.findOrderOrFail(manager, orderId);
+      return this.findOrderOrFail(orderId, manager);
     });
   }
 
   async approveOrder(orderId: number): Promise<Order> {
-    const order = await this.findOrderOrFail(this.dataSource.manager, orderId);
+    const order = await this.findOrderOrFail(orderId);
     if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
       throw new BadRequestException(`Order ${orderId} cannot be approved from status ${order.status}`);
     }
 
     order.status = 'APPROVED';
-    await this.dataSource.manager.save(Order, order);
-    const updatedOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
+    await this.orderRepository.save(order);
+    const updatedOrder = await this.findOrderOrFail(orderId);
     this.notificationEventBus.publish({
       type: 'ORDER_APPROVED',
       orderId,
@@ -279,8 +281,8 @@ export class OrderService {
   }
 
   async rejectOrder(orderId: number): Promise<Order> {
-    const existingOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
-    const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
+    const existingOrder = await this.findOrderOrFail(orderId);
+    const paymentInfo = await this.orderRepository.getSuccessfulPaymentInfo(orderId, this.dataSource.manager);
 
     let refundAutomated = false;
     if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method) {
@@ -292,7 +294,7 @@ export class OrderService {
     }
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
-      const order = await this.findOrderOrFail(manager, orderId);
+      const order = await this.findOrderOrFail(orderId, manager);
       if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
         throw new BadRequestException(`Order ${orderId} cannot be rejected from status ${order.status}`);
       }
@@ -303,8 +305,8 @@ export class OrderService {
         ? 'REJECTED'
         : 'REFUND_PENDING';
 
-      await manager.save(Order, order);
-      return this.findOrderOrFail(manager, orderId);
+      await this.orderRepository.save(order, manager);
+      return this.findOrderOrFail(orderId, manager);
     });
 
     this.notificationEventBus.publish({
@@ -318,8 +320,8 @@ export class OrderService {
   }
 
   async cancelOrder(orderId: number): Promise<Order> {
-    const existingOrder = await this.findOrderOrFail(this.dataSource.manager, orderId);
-    const paymentInfo = await this.getSuccessfulPaymentInfo(this.dataSource.manager, orderId);
+    const existingOrder = await this.findOrderOrFail(orderId);
+    const paymentInfo = await this.orderRepository.getSuccessfulPaymentInfo(orderId, this.dataSource.manager);
 
     let refundAutomated = false;
     if (existingOrder.status === 'PENDING_PROCESSING' && paymentInfo?.method) {
@@ -331,7 +333,7 @@ export class OrderService {
     }
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
-      const order = await this.findOrderOrFail(manager, orderId);
+      const order = await this.findOrderOrFail(orderId, manager);
       if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
         throw new BadRequestException(`Order ${orderId} cannot be cancelled from status ${order.status}`);
       }
@@ -342,8 +344,8 @@ export class OrderService {
         ? 'CANCELLED'
         : 'REFUND_PENDING';
 
-      await manager.save(Order, order);
-      return this.findOrderOrFail(manager, orderId);
+      await this.orderRepository.save(order, manager);
+      return this.findOrderOrFail(orderId, manager);
     });
 
     this.notificationEventBus.publish({
@@ -365,14 +367,7 @@ export class OrderService {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), this.defaultPendingPageSize);
 
-    const query = this.dataSource.getRepository(Order).createQueryBuilder('order')
-      .leftJoinAndSelect('order.orderItems', 'orderItems')
-      .leftJoinAndSelect('orderItems.product', 'product')
-      .leftJoinAndSelect('order.deliveryInfo', 'deliveryInfo')
-      .leftJoinAndSelect('order.invoice', 'invoice')
-      .where('order.status IN (:...statuses)', { statuses: ['PENDING', 'PENDING_PROCESSING'] })
-      .orderBy('order.status', 'DESC')
-      .addOrderBy('order.createdAt', 'ASC')
+    const query = this.orderRepository.buildPendingQuery()
       .skip((safePage - 1) * safeLimit)
       .take(safeLimit);
 
@@ -381,7 +376,7 @@ export class OrderService {
     const [items, total] = await query.getManyAndCount();
 
     const orderIds = items.map(o => o.orderID);
-    const paymentMethodsMap = await this.getLatestSuccessfulPaymentMethods(orderIds);
+    const paymentMethodsMap = await this.orderRepository.getLatestSuccessfulPaymentMethods(orderIds);
 
     const itemsWithMethod = items.map(item => ({
       ...item,
@@ -401,14 +396,7 @@ export class OrderService {
     const safePage = Math.max(page, 1);
     const safeLimit = Math.min(Math.max(limit, 1), 30);
 
-    const query = this.dataSource.getRepository(Order)
-      .createQueryBuilder('order')
-      .leftJoinAndSelect('order.orderItems', 'orderItems')
-      .leftJoinAndSelect('orderItems.product', 'product')
-      .leftJoinAndSelect('order.deliveryInfo', 'deliveryInfo')
-      .leftJoinAndSelect('order.invoice', 'invoice')
-      .where('order.status = :status', { status: 'REFUND_PENDING' })
-      .orderBy('order.createdAt', 'ASC')
+    const query = this.orderRepository.buildRefundPendingQuery()
       .skip((safePage - 1) * safeLimit)
       .take(safeLimit);
 
@@ -422,7 +410,7 @@ export class OrderService {
     const [items, total] = await query.getManyAndCount();
 
     const orderIds = items.map(o => o.orderID);
-    const paymentMethodsMap = await this.getLatestSuccessfulPaymentMethods(orderIds);
+    const paymentMethodsMap = await this.orderRepository.getLatestSuccessfulPaymentMethods(orderIds);
 
     const itemsWithMethod = items.map(item => ({
       ...item,
@@ -440,41 +428,23 @@ export class OrderService {
 
   async confirmVietqrRefund(orderId: number): Promise<Order> {
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
-      const order = await manager.findOne(Order, {
-        where: { orderID: orderId },
-        relations: ['orderItems', 'deliveryInfo', 'invoice'],
-      });
-      if (!order) {
-        throw new NotFoundException(`Order #${orderId} not found`);
-      }
+      const order = await this.findOrderOrFail(orderId, manager);
       if (order.status !== 'REFUND_PENDING') {
         throw new BadRequestException(`Order #${orderId} is in status ${order.status}, not REFUND_PENDING`);
       }
 
-      // Check if there is a SUCCESS VietQR transaction
-      const tx = await manager.query(
-        'SELECT transaction_id FROM payment_transactions WHERE order_id = $1 AND method = $2 AND status = $3 LIMIT 1',
-        [orderId, 'VIETQR', 'SUCCESS']
-      );
-
-      if (tx.length === 0) {
+      const transactionId = await this.orderRepository.findVietqrTransactionId(orderId, manager);
+      if (!transactionId) {
         throw new BadRequestException(`Order #${orderId} does not have a successful VietQR transaction to refund`);
       }
 
-      const transactionId = tx[0].transaction_id;
+      await this.orderRepository.markTransactionRefunded(transactionId, manager);
 
-      // Update payment transaction status to REFUNDED
-      await manager.query(
-        'UPDATE payment_transactions SET status = $1 WHERE transaction_id = $2',
-        ['REFUNDED', transactionId]
-      );
-
-      // Update order status to REFUNDED
       order.status = 'REFUNDED';
-      await manager.save(Order, order);
-
+      await this.orderRepository.save(order, manager);
       return order;
     });
+
     this.notificationEventBus.publish({
       type: 'ORDER_CANCELLED',
       orderId,
@@ -488,50 +458,11 @@ export class OrderService {
     if (!token?.trim()) {
       throw new BadRequestException('Missing customer order access token');
     }
-
-    const order = await this.dataSource.getRepository(Order).findOne({
-      where: {
-        orderID: orderId,
-        customerAccessToken: token,
-      },
-      relations: ['orderItems', 'orderItems.product', 'deliveryInfo', 'invoice'],
-    });
-
+    const order = await this.orderRepository.findByToken(orderId, token);
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} was not found for this access token`);
     }
-
     return order;
-  }
-
-  private async getSuccessfulPaymentInfo(
-    manager: EntityManager,
-    orderId: number,
-  ): Promise<{ transaction_id: number; method: string } | null> {
-    const txs = await manager.query(
-      'SELECT transaction_id, method FROM payment_transactions WHERE order_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 1',
-      [orderId, 'SUCCESS'],
-    );
-    return txs.length > 0 ? txs[0] : null;
-  }
-
-  private async getLatestSuccessfulPaymentMethods(orderIds: number[]): Promise<Record<number, string>> {
-    const paymentMethodsMap: Record<number, string> = {};
-    if (orderIds.length === 0) {
-      return paymentMethodsMap;
-    }
-
-    const txs = await this.dataSource.manager.query(
-      `SELECT DISTINCT ON (order_id) order_id, method
-       FROM payment_transactions
-       WHERE order_id = ANY($1) AND status = $2
-       ORDER BY order_id, created_at DESC`,
-      [orderIds, 'SUCCESS'],
-    );
-    for (const tx of txs) {
-      paymentMethodsMap[tx.order_id] = tx.method;
-    }
-    return paymentMethodsMap;
   }
 
   private applyOrderListFilters(query: SelectQueryBuilder<Order>, filters: OrderListFilters): void {
@@ -634,16 +565,11 @@ export class OrderService {
     }
   }
 
-  private async findOrderOrFail(manager: EntityManager, orderId: number): Promise<Order> {
-    const order = await manager.findOne(Order, {
-      where: { orderID: orderId },
-      relations: ['orderItems', 'orderItems.product', 'deliveryInfo', 'invoice'],
-    });
-
+  private async findOrderOrFail(orderId: number, manager?: EntityManager): Promise<Order> {
+    const order = await this.orderRepository.findFullById(orderId, manager);
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
     }
-
     return order;
   }
 

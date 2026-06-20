@@ -32,14 +32,14 @@ export class PaymentService {
     this.adapterMap = new Map(adapters.map((adapter) => [adapter.method, adapter]));
   }
 
-  async processPayment(orderId: number, amount: number, method: string): Promise<any> {
+  async processPayment(orderId: number, amount: number, method: string, options?: Record<string, unknown>): Promise<any> {
     const order = await this.dataSource.getRepository(Order).findOne({ where: { orderID: orderId } });
     if (!order) {
       throw new NotFoundException(`Order with ID ${orderId} not found`);
     }
 
     const adapter = this.getAdapter(method);
-    const gatewayResponse = await adapter.createPaymentRequest(orderId, amount);
+    const gatewayResponse = await adapter.createPaymentRequest(orderId, amount, options);
 
     await this.paymentRepository.createTransaction(orderId, amount, method as 'PAYPAL' | 'VIETQR', `${method} payment for order ${orderId}`);
 

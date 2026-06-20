@@ -1,19 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from './user.entity';
+import { Role } from './role.entity';
+import { UserAuditLog } from './user-log.entity';
 
 @Injectable()
 export class UserRepository {
-  private repository: Repository<User>;
+  private readonly repository: Repository<User>;
+  private readonly auditLogRepository: Repository<UserAuditLog>;
 
-  constructor(private dataSource: DataSource) {
+  constructor(private readonly dataSource: DataSource) {
     this.repository = this.dataSource.getRepository(User);
+    this.auditLogRepository = this.dataSource.getRepository(UserAuditLog);
   }
 
   async findById(id: number): Promise<User | null> {
     return this.repository.findOne({
       where: { userID: id },
-      relations: ['roles']
+      relations: ['roles'],
     });
   }
 
@@ -29,8 +33,8 @@ export class UserRepository {
         status: true,
         phoneNumber: true,
         createdAt: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
   }
 
@@ -40,7 +44,49 @@ export class UserRepository {
 
   async findAll(): Promise<User[]> {
     return this.repository.find({
-      relations: ['roles']
+      relations: ['roles'],
+      order: { userID: 'ASC' },
     });
+  }
+
+  async findFullById(userId: number, manager?: EntityManager): Promise<User | null> {
+    const mgr = manager ?? this.dataSource.manager;
+    return mgr.findOne(User, {
+      where: { userID: userId },
+      relations: ['roles'],
+    });
+  }
+
+  async findByEmailInTransaction(email: string, manager: EntityManager): Promise<User | null> {
+    return manager.findOne(User, { where: { email } });
+  }
+
+  async save(user: User, manager?: EntityManager): Promise<User> {
+    if (manager) return manager.save(User, user);
+    return this.repository.save(user);
+  }
+
+  async updatePartial(userId: number, data: Partial<User>, manager: EntityManager): Promise<void> {
+    await manager.update(User, userId, data);
+  }
+
+  async findAuditLogs(userId: number, limit = 10): Promise<UserAuditLog[]> {
+    return this.auditLogRepository.find({
+      where: { user: { userID: userId } },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+  }
+
+  async saveAuditLog(
+    params: { action: string; description: string; performedBy: string; user: User },
+    manager: EntityManager,
+  ): Promise<void> {
+    const logRepo = manager.getRepository(UserAuditLog);
+    await logRepo.save(logRepo.create(params));
+  }
+
+  async findRolesByNames(names: string[], manager: EntityManager): Promise<Role[]> {
+    return manager.find(Role, { where: names.map((name) => ({ name })) });
   }
 }

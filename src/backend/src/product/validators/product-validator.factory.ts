@@ -16,7 +16,8 @@ import {
 import { Product } from '../entities/product.entity';
 import { PRODUCT_VALIDATORS, ProductValidator } from '../interfaces/product-validator.interface';
 
-export { PRODUCT_VALIDATORS, ProductValidator };
+export { PRODUCT_VALIDATORS };
+export type { ProductValidator };
 
 type DetailPayload =
   | CreateBookDetailDto

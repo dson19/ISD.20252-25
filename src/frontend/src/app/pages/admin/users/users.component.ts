@@ -1,13 +1,7 @@
-import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { API_BASE_URL } from '../../../app.config';
 import { FormsModule } from '@angular/forms';
-
-interface Role {
-  roleID: number;
-  name: string;
-}
+import { UserService, UserRecord } from '../../../services/user.service';
 
 interface UserAuditLog {
   logID: number;
@@ -17,15 +11,7 @@ interface UserAuditLog {
   createdAt: string;
 }
 
-interface User {
-  userID: number;
-  fullName: string;
-  email: string;
-  phoneNumber?: string;
-  status: 'ACTIVE' | 'DEACTIVATED';
-  roles: Role[];
-  auditLogs?: UserAuditLog[];
-}
+type User = UserRecord & { auditLogs?: UserAuditLog[] };
 
 @Component({
   selector: 'app-users',
@@ -41,41 +27,21 @@ export class UsersComponent implements OnInit {
   statusFilter = '';
   isLoading = false;
 
-  // Statistic getters for Dashboard Metrics Panel
-  get totalUsersCount(): number {
-    return this.users.length;
-  }
+  get totalUsersCount(): number { return this.users.length; }
+  get activeUsersCount(): number { return this.users.filter(u => u.status === 'ACTIVE').length; }
+  get lockedUsersCount(): number { return this.users.filter(u => u.status === 'DEACTIVATED').length; }
+  get adminUsersCount(): number { return this.users.filter(u => u.roles?.some(r => r.name === 'ADMIN')).length; }
 
-  get activeUsersCount(): number {
-    return this.users.filter(u => u.status === 'ACTIVE').length;
-  }
-
-  get lockedUsersCount(): number {
-    return this.users.filter(u => u.status === 'DEACTIVATED').length;
-  }
-
-  get adminUsersCount(): number {
-    return this.users.filter(u => u.roles && u.roles.some(r => r.name === 'ADMIN')).length;
-  }
-
-  // Audit logs expand/collapse tracking
   expandedUserIds = new Set<number>();
 
-  // Modal control for Editing Roles
   isRolesModalOpen = false;
   selectedUserForRoles: User | null = null;
   availableRoles = ['ADMIN', 'PRODUCT_MANAGER', 'STAFF'];
   selectedRolesMap: { [key: string]: boolean } = {};
 
-  // Modal control for Reset Password Result
   isResetPwdModalOpen = false;
-  resetPwdResult: {
-    email: string;
-    fullName: string;
-    newPassword?: string;
-  } | null = null;
+  resetPwdResult: { email: string; fullName: string; newPassword?: string } | null = null;
 
-  // Custom Popup Alert/Confirm properties
   isConfirmModalOpen = false;
   confirmTitle = '';
   confirmMessage = '';
@@ -87,11 +53,9 @@ export class UsersComponent implements OnInit {
   alertMessage = '';
   alertType: 'success' | 'error' | 'warning' | 'info' = 'info';
 
-
   constructor(
-    private readonly http: HttpClient,
-    @Inject(API_BASE_URL) private readonly baseUrl: string,
-    private readonly cdr: ChangeDetectorRef
+    private readonly userService: UserService,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -100,49 +64,33 @@ export class UsersComponent implements OnInit {
 
   fetchUsers() {
     this.isLoading = true;
-    console.log('[UsersComponent] fetchUsers() bat dau goi API...');
-    console.log('[UsersComponent] baseUrl:', this.baseUrl);
-    console.log('[UsersComponent] Full URL:', `${this.baseUrl}/api/users`);
-    
-    this.http.get<User[]>(`${this.baseUrl}/api/users`).subscribe({
+    this.userService.getAll().subscribe({
       next: (data) => {
-        console.log('[UsersComponent] fetchUsers() nhan du lieu thanh cong:', data);
         this.users = data;
         this.applyFilter();
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('[UsersComponent] fetchUsers() gap loi khi goi API:', err);
+      error: () => {
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
   applyFilter() {
     const query = this.searchQuery.toLowerCase().trim();
     this.filteredUsers = this.users.filter((user) => {
-      const fullName = user.fullName || '';
-      const email = user.email || '';
-
-      // 1. Search Query filter (matches full name, email or ID)
       const matchesSearch =
         !query ||
-        fullName.toLowerCase().includes(query) ||
-        email.toLowerCase().includes(query) ||
+        user.fullName?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query) ||
         String(user.userID).includes(query);
-
-      // 2. Role filter
       const matchesRole =
         !this.roleFilter ||
-        (user.roles && user.roles.some((r) => r.name === this.roleFilter));
-
-      // 3. Status filter
+        user.roles?.some((r) => r.name === this.roleFilter);
       const matchesStatus =
-        !this.statusFilter ||
-        user.status === this.statusFilter;
-
+        !this.statusFilter || user.status === this.statusFilter;
       return matchesSearch && matchesRole && matchesStatus;
     });
   }
@@ -154,7 +102,6 @@ export class UsersComponent implements OnInit {
     this.applyFilter();
   }
 
-  // Toggle user active status
   toggleUserStatus(user: User) {
     const newStatus = user.status === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE';
     const actionText = newStatus === 'ACTIVE' ? 'unlock' : 'lock';
@@ -164,25 +111,20 @@ export class UsersComponent implements OnInit {
       `Are you sure you want to ${actionText} the account [${user.email}]?`,
       newStatus === 'ACTIVE' ? 'info' : 'warning',
       () => {
-        this.http
-          .patch<User>(`${this.baseUrl}/api/users/${user.userID}/status`, {
-            status: newStatus
-          })
-          .subscribe({
-            next: (updatedUser) => {
-              user.status = updatedUser.status;
-              this.fetchUsers(); // Refresh to get updated audit logs
-              this.showAlert('Success', `Successfully ${actionText}ed the account [${user.email}].`, 'success');
-            },
-            error: (err) => {
-              this.showAlert('Action Failed', err.error?.message || `Unable to ${actionText} the account`, 'error');
-            }
-          });
-      }
+        this.userService.toggleStatus(user.userID, newStatus).subscribe({
+          next: (updatedUser) => {
+            user.status = updatedUser.status;
+            this.fetchUsers();
+            this.showAlert('Success', `Successfully ${actionText}ed the account [${user.email}].`, 'success');
+          },
+          error: (err) => {
+            this.showAlert('Action Failed', err.error?.message || `Unable to ${actionText} the account`, 'error');
+          },
+        });
+      },
     );
   }
 
-  // Expand / collapse audit logs panel
   toggleAuditLogs(userID: number) {
     if (this.expandedUserIds.has(userID)) {
       this.expandedUserIds.delete(userID);
@@ -191,17 +133,13 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  // Edit Roles Modal trigger
   openRolesModal(user: User, event: Event) {
-    event.stopPropagation(); // Avoid triggering row click / expansion
+    event.stopPropagation();
     this.selectedUserForRoles = user;
     this.selectedRolesMap = {};
-    
-    // Check checkboxes based on current user roles
     this.availableRoles.forEach((role) => {
-      this.selectedRolesMap[role] = user.roles.some((r) => r.name === role);
+      this.selectedRolesMap[role] = user.roles?.some((r) => r.name === role) ?? false;
     });
-    
     this.isRolesModalOpen = true;
   }
 
@@ -213,57 +151,42 @@ export class UsersComponent implements OnInit {
   saveRoles() {
     if (!this.selectedUserForRoles) return;
 
-    const chosenRoles = Object.keys(this.selectedRolesMap).filter(
-      (roleName) => this.selectedRolesMap[roleName]
-    );
-
+    const chosenRoles = Object.keys(this.selectedRolesMap).filter((r) => this.selectedRolesMap[r]);
     if (chosenRoles.length === 0) {
       this.showAlert('Warning', 'Please select at least one role for the user', 'warning');
       return;
     }
 
-    this.http
-      .patch<User>(`${this.baseUrl}/api/users/${this.selectedUserForRoles.userID}/roles`, {
-        roles: chosenRoles
-      })
-      .subscribe({
-        next: (updatedUser) => {
-          this.closeRolesModal();
-          this.fetchUsers(); // Refresh to update list and logs
-          this.showAlert('Update Successful', 'User roles updated successfully.', 'success');
-        },
-        error: (err) => {
-          this.showAlert('Update Error', err.error?.message || 'Unable to update user roles', 'error');
-        }
-      });
+    this.userService.updateRoles(this.selectedUserForRoles.userID, chosenRoles).subscribe({
+      next: () => {
+        this.closeRolesModal();
+        this.fetchUsers();
+        this.showAlert('Update Successful', 'User roles updated successfully.', 'success');
+      },
+      error: (err) => {
+        this.showAlert('Update Error', err.error?.message || 'Unable to update user roles', 'error');
+      },
+    });
   }
 
-  // Reset Password trigger
   resetPassword(user: User, event: Event) {
-    event.stopPropagation(); // Avoid triggering row click
-    
+    event.stopPropagation();
     this.showConfirm(
       'Confirm Password Reset',
       `Are you sure you want to reset the password for [${user.email}]? A new temporary password will be randomly generated.`,
       'warning',
       () => {
-        this.http
-          .post<any>(`${this.baseUrl}/api/auth/reset-password/${user.userID}`, {})
-          .subscribe({
-            next: (res) => {
-              this.resetPwdResult = {
-                email: res.email,
-                fullName: res.fullName,
-                newPassword: res.newPassword
-              };
-              this.isResetPwdModalOpen = true;
-              this.fetchUsers(); // Refresh to get updated audit logs
-            },
-            error: (err) => {
-              this.showAlert('Reset Failed', err.error?.message || 'Unable to reset user password', 'error');
-            }
-          });
-      }
+        this.userService.resetPassword(user.userID).subscribe({
+          next: (res) => {
+            this.resetPwdResult = { email: res.email, fullName: res.fullName, newPassword: res.newPassword };
+            this.isResetPwdModalOpen = true;
+            this.fetchUsers();
+          },
+          error: (err) => {
+            this.showAlert('Reset Failed', err.error?.message || 'Unable to reset user password', 'error');
+          },
+        });
+      },
     );
   }
 
@@ -272,7 +195,6 @@ export class UsersComponent implements OnInit {
     this.resetPwdResult = null;
   }
 
-  // Helper Methods for Custom Alert & Confirm Popups
   showAlert(title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
     this.alertTitle = title;
     this.alertMessage = message;
@@ -302,10 +224,7 @@ export class UsersComponent implements OnInit {
   }
 
   triggerConfirmAction() {
-    if (this.confirmAction) {
-      this.confirmAction();
-    }
+    if (this.confirmAction) this.confirmAction();
     this.closeConfirm();
   }
-
 }

@@ -66,6 +66,7 @@ function buildService(
     dataSource,
     {} as never,
     {} as never,
+    {} as never,
     eventBus as never,
     paymentService as never,
   );

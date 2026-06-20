@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { IVietQR } from '../interfaces/ivietqr.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from '../../order/entities/order.entity';
@@ -41,7 +42,7 @@ export interface VietqrCallbackResult {
  *   - Bundling state transitions, validations, and callback sync logic keeps the payment process transactional, safe, and easily testable.
  */
 @Injectable()
-export class VietqrPaymentService {
+export class VietqrPaymentService implements IVietQR {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,

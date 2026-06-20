@@ -92,7 +92,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.loading.set(true);
         this.statusMessage.set('Verifying PayPal transaction, please do not close the browser...');
 
-        this.paymentService.captureOrder(paypalToken, this.orderId()!).subscribe({
+        this.paymentService.capture(paypalToken, this.orderId()!).subscribe({
           next: () => {
             // Xóa sạch giỏ hàng trong localStorage
             localStorage.removeItem('aims_cart');
@@ -153,8 +153,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.statusMessage.set('Creating VietQR payment code...');
     
     const content = `AIMS ${orderId}`;
-
-    this.paymentService.createVietqrPayment(orderId, amount, content).subscribe({
+    this.paymentService.pay(orderId, amount, 'VIETQR', content).subscribe({
       next: (res) => {
         this.loading.set(false);
         this.paymentId.set(res.paymentId);
@@ -236,7 +235,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   checkPaymentStatus(paymentId: number) {
-    this.paymentService.getVietqrPaymentStatus(paymentId).subscribe({
+    this.paymentService.getVietqrStatus(paymentId).subscribe({
       next: (res) => {
         if (res.status === 'PAID') {
           this.stopStatusPolling();
@@ -278,7 +277,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             setTimeout(() => {
-              this.paymentService.getVietqrPaymentStatus(pId).subscribe({
+              this.paymentService.getVietqrStatus(pId).subscribe({
                 next: (res) => {
                   this.loading.set(false);
                   if (res.status === 'PAID') {
@@ -307,7 +306,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
       this.loading.set(true);
       this.statusMessage.set('Preparing PayPal transaction...');
 
-      this.paymentService.createOrder(currentOrderId).subscribe({
+      this.paymentService.pay(currentOrderId, this.totalAmount(), 'PAYPAL').subscribe({
         next: (res) => {
           if (res.approveUrl) {
             window.location.href = res.approveUrl;
