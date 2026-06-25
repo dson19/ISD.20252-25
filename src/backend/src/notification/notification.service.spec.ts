@@ -2,7 +2,6 @@ import { Order } from '../order/entities/order.entity';
 import { PaymentTransaction } from '../payment/entities/payment-transaction.entity';
 import { NotificationEventBus } from './events/notification-event-bus';
 import { NotificationService } from './notification.service';
-import { EmailTemplateService } from './templates/email-template.service';
 
 describe('NotificationService', () => {
   it('logs provider failures without throwing', async () => {
@@ -32,7 +31,6 @@ describe('NotificationService', () => {
     const service = new NotificationService(
       dataSource as never,
       new NotificationEventBus(),
-      new EmailTemplateService(),
       [provider],
     );
 

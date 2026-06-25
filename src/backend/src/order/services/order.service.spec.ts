@@ -1,26 +1,25 @@
 import { BadRequestException } from '@nestjs/common';
-import { Order } from '../entities/order.entity';
 import { Product } from '../../product/entities/product.entity';
 import { OrderService } from './order.service';
 
 describe('OrderService cancellation notifications', () => {
   it('rejects cancellation for approved orders', async () => {
-    const dataSource = buildDataSource({
+    const { dataSource, orderRepository } = buildDeps({
       order: buildOrder('APPROVED'),
-      paymentRows: [],
+      paymentInfo: null,
     });
-    const service = buildService(dataSource);
+    const service = buildService(dataSource, orderRepository);
 
     await expect(service.cancelOrder(123)).rejects.toThrow(BadRequestException);
   });
 
   it('publishes refund-pending cancellation notification for paid VietQR orders', async () => {
     const eventBus = { publish: jest.fn() };
-    const dataSource = buildDataSource({
+    const { dataSource, orderRepository } = buildDeps({
       order: buildOrder('PENDING_PROCESSING'),
-      paymentRows: [{ transaction_id: 88, method: 'VIETQR' }],
+      paymentInfo: { transaction_id: 88, method: 'VIETQR' },
     });
-    const service = buildService(dataSource, eventBus);
+    const service = buildService(dataSource, orderRepository, eventBus);
 
     await service.cancelOrder(123);
 
@@ -38,11 +37,11 @@ describe('OrderService cancellation notifications', () => {
     const paymentService = {
       processRefundIfSupported: jest.fn().mockResolvedValue({ automated: true }),
     };
-    const dataSource = buildDataSource({
+    const { dataSource, orderRepository } = buildDeps({
       order: buildOrder('PENDING_PROCESSING'),
-      paymentRows: [{ transaction_id: 99, method: 'PAYPAL' }],
+      paymentInfo: { transaction_id: 99, method: 'PAYPAL' },
     });
-    const service = buildService(dataSource, eventBus, paymentService);
+    const service = buildService(dataSource, orderRepository, eventBus, paymentService);
 
     await service.cancelOrder(123);
 
@@ -59,38 +58,44 @@ describe('OrderService cancellation notifications', () => {
 
 function buildService(
   dataSource: any,
+  orderRepository: any,
   eventBus = { publish: jest.fn() },
   paymentService: any = { processRefundIfSupported: jest.fn().mockResolvedValue({ automated: false }) },
 ) {
   return new OrderService(
     dataSource,
-    {} as never,
-    {} as never,
-    {} as never,
+    orderRepository,
+    {} as never, // cartService
+    {} as never, // shippingCalculatorService
     eventBus as never,
     paymentService as never,
   );
 }
 
-function buildDataSource({ order, paymentRows }: { order: any; paymentRows: any[] }) {
+function buildDeps({ order, paymentInfo }: { order: any; paymentInfo: any }) {
   const manager = {
     findOne: jest.fn((entity) => {
-      if (entity === Order) {
-        return Promise.resolve(order);
-      }
       if (entity === Product) {
         return Promise.resolve({ productID: 1, quantityInStock: 1 });
       }
       return Promise.resolve(null);
     }),
-    query: jest.fn().mockResolvedValue(paymentRows),
     save: jest.fn((_, entity) => Promise.resolve(entity)),
   };
 
-  return {
+  const dataSource = {
     manager,
     transaction: jest.fn((callback) => callback(manager)),
   };
+
+  // OrderRepository transaction-aware: data access đi qua repo, không phải raw SQL trong service.
+  const orderRepository = {
+    findFullById: jest.fn().mockResolvedValue(order),
+    getSuccessfulPaymentInfo: jest.fn().mockResolvedValue(paymentInfo),
+    save: jest.fn((entity) => Promise.resolve(entity)),
+  };
+
+  return { dataSource, orderRepository };
 }
 
 function buildOrder(status: string) {

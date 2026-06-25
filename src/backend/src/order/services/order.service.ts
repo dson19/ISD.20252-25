@@ -1,8 +1,9 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { DataSource, EntityManager, In, SelectQueryBuilder } from 'typeorm';
+import { DataSource, EntityManager, In } from 'typeorm';
 import { NotificationEventBus } from '../../notification/events/notification-event-bus';
-import { PaymentService } from '../../payment/services/payment.service';
+import { PAYMENT_SERVICE } from '../../payment/interfaces/payment-service.interface';
+import type { IPaymentService } from '../../payment/interfaces/payment-service.interface';
 import { Product } from '../../product/entities/product.entity';
 import { CartItemDto } from '../dto/cart-item.dto';
 import { DeliveryInfoDto } from '../dto/delivery-info.dto';
@@ -14,11 +15,22 @@ import { OrderRepository } from '../order.repository';
 import { CartStockIssue, CartService } from './cart.service';
 import { ShippingCalculatorService } from './shipping-calculator.service';
 
-export interface OrderListFilters {
-  search?: string;
-  dateRange?: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH';
-  paymentMethod?: 'ALL' | 'PAYPAL' | 'VIETQR' | 'UNPAID';
-}
+/** Hành động làm thay đổi trạng thái đơn — gom guard chuyển trạng thái về một bảng. */
+type OrderAction = 'updateDelivery' | 'approve' | 'reject' | 'cancel';
+
+const ALLOWED_TRANSITIONS: Record<OrderAction, string[]> = {
+  updateDelivery: ['PENDING', 'PENDING_PROCESSING'],
+  approve: ['PENDING', 'PENDING_PROCESSING'],
+  reject: ['PENDING', 'PENDING_PROCESSING'],
+  cancel: ['PENDING', 'PENDING_PROCESSING'],
+};
+
+const ACTION_VERB: Record<OrderAction, string> = {
+  updateDelivery: 'update delivery info',
+  approve: 'be approved',
+  reject: 'be rejected',
+  cancel: 'be cancelled',
+};
 
 /**
  * + Coupling/Cohesion level:
@@ -28,26 +40,32 @@ export interface OrderListFilters {
  *   - Delegating shipping calculations and cart validations to dedicated services ensures the ordering service maintains a clean, single procedural focus.
  *
  * + SOLID Principles Review:
- *   - SRP Violation: OrderService is responsible for order processing calculations, stock validation coordination, workflow state transitions, and third-party payment refunds.
- *     Improvement: Split into OrderCalculatorService, StockReservationService, and OrderWorkflowService.
- *   - OCP Violation: Conditional branches in rejectOrder() and cancelOrder() check specific payment methods (PAYPAL, VIETQR). Adding new payment systems requires modifying this service.
- *     Improvement: Implement a unified PaymentRefundStrategy interface.
- *   - DIP Violation: Depends directly on concrete PaypalService (using forwardRef to resolve circular dependency).
- *     Improvement: Introduce a RefundProcessor interface abstraction.
+ *   - SRP Adherence: Chỉ còn lo vòng đời đơn (đặt/cập nhật/duyệt/từ chối/huỷ). Truy vấn danh sách
+ *     tách sang OrderQueryService, xác nhận hoàn tiền VietQR tách sang OrderRefundService.
+ *   - OCP Adherence: Guard chuyển trạng thái dùng ALLOWED_TRANSITIONS (assertCanTransition); trạng thái
+ *     hoàn tiền dùng cờ refundAutomated (do cổng tự quyết) thay vì if theo tên PAYPAL/VIETQR.
+ *   - DIP Adherence: Hoàn tiền qua abstraction IPaymentService (token PAYMENT_SERVICE), không phụ thuộc
+ *     concrete PaymentService và không cần forwardRef ở constructor.
  */
 @Injectable()
 export class OrderService {
-  private readonly defaultPendingPageSize = 30;
-
   constructor(
     private readonly dataSource: DataSource,
     private readonly orderRepository: OrderRepository,
     private readonly cartService: CartService,
     private readonly shippingCalculatorService: ShippingCalculatorService,
     private readonly notificationEventBus: NotificationEventBus,
-    @Inject(forwardRef(() => PaymentService))
-    private readonly paymentService: PaymentService,
+    @Inject(PAYMENT_SERVICE)
+    private readonly paymentService: IPaymentService,
   ) { }
+
+  private assertCanTransition(order: Order, action: OrderAction): void {
+    if (!ALLOWED_TRANSITIONS[action].includes(order.status)) {
+      throw new BadRequestException(
+        `Order ${order.orderID} cannot ${ACTION_VERB[action]} from status ${order.status}`,
+      );
+    }
+  }
 
   async placeOrder(cartItems: CartItemDto[], deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
     const stockCheck = await this.cartService.checkCartStock(cartItems);
@@ -222,9 +240,7 @@ export class OrderService {
   async updateDeliveryInfo(orderId: number, deliveryInfoDto: DeliveryInfoDto): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
       const order = await this.findOrderOrFail(orderId, manager);
-      if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
-        throw new BadRequestException(`Order ${orderId} cannot update delivery info from status ${order.status}`);
-      }
+      this.assertCanTransition(order, 'updateDelivery');
 
       const subtotal = this.roundMoney(Number(order.subTotal));
       const tax = this.roundMoney(Number(order.tax));
@@ -266,9 +282,7 @@ export class OrderService {
 
   async approveOrder(orderId: number): Promise<Order> {
     const order = await this.findOrderOrFail(orderId);
-    if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
-      throw new BadRequestException(`Order ${orderId} cannot be approved from status ${order.status}`);
-    }
+    this.assertCanTransition(order, 'approve');
 
     order.status = 'APPROVED';
     await this.orderRepository.save(order);
@@ -295,9 +309,7 @@ export class OrderService {
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
       const order = await this.findOrderOrFail(orderId, manager);
-      if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
-        throw new BadRequestException(`Order ${orderId} cannot be rejected from status ${order.status}`);
-      }
+      this.assertCanTransition(order, 'reject');
 
       await this.restoreReservedStock(manager, order);
 
@@ -314,7 +326,7 @@ export class OrderService {
       orderId,
       paymentTransactionId: paymentInfo?.transaction_id,
       refundMethod: paymentInfo?.method ?? null,
-      refundStatus: this.resolveRefundStatus(paymentInfo?.method ?? null, updatedOrder.status),
+      refundStatus: this.resolveRefundStatus(paymentInfo?.method ?? null, refundAutomated, updatedOrder.status),
     });
     return updatedOrder;
   }
@@ -334,9 +346,7 @@ export class OrderService {
 
     const updatedOrder = await this.dataSource.transaction(async (manager) => {
       const order = await this.findOrderOrFail(orderId, manager);
-      if (!['PENDING', 'PENDING_PROCESSING'].includes(order.status)) {
-        throw new BadRequestException(`Order ${orderId} cannot be cancelled from status ${order.status}`);
-      }
+      this.assertCanTransition(order, 'cancel');
 
       await this.restoreReservedStock(manager, order);
 
@@ -353,7 +363,7 @@ export class OrderService {
       orderId,
       paymentTransactionId: paymentInfo?.transaction_id,
       refundMethod: paymentInfo?.method ?? null,
-      refundStatus: this.resolveRefundStatus(paymentInfo?.method ?? null, updatedOrder.status),
+      refundStatus: this.resolveRefundStatus(paymentInfo?.method ?? null, refundAutomated, updatedOrder.status),
     });
     return updatedOrder;
   }
@@ -361,97 +371,6 @@ export class OrderService {
   async cancelCustomerOrder(orderId: number, token: string): Promise<Order> {
     await this.findCustomerOrderOrFail(orderId, token);
     return this.cancelOrder(orderId);
-  }
-
-  async getPendingOrders(page = 1, limit = this.defaultPendingPageSize, filters: OrderListFilters = {}) {
-    const safePage = Math.max(page, 1);
-    const safeLimit = Math.min(Math.max(limit, 1), this.defaultPendingPageSize);
-
-    const query = this.orderRepository.buildPendingQuery()
-      .skip((safePage - 1) * safeLimit)
-      .take(safeLimit);
-
-    this.applyOrderListFilters(query, filters);
-
-    const [items, total] = await query.getManyAndCount();
-
-    const orderIds = items.map(o => o.orderID);
-    const paymentMethodsMap = await this.orderRepository.getLatestSuccessfulPaymentMethods(orderIds);
-
-    const itemsWithMethod = items.map(item => ({
-      ...item,
-      paymentMethod: paymentMethodsMap[item.orderID] || null,
-    }));
-
-    return {
-      items: itemsWithMethod,
-      total,
-      page: safePage,
-      limit: safeLimit,
-      totalPages: Math.ceil(total / safeLimit),
-    };
-  }
-
-  async getVietqrRefundRequests(page = 1, limit = 30, filters: OrderListFilters = {}) {
-    const safePage = Math.max(page, 1);
-    const safeLimit = Math.min(Math.max(limit, 1), 30);
-
-    const query = this.orderRepository.buildRefundPendingQuery()
-      .skip((safePage - 1) * safeLimit)
-      .take(safeLimit);
-
-    this.applyOrderListFilters(query, {
-      ...filters,
-      paymentMethod: filters.paymentMethod === 'PAYPAL' || filters.paymentMethod === 'UNPAID'
-        ? 'ALL'
-        : filters.paymentMethod,
-    });
-
-    const [items, total] = await query.getManyAndCount();
-
-    const orderIds = items.map(o => o.orderID);
-    const paymentMethodsMap = await this.orderRepository.getLatestSuccessfulPaymentMethods(orderIds);
-
-    const itemsWithMethod = items.map(item => ({
-      ...item,
-      paymentMethod: paymentMethodsMap[item.orderID] || 'VIETQR',
-    }));
-
-    return {
-      items: itemsWithMethod,
-      total,
-      page: safePage,
-      limit: safeLimit,
-      totalPages: Math.ceil(total / safeLimit),
-    };
-  }
-
-  async confirmVietqrRefund(orderId: number): Promise<Order> {
-    const updatedOrder = await this.dataSource.transaction(async (manager) => {
-      const order = await this.findOrderOrFail(orderId, manager);
-      if (order.status !== 'REFUND_PENDING') {
-        throw new BadRequestException(`Order #${orderId} is in status ${order.status}, not REFUND_PENDING`);
-      }
-
-      const transactionId = await this.orderRepository.findVietqrTransactionId(orderId, manager);
-      if (!transactionId) {
-        throw new BadRequestException(`Order #${orderId} does not have a successful VietQR transaction to refund`);
-      }
-
-      await this.orderRepository.markTransactionRefunded(transactionId, manager);
-
-      order.status = 'REFUNDED';
-      await this.orderRepository.save(order, manager);
-      return order;
-    });
-
-    this.notificationEventBus.publish({
-      type: 'ORDER_CANCELLED',
-      orderId,
-      refundMethod: 'VIETQR',
-      refundStatus: 'REFUNDED',
-    });
-    return updatedOrder;
   }
 
   private async findCustomerOrderOrFail(orderId: number, token: string): Promise<Order> {
@@ -465,85 +384,21 @@ export class OrderService {
     return order;
   }
 
-  private applyOrderListFilters(query: SelectQueryBuilder<Order>, filters: OrderListFilters): void {
-    const search = filters.search?.trim();
-    if (search) {
-      const orderId = Number(search.replace(/^#/, ''));
-      const searchPattern = `%${search.toLowerCase()}%`;
-
-      if (Number.isInteger(orderId) && orderId > 0) {
-        query.andWhere(
-          '(order.orderID = :orderId OR LOWER(deliveryInfo.receiverName) LIKE :search OR LOWER(deliveryInfo.email) LIKE :search OR deliveryInfo.phoneNumber LIKE :search)',
-          { orderId, search: searchPattern },
-        );
-      } else {
-        query.andWhere(
-          '(LOWER(deliveryInfo.receiverName) LIKE :search OR LOWER(deliveryInfo.email) LIKE :search OR deliveryInfo.phoneNumber LIKE :search)',
-          { search: searchPattern },
-        );
-      }
+  /**
+   * Trạng thái hoàn tiền suy từ KẾT QUẢ hoàn tiền (refundAutomated do cổng tự quyết qua
+   * processRefundIfSupported), KHÔNG phân nhánh theo tên cổng → thêm cổng mới không phải sửa hàm này.
+   *   - Không có giao dịch → không cần hoàn.
+   *   - Cổng hoàn tự động → REFUNDED ngay.
+   *   - Cổng không hoàn tự động (vd VietQR thủ công) → REFUND_PENDING cho tới khi xác nhận tay.
+   */
+  private resolveRefundStatus(paymentMethod: string | null, refundAutomated: boolean, orderStatus: string): string {
+    if (!paymentMethod) {
+      return 'No payment refund required';
     }
-
-    const dateRange = filters.dateRange ?? 'ALL';
-    if (dateRange !== 'ALL') {
-      const startDate = this.resolveDateRangeStart(dateRange);
-      if (startDate) {
-        query.andWhere('order.createdAt >= :startDate', { startDate });
-      }
-    }
-
-    const paymentMethod = filters.paymentMethod ?? 'ALL';
-    if (paymentMethod === 'PAYPAL' || paymentMethod === 'VIETQR') {
-      query.andWhere(
-        `(
-          SELECT payment_filter.method
-          FROM payment_transactions payment_filter
-          WHERE payment_filter.order_id = "order"."order_id"
-            AND payment_filter.status = :paymentSuccessStatus
-          ORDER BY payment_filter.created_at DESC
-          LIMIT 1
-        ) = :paymentMethod`,
-        { paymentSuccessStatus: 'SUCCESS', paymentMethod },
-      );
-    }
-
-    if (paymentMethod === 'UNPAID') {
-      query.andWhere(
-        `NOT EXISTS (
-          SELECT 1
-          FROM payment_transactions payment_filter
-          WHERE payment_filter.order_id = "order"."order_id"
-            AND payment_filter.status = :paymentSuccessStatus
-        )`,
-        { paymentSuccessStatus: 'SUCCESS' },
-      );
-    }
-  }
-
-  private resolveDateRangeStart(dateRange: OrderListFilters['dateRange']): Date | null {
-    const now = new Date();
-    if (dateRange === 'TODAY') {
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    }
-    if (dateRange === 'WEEK') {
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      start.setDate(start.getDate() - 6);
-      return start;
-    }
-    if (dateRange === 'MONTH') {
-      return new Date(now.getFullYear(), now.getMonth(), 1);
-    }
-    return null;
-  }
-
-  private resolveRefundStatus(paymentMethod: string | null, orderStatus: string): string {
-    if (paymentMethod === 'PAYPAL') {
+    if (refundAutomated) {
       return 'REFUNDED';
     }
-    if (paymentMethod === 'VIETQR') {
-      return orderStatus === 'REFUNDED' ? 'REFUNDED' : 'REFUND_PENDING';
-    }
-    return 'No payment refund required';
+    return orderStatus === 'REFUNDED' ? 'REFUNDED' : 'REFUND_PENDING';
   }
 
   private async restoreReservedStock(manager: EntityManager, order: Order): Promise<void> {

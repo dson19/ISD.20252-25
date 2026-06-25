@@ -7,6 +7,7 @@ import {
   PAYMENT_ADAPTERS,
 } from '../interfaces/payment-adapter.interface';
 import { PaymentRepository } from '../repositories/payment.repository';
+import type { IPaymentService } from '../interfaces/payment-service.interface';
 
 /**
  * Template Method pattern: processPayment / processRefund define the fixed AIMS skeleton
@@ -17,10 +18,12 @@ import { PaymentRepository } from '../repositories/payment.repository';
  *     adapter.method. Adding a gateway (VNPay/MoMo) needs only a new adapter + provider entry —
  *     this service is never modified.
  *   - DIP Adherence: Depends on the IPaymentAdapter abstraction, not on PaypalAdapter/VietqrAdapter.
+ *     Đồng thời implements IPaymentService để OrderService phụ thuộc abstraction (token PAYMENT_SERVICE),
+ *     không phụ thuộc concrete class này.
  *   - LSP Adherence: Refund is only attempted on adapters narrowed to IRefundableAdapter.
  */
 @Injectable()
-export class PaymentService {
+export class PaymentService implements IPaymentService {
   private readonly adapterMap: Map<string, IPaymentAdapter>;
 
   constructor(

@@ -28,17 +28,27 @@ describe('SendGridEmailProvider', () => {
     process.env = originalEnv;
   });
 
-  it('sends email through SendGrid with expected message fields', async () => {
-    const provider = new SendGridEmailProvider();
+  it('renders via template service and sends through SendGrid', async () => {
+    const emailTemplateService = {
+      renderPaymentSuccess: jest.fn().mockReturnValue({
+        subject: 'Subject',
+        html: '<p>Hello</p>',
+        text: 'Hello',
+      }),
+      renderCancellation: jest.fn(),
+      renderReviewResult: jest.fn(),
+    };
+    const provider = new SendGridEmailProvider(emailTemplateService as never);
     (sendgrid.send as jest.Mock).mockResolvedValue(undefined);
 
     await provider.send({
-      to: 'customer@example.com',
-      subject: 'Subject',
-      html: '<p>Hello</p>',
-      text: 'Hello',
+      order: { orderID: 1, deliveryInfo: { email: 'customer@example.com' } } as never,
+      event: { type: 'ORDER_PAYMENT_SUCCEEDED', orderId: 1 },
+      paymentTransaction: null,
+      urls: { viewOrder: 'http://app/view', cancelOrder: 'http://app/cancel' },
     });
 
+    expect(emailTemplateService.renderPaymentSuccess).toHaveBeenCalledTimes(1);
     expect(sendgrid.setApiKey).toHaveBeenCalledWith('test-key');
     expect(sendgrid.send).toHaveBeenCalledWith({
       to: 'customer@example.com',
@@ -50,5 +60,23 @@ describe('SendGridEmailProvider', () => {
       html: '<p>Hello</p>',
       text: 'Hello',
     });
+  });
+
+  it('skips when the order has no customer email', async () => {
+    const emailTemplateService = {
+      renderPaymentSuccess: jest.fn(),
+      renderCancellation: jest.fn(),
+      renderReviewResult: jest.fn(),
+    };
+    const provider = new SendGridEmailProvider(emailTemplateService as never);
+
+    await provider.send({
+      order: { orderID: 2, deliveryInfo: { email: undefined } } as never,
+      event: { type: 'ORDER_PAYMENT_SUCCEEDED', orderId: 2 },
+      paymentTransaction: null,
+      urls: { viewOrder: 'http://app/view', cancelOrder: 'http://app/cancel' },
+    });
+
+    expect(sendgrid.send).not.toHaveBeenCalled();
   });
 });

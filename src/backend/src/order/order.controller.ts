@@ -18,10 +18,11 @@ import { PlaceOrderDto } from './dto/place-order.dto';
 import { ShippingFeeDto } from './dto/shipping-fee.dto';
 import { CartService } from './services/cart.service';
 import { OrderService } from './services/order.service';
+import { OrderQueryService, OrderListFilters } from './services/order-query.service';
+import { OrderRefundService } from './services/order-refund.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { OrderListFilters } from './services/order.service';
 
 /**
  * OrderController - REST API cho cart va quy trinh dat/duyet/huy don hang.
@@ -38,6 +39,8 @@ export class OrderController {
   constructor(
     private readonly cartService: CartService,
     private readonly orderService: OrderService,
+    private readonly orderQueryService: OrderQueryService,
+    private readonly orderRefundService: OrderRefundService,
   ) { }
 
   @Post('cart/check-stock')
@@ -65,7 +68,7 @@ export class OrderController {
     @Query('dateRange') dateRange?: OrderListFilters['dateRange'],
     @Query('paymentMethod') paymentMethod?: OrderListFilters['paymentMethod'],
   ) {
-    return this.orderService.getPendingOrders(page, limit, { search, dateRange, paymentMethod });
+    return this.orderQueryService.getPendingOrders(page, limit, { search, dateRange, paymentMethod });
   }
 
   @Get('vietqr-refunds')
@@ -78,7 +81,7 @@ export class OrderController {
     @Query('dateRange') dateRange?: OrderListFilters['dateRange'],
     @Query('paymentMethod') paymentMethod?: OrderListFilters['paymentMethod'],
   ) {
-    return this.orderService.getVietqrRefundRequests(page, limit, { search, dateRange, paymentMethod });
+    return this.orderQueryService.getVietqrRefundRequests(page, limit, { search, dateRange, paymentMethod });
   }
 
   @Get(':orderId')
@@ -119,6 +122,6 @@ export class OrderController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PRODUCT_MANAGER')
   async confirmVietqrRefund(@Param('orderId', ParseIntPipe) orderId: number) {
-    return this.orderService.confirmVietqrRefund(orderId);
+    return this.orderRefundService.confirmVietqrRefund(orderId);
   }
 }

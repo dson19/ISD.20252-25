@@ -1,43 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { ShippingStrategy } from '../interfaces/shipping-strategy.interface';
-import { WeightOnlyShippingStrategy } from '../strategies/weight-shipping.strategy';
+import { Inject, Injectable } from '@nestjs/common';
+import type { ShippingStrategy } from '../interfaces/shipping-strategy.interface';
+import { SHIPPING_STRATEGY } from '../interfaces/shipping-strategy.interface';
 
 /**
  * + Coupling/Cohesion level:
  *   - Data Coupling: Receives only primitive parameters (`province`, `totalWeight`, `subtotal`) to perform its calculations.
  *   - Functional Cohesion: Exclusively focused on calculating order shipping fees based on weight and geographic factors.
- * + Reason why:
- *   - Isolating dynamic shipping fee algorithms from the main OrderService prevents formula duplication and simplifies price calculation test suites.
- * 
+ *
  * + SOLID Principles Review:
- *   - OCP Violation: Calculation thresholds, inner/outer city province matchers, and fee increments are hardcoded. Changing policies or adding new shipping tiers (e.g. Express) requires modifying this class.
- *     Improvement: Define a ShippingStrategy interface and implement specific strategies (e.g. InnerCityShippingStrategy, OtherProvinceShippingStrategy, ExpressShippingStrategy).
+ *   - OCP: Cách tính TRỌNG LƯỢNG tính phí được uỷ cho ShippingStrategy (DI qua token SHIPPING_STRATEGY).
+ *     Đổi từ tính theo cân nặng thực sang tính theo thể tích (#3) = đổi binding strategy ở module,
+ *     KHÔNG sửa service này. Biểu phí theo vùng (HN/HCM vs tỉnh khác) vẫn áp lên trọng lượng tính phí.
+ *   - DIP: Phụ thuộc abstraction ShippingStrategy, không phụ thuộc implementation cụ thể.
  */
 @Injectable()
 export class ShippingCalculatorService {
   private readonly freeShippingThreshold = 100000;
   private readonly maxShippingDiscount = 25000;
   private readonly extraHalfKgFee = 2500;
-  private strategy: ShippingStrategy = new WeightOnlyShippingStrategy();
 
-  setStrategy(strategy: ShippingStrategy): void {
-    this.strategy = strategy;
-  }
+  constructor(
+    @Inject(SHIPPING_STRATEGY)
+    private readonly strategy: ShippingStrategy,
+  ) {}
 
   calculateShippingFee(province: string, totalWeight: number, subtotal: number, dimensions?: { length?: number; width?: number; height?: number }): number {
     const normalizedProvince = this.normalizeProvince(province);
-    const weight = Math.max(totalWeight, 0);
-    const rawBaseFee = this.isInnerCity(normalizedProvince)
-      ? this.calculateInnerCityFee(weight)
-      : this.calculateOtherProvinceFee(weight);
+    const actualWeight = Math.max(totalWeight, 0);
+    const chargeableWeight = Math.max(
+      this.strategy.calculateChargeableWeight(actualWeight, dimensions),
+      0,
+    );
 
-    const baseFee = this.strategy.calculateFee({
-      weight,
-      length: dimensions?.length,
-      width: dimensions?.width,
-      height: dimensions?.height,
-      baseFee: rawBaseFee,
-    });
+    const baseFee = this.isInnerCity(normalizedProvince)
+      ? this.calculateInnerCityFee(chargeableWeight)
+      : this.calculateOtherProvinceFee(chargeableWeight);
 
     if (subtotal > this.freeShippingThreshold) {
       return Math.max(baseFee - this.maxShippingDiscount, 0);

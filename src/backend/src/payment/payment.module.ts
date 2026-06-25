@@ -21,6 +21,7 @@ import { PaypalAdapter } from './adapters/paypal-adapter';
 import { VietqrAdapter } from './adapters/vietqr-adapter';
 import { PaymentService } from './services/payment.service';
 import { PAYMENT_ADAPTERS } from './interfaces/payment-adapter.interface';
+import { PAYMENT_SERVICE } from './interfaces/payment-service.interface';
 
 @Module({
   imports: [
@@ -47,6 +48,8 @@ import { PAYMENT_ADAPTERS } from './interfaces/payment-adapter.interface';
       inject: [PaypalAdapter, VietqrAdapter],
     },
     PaymentService,
+    // DIP: expose PaymentService dưới abstraction IPaymentService cho OrderService inject.
+    { provide: PAYMENT_SERVICE, useExisting: PaymentService },
   ],
   exports: [
     PaymentRepository,
@@ -59,6 +62,7 @@ import { PAYMENT_ADAPTERS } from './interfaces/payment-adapter.interface';
     PaypalAdapter,
     VietqrAdapter,
     PaymentService,
+    PAYMENT_SERVICE,
   ],
 })
 /**
