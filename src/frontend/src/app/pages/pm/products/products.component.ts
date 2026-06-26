@@ -30,6 +30,8 @@ export class ProductsComponent implements OnInit {
 
   // Modals visibility toggles
   isProductModalOpen = false;
+  isViewModalOpen = false;
+  viewProduct: any = null;
   isStockModalOpen = false;
 
   // Stock Adjustment State
@@ -98,7 +100,7 @@ export class ProductsComponent implements OnInit {
 
   // Master DTO structure matching CreateProductDto
   productForm: any = {
-    mediaType: 'BOOK',
+    productType: 'BOOK',
     title: '',
     category: '',
     description: '',
@@ -466,7 +468,7 @@ export class ProductsComponent implements OnInit {
     
     // Reset Form to initial empty template
     this.productForm = {
-      mediaType: 'BOOK',
+      productType: 'BOOK',
       title: '',
       category: '',
       description: '',
@@ -527,7 +529,7 @@ export class ProductsComponent implements OnInit {
       next: (fullProduct) => {
         // Prepopulate form fields
         this.productForm = {
-          mediaType: fullProduct.mediaType,
+          productType: fullProduct.productType,
           title: fullProduct.title,
           category: fullProduct.category,
           description: fullProduct.description || '',
@@ -578,7 +580,7 @@ export class ProductsComponent implements OnInit {
         };
 
         // Convert nested track objects to dynamic form array
-        if (this.productForm.mediaType === 'CD' && !this.productForm.cd.tracks) {
+        if (this.productForm.productType === 'CD' && !this.productForm.cd.tracks) {
           this.productForm.cd.tracks = [];
         }
 
@@ -592,6 +594,56 @@ export class ProductsComponent implements OnInit {
         this.showAlert('Load Error', err.error?.message || 'Unable to load product details', 'error');
       }
     });
+  }
+
+  // ===== View Product Detail (read-only) =====
+  openViewModal(product: Product) {
+    if (this.loadingProductId !== null) return;
+    this.loadingProductId = product.productID;
+    this.cdr.detectChanges();
+
+    this.productService.getProductById(product.productID).subscribe({
+      next: (fullProduct) => {
+        this.viewProduct = fullProduct;
+        this.isViewModalOpen = true;
+        this.loadingProductId = null;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.loadingProductId = null;
+        this.cdr.detectChanges();
+        this.showAlert('Load Error', err.error?.message || 'Unable to load product details', 'error');
+      }
+    });
+  }
+
+  closeViewModal() {
+    this.isViewModalOpen = false;
+    this.viewProduct = null;
+    this.cdr.detectChanges();
+  }
+
+  mediaTypeLabel(type: string): string {
+    const labels: Record<string, string> = { BOOK: 'Book', NEWSPAPER: 'Newspaper', CD: 'CD', DVD: 'DVD' };
+    return labels[type] ?? type;
+  }
+
+  formatDate(value?: string | null): string {
+    if (!value) return 'N/A';
+    return new Intl.DateTimeFormat('en-US').format(new Date(value));
+  }
+
+  viewDimensions(): string {
+    const p = this.viewProduct;
+    if (!p) return 'N/A';
+    const values = [p.length, p.width, p.height].filter((v: any) => v !== null && v !== undefined);
+    return values.length ? `${values.join(' x ')} cm` : 'N/A';
+  }
+
+  trackLength(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
   closeProductModal() {
@@ -660,7 +712,7 @@ export class ProductsComponent implements OnInit {
     }
 
     // MediaType specific validation
-    const type = this.productForm.mediaType;
+    const type = this.productForm.productType;
     if (type === 'BOOK') {
       const book = this.productForm.book;
       if (!book.authors?.trim()) {
@@ -771,9 +823,9 @@ export class ProductsComponent implements OnInit {
     if (!this.validateForm()) return;
 
     // Assemble dynamic payload consisting of general details and only one matching media sub-object
-    const type = this.productForm.mediaType;
+    const type = this.productForm.productType;
     const payload: any = {
-      mediaType: type,
+      productType: type,
       title: this.productForm.title.trim(),
       category: this.productForm.category.trim(),
       description: this.productForm.description ? this.productForm.description.trim() : null,

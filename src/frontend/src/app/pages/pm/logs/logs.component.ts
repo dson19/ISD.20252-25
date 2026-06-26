@@ -14,7 +14,7 @@ interface ProductLog {
     productID: number;
     title: string;
     barcode: string;
-    mediaType: string;
+    productType: string;
   } | null;
 }
 

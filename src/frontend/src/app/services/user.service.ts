@@ -13,6 +13,23 @@ export interface UserRecord {
   auditLogs?: any[];
 }
 
+export interface CreateUserPayload {
+  email: string;
+  fullName: string;
+  phoneNumber?: string;
+  password: string;
+  roles: string[];
+}
+
+export interface UserLogRecord {
+  logID: number;
+  action: string;
+  description?: string | null;
+  performedBy?: string | null;
+  createdAt: string;
+  user?: { userID: number; email: string; fullName: string } | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   constructor(
@@ -22,6 +39,14 @@ export class UserService {
 
   getAll(): Observable<UserRecord[]> {
     return this.http.get<UserRecord[]>(`${this.baseUrl}/api/users`);
+  }
+
+  create(payload: CreateUserPayload): Observable<UserRecord> {
+    return this.http.post<UserRecord>(`${this.baseUrl}/api/users`, payload);
+  }
+
+  getLogs(): Observable<UserLogRecord[]> {
+    return this.http.get<UserLogRecord[]>(`${this.baseUrl}/api/users/logs`);
   }
 
   toggleStatus(userId: number, status: string): Observable<UserRecord> {

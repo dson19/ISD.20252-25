@@ -1,0 +1,99 @@
+<div class="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+    <div class="space-y-1">
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide">
+        Audit Trail
+      </span>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">User Logs</h1>
+      <p class="text-sm text-gray-500">All administrative actions performed on user accounts.</p>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">TOTAL LOGS</p>
+      <p class="text-2xl font-extrabold text-gray-900">{{ totalLogsCount }}</p>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">CREATED</p>
+      <p class="text-2xl font-extrabold text-gray-900">{{ createLogsCount }}</p>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">ROLE CHANGES</p>
+      <p class="text-2xl font-extrabold text-gray-900">{{ roleLogsCount }}</p>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">SECURITY</p>
+      <p class="text-2xl font-extrabold text-gray-900">{{ securityLogsCount }}</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 md:items-center">
+    <input
+      type="text"
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="applyFilter()"
+      placeholder="Search by email, name, performer or action..."
+      class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" />
+    <select [(ngModel)]="actionFilter" (ngModelChange)="applyFilter()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary">
+      <option value="">All actions</option>
+      @for (action of availableActions; track action) {
+        <option [value]="action">{{ action }}</option>
+      }
+    </select>
+    <select [(ngModel)]="timeFilter" (ngModelChange)="applyFilter()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-primary focus:border-primary">
+      <option value="ALL">All time</option>
+      <option value="24H">Last 24 hours</option>
+      <option value="7D">Last 7 days</option>
+    </select>
+    <button (click)="clearFilters()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors">
+      Clear
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+    @if (isLoading) {
+      <div class="p-12 text-center text-gray-400 text-sm">Loading logs...</div>
+    } @else if (filteredLogs.length === 0) {
+      <div class="p-12 text-center text-gray-400 text-sm">No logs found.</div>
+    } @else {
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50/70 text-gray-400 text-xs uppercase tracking-wider">
+          <tr>
+            <th class="text-left p-5 font-bold">Action</th>
+            <th class="text-left p-5 font-bold">Target Account</th>
+            <th class="text-left p-5 font-bold">Description</th>
+            <th class="text-left p-5 font-bold">Performed By</th>
+            <th class="text-left p-5 font-bold">Time</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (log of filteredLogs; track log.logID) {
+            <tr class="hover:bg-gray-50/50 transition-colors">
+              <td class="p-5">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold border bg-blue-50 text-blue-700 border-blue-100">
+                  {{ log.action }}
+                </span>
+              </td>
+              <td class="p-5">
+                @if (log.user) {
+                  <p class="font-semibold text-gray-900">{{ log.user.fullName }}</p>
+                  <p class="text-xs text-gray-400">{{ log.user.email }}</p>
+                } @else {
+                  <span class="text-gray-300">—</span>
+                }
+              </td>
+              <td class="p-5 text-gray-600 max-w-md">{{ log.description }}</td>
+              <td class="p-5 font-medium text-gray-700">{{ log.performedBy || 'SYSTEM' }}</td>
+              <td class="p-5 text-gray-500 whitespace-nowrap">{{ log.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

@@ -11,7 +11,7 @@ export interface CdTrack {
 
 export interface Product {
   productID: number;
-  mediaType: 'BOOK' | 'CD' | 'DVD' | 'NEWSPAPER' | string;
+  productType: 'BOOK' | 'CD' | 'DVD' | 'NEWSPAPER' | string;
   title: string;
   category: string;
   description?: string | null;

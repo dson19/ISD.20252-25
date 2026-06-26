@@ -78,6 +78,14 @@ export class UserRepository {
     });
   }
 
+  /** Toàn bộ user logs (gộp mọi user) cho trang Admin Logs — kèm relation user để hiện email/tên. */
+  async findAllUserLogs(): Promise<UserAuditLog[]> {
+    return this.auditLogRepository.find({
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async saveAuditLog(
     params: { action: string; description: string; performedBy: string; user: User },
     manager: EntityManager,

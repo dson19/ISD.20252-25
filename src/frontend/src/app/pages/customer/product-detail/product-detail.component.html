@@ -26,7 +26,7 @@
       <section class="bg-white border border-gray-100 rounded-lg p-6">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
-            <p class="text-xs font-semibold uppercase text-primary mb-2">{{ mediaTypeLabel(product.mediaType) }}</p>
+            <p class="text-xs font-semibold uppercase text-primary mb-2">{{ mediaTypeLabel(product.productType) }}</p>
             <h1 class="text-3xl font-bold text-gray-900 leading-tight">{{ product.title }}</h1>
           </div>
           <span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-semibold text-gray-600">{{ product.status }}</span>
@@ -117,7 +117,7 @@
       <section class="bg-white border border-gray-100 rounded-lg p-6">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Detailed Information</h2>
 
-        @if (product.mediaType === 'BOOK' && product.book) {
+        @if (product.productType === 'BOOK' && product.book) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div><dt class="text-gray-500">Author(s)</dt><dd class="font-semibold text-gray-900">{{ product.book.authors }}</dd></div>
             <div><dt class="text-gray-500">Cover Type</dt><dd class="font-semibold text-gray-900">{{ product.book.coverType }}</dd></div>
@@ -127,7 +127,7 @@
             <div><dt class="text-gray-500">Language</dt><dd class="font-semibold text-gray-900">{{ product.book.language || 'N/A' }}</dd></div>
             <div><dt class="text-gray-500">Genre</dt><dd class="font-semibold text-gray-900">{{ product.book.genre || 'N/A' }}</dd></div>
           </dl>
-        } @else if (product.mediaType === 'NEWSPAPER' && product.newspaper) {
+        } @else if (product.productType === 'NEWSPAPER' && product.newspaper) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div><dt class="text-gray-500">Editor-in-Chief</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.editorInChief }}</dd></div>
             <div><dt class="text-gray-500">Publisher</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.publisher }}</dd></div>
@@ -137,7 +137,7 @@
             <div><dt class="text-gray-500">ISSN</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.issn || 'N/A' }}</dd></div>
             <div class="sm:col-span-2"><dt class="text-gray-500">Sections</dt><dd class="font-semibold text-gray-900">{{ product.newspaper.sections || 'N/A' }}</dd></div>
           </dl>
-        } @else if (product.mediaType === 'CD' && product.cd) {
+        } @else if (product.productType === 'CD' && product.cd) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
             <div><dt class="text-gray-500">Artist(s)</dt><dd class="font-semibold text-gray-900">{{ product.cd.artists }}</dd></div>
             <div><dt class="text-gray-500">Record Label</dt><dd class="font-semibold text-gray-900">{{ product.cd.recordLabel }}</dd></div>
@@ -154,7 +154,7 @@
               }
             </div>
           }
-        } @else if (product.mediaType === 'DVD' && product.dvd) {
+        } @else if (product.productType === 'DVD' && product.dvd) {
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div><dt class="text-gray-500">Disc Type</dt><dd class="font-semibold text-gray-900">{{ product.dvd.discType }}</dd></div>
             <div><dt class="text-gray-500">Director</dt><dd class="font-semibold text-gray-900">{{ product.dvd.director }}</dd></div>

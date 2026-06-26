@@ -307,7 +307,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       price: Number(item.unitPrice),
       imageUrl: item.product?.imageUrl || 'https://placehold.co/300x400/e2e8f0/475569?text=AIMS',
       quantity: item.quantity,
-      mediaType: item.product?.mediaType ?? 'PRODUCT',
+      mediaType: item.product?.productType ?? 'PRODUCT',
       quantityInStock: item.product?.quantityInStock ?? item.quantity,
     }));
   }

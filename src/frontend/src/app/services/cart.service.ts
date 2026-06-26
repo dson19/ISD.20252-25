@@ -46,7 +46,7 @@ export class CartService {
           price: Number(product.currentPrice),
           imageUrl: product.imageUrl || 'https://placehold.co/300x400/e2e8f0/475569?text=AIMS',
           quantity: requestedQuantity,
-          mediaType: product.mediaType,
+          mediaType: product.productType,
           quantityInStock: maxQuantity,
         },
       ];

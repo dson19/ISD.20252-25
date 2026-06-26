@@ -236,12 +236,12 @@
                 </td>
                 <td class="p-5 text-center">
                   <span [ngClass]="{
-                    'bg-indigo-50 text-indigo-700 border-indigo-150/60': product.mediaType === 'BOOK',
-                    'bg-emerald-50 text-emerald-700 border-emerald-150/60': product.mediaType === 'CD',
-                    'bg-amber-50 text-amber-700 border-amber-150/60': product.mediaType === 'DVD',
-                    'bg-rose-50 text-rose-700 border-rose-150/60': product.mediaType === 'NEWSPAPER'
+                    'bg-indigo-50 text-indigo-700 border-indigo-150/60': product.productType === 'BOOK',
+                    'bg-emerald-50 text-emerald-700 border-emerald-150/60': product.productType === 'CD',
+                    'bg-amber-50 text-amber-700 border-amber-150/60': product.productType === 'DVD',
+                    'bg-rose-50 text-rose-700 border-rose-150/60': product.productType === 'NEWSPAPER'
                   }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold border shadow-sm">
-                    {{ product.mediaType }}
+                    {{ product.productType }}
                   </span>
                 </td>
                 <td class="p-5 text-center">
@@ -271,6 +271,17 @@
                 </td>
                 <td class="p-5 text-center" (click)="$event.stopPropagation()">
                   <div class="flex items-center justify-center space-x-2">
+                    <button
+                      (click)="openViewModal(product)"
+                      [disabled]="loadingProductId === product.productID"
+                      class="w-8 h-8 rounded-xl border border-gray-200 hover:border-blue-100 text-gray-500 hover:text-primary hover:bg-blue-50 flex items-center justify-center transition-all shadow-sm focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="View details"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
                     <button
                       (click)="openEditModal(product)"
                       [disabled]="loadingProductId === product.productID"
@@ -407,7 +418,7 @@
               <div [class.md:col-span-2]="!isEditMode">
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Type</label>
                 <select
-                  [(ngModel)]="productForm.mediaType"
+                  [(ngModel)]="productForm.productType"
                   (ngModelChange)="onMediaTypeChange($event)"
                   [disabled]="isEditMode"
                   class="block w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm focus:ring-primary focus:border-primary font-semibold text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"
@@ -507,7 +518,7 @@
 
           <!-- Block 3: Dynamic MediaType Specific Sub-forms -->
           <!-- 3.1: BOOK SUB-FORM -->
-          @if (productForm.mediaType === 'BOOK') {
+          @if (productForm.productType === 'BOOK') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
               <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">BOOK-Specific Information</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -550,7 +561,7 @@
           }
 
           <!-- 3.2: CD SUB-FORM -->
-          @if (productForm.mediaType === 'CD') {
+          @if (productForm.productType === 'CD') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
               <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">CD-Specific Information</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -620,7 +631,7 @@
           }
 
           <!-- 3.3: DVD SUB-FORM -->
-          @if (productForm.mediaType === 'DVD') {
+          @if (productForm.productType === 'DVD') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
               <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">DVD-Specific Information</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -658,7 +669,7 @@
           }
 
           <!-- 3.4: NEWSPAPER SUB-FORM -->
-          @if (productForm.mediaType === 'NEWSPAPER') {
+          @if (productForm.productType === 'NEWSPAPER') {
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
               <h4 class="text-sm font-bold text-gray-800 border-l-4 border-success pl-2.5">Thông tin đặc thù BÁO CHÍ</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -933,6 +944,120 @@
               Đồng ý
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- View Product Detail Modal (read-only) -->
+  @if (isViewModalOpen && viewProduct) {
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-sm p-4 flex items-start justify-center">
+      <div class="relative bg-white w-full max-w-4xl my-8 rounded-3xl border border-gray-100 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-gray-100 p-6">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-primary mb-1">{{ mediaTypeLabel(viewProduct.productType) }}</p>
+            <h3 class="text-2xl font-extrabold text-gray-900 leading-tight">{{ viewProduct.title }}</h3>
+          </div>
+          <button (click)="closeViewModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-50 p-1.5 rounded-full transition-all">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          <!-- Image -->
+          <div class="bg-gray-50 border border-gray-100 rounded-2xl p-3 h-fit">
+            <img [src]="viewProduct.imageUrl || 'https://placehold.co/400x520/e2e8f0/475569?text=AIMS'" [alt]="viewProduct.title" class="w-full aspect-[3/4] object-cover rounded-xl bg-gray-100" />
+            <div class="mt-3 flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-600">{{ viewProduct.status }}</span>
+              <span class="text-xs text-gray-400 font-medium">ID #{{ viewProduct.productID }}</span>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="space-y-6">
+            @if (viewProduct.description) {
+              <p class="text-sm text-gray-600 leading-relaxed">{{ viewProduct.description }}</p>
+            }
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+              <div><p class="text-gray-400 text-xs font-semibold uppercase">Category</p><p class="font-semibold text-gray-900">{{ viewProduct.category }}</p></div>
+              <div><p class="text-gray-400 text-xs font-semibold uppercase">Barcode</p><p class="font-semibold text-gray-900">{{ viewProduct.barcode }}</p></div>
+              <div><p class="text-gray-400 text-xs font-semibold uppercase">In Stock</p><p class="font-semibold text-gray-900">{{ viewProduct.quantityInStock }}</p></div>
+              <div><p class="text-gray-400 text-xs font-semibold uppercase">Dimensions</p><p class="font-semibold text-gray-900">{{ viewDimensions() }}</p></div>
+              <div><p class="text-gray-400 text-xs font-semibold uppercase">Weight</p><p class="font-semibold text-gray-900">{{ viewProduct.weight }} kg</p></div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-4 flex items-end gap-6">
+              <div>
+                <p class="text-xs font-semibold uppercase text-gray-400">Current Price</p>
+                <p class="text-2xl font-extrabold text-primary">{{ viewProduct.currentPrice | number:'1.0-0' }} VND</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold uppercase text-gray-400">Original Value</p>
+                <p class="text-base font-bold text-gray-500">{{ viewProduct.originalPrice | number:'1.0-0' }} VND</p>
+              </div>
+            </div>
+
+            <!-- Type-specific detail -->
+            <div class="border-t border-gray-100 pt-4">
+              <h4 class="text-sm font-bold text-gray-900 mb-3">Detailed Information</h4>
+              @if (viewProduct.productType === 'BOOK' && viewProduct.book) {
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div><dt class="text-gray-400 text-xs uppercase">Author(s)</dt><dd class="font-semibold text-gray-900">{{ viewProduct.book.authors }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Cover Type</dt><dd class="font-semibold text-gray-900">{{ viewProduct.book.coverType }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Publisher</dt><dd class="font-semibold text-gray-900">{{ viewProduct.book.publisher }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Publication Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(viewProduct.book.publicationDate) }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Pages</dt><dd class="font-semibold text-gray-900">{{ viewProduct.book.numPages || 'N/A' }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Language</dt><dd class="font-semibold text-gray-900">{{ viewProduct.book.language || 'N/A' }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Genre</dt><dd class="font-semibold text-gray-900">{{ viewProduct.book.genre || 'N/A' }}</dd></div>
+                </dl>
+              } @else if (viewProduct.productType === 'NEWSPAPER' && viewProduct.newspaper) {
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div><dt class="text-gray-400 text-xs uppercase">Editor-in-Chief</dt><dd class="font-semibold text-gray-900">{{ viewProduct.newspaper.editorInChief }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Publisher</dt><dd class="font-semibold text-gray-900">{{ viewProduct.newspaper.publisher }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Publication Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(viewProduct.newspaper.publicationDate) }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Issue Number</dt><dd class="font-semibold text-gray-900">{{ viewProduct.newspaper.issueNumber || 'N/A' }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Frequency</dt><dd class="font-semibold text-gray-900">{{ viewProduct.newspaper.frequency || 'N/A' }}</dd></div>
+                  <div class="sm:col-span-2"><dt class="text-gray-400 text-xs uppercase">Sections</dt><dd class="font-semibold text-gray-900">{{ viewProduct.newspaper.sections || 'N/A' }}</dd></div>
+                </dl>
+              } @else if (viewProduct.productType === 'CD' && viewProduct.cd) {
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
+                  <div><dt class="text-gray-400 text-xs uppercase">Artist(s)</dt><dd class="font-semibold text-gray-900">{{ viewProduct.cd.artists }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Record Label</dt><dd class="font-semibold text-gray-900">{{ viewProduct.cd.recordLabel }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Genre</dt><dd class="font-semibold text-gray-900">{{ viewProduct.cd.genre }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Release Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(viewProduct.cd.releaseDate) }}</dd></div>
+                </dl>
+                @if (viewProduct.cd.tracks?.length) {
+                  <div class="border border-gray-100 rounded-xl divide-y divide-gray-100">
+                    @for (track of viewProduct.cd.tracks; track track.id || track.title) {
+                      <div class="flex justify-between px-4 py-2.5 text-sm">
+                        <span class="font-medium text-gray-900">{{ track.title }}</span>
+                        <span class="text-gray-500">{{ trackLength(track.lengthSeconds) }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              } @else if (viewProduct.productType === 'DVD' && viewProduct.dvd) {
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div><dt class="text-gray-400 text-xs uppercase">Disc Type</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.discType }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Director</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.director }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Runtime</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.runtimeMinutes }} min</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Studio</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.studio }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Language</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.language }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Subtitles</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.subtitles }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Genre</dt><dd class="font-semibold text-gray-900">{{ viewProduct.dvd.genre || 'N/A' }}</dd></div>
+                  <div><dt class="text-gray-400 text-xs uppercase">Release Date</dt><dd class="font-semibold text-gray-900">{{ formatDate(viewProduct.dvd.releaseDate) }}</dd></div>
+                </dl>
+              } @else {
+                <p class="text-sm text-gray-400">No detailed information available.</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-100 p-5 flex justify-end">
+          <button (click)="closeViewModal()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">Close</button>
         </div>
       </div>
     </div>

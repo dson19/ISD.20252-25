@@ -10,6 +10,14 @@
       <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">User Management</h1>
       <p class="text-sm text-gray-500">Assign system roles, lock/unlock accounts, and securely reset passwords.</p>
     </div>
+    <button
+      (click)="openCreateModal()"
+      class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm hover:bg-primary-hover transition-colors focus:outline-none">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Create User
+    </button>
   </div>
 
   <!-- Dashboard Metrics Panel -->
@@ -403,6 +411,64 @@
           class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover shadow-md hover:shadow-lg text-sm font-bold text-white transition-all transform hover:-translate-y-0.5"
         >
           Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create User -->
+  <div *ngIf="isCreateModalOpen" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="relative bg-white w-full max-w-md rounded-3xl border border-gray-100 shadow-2xl p-6 transform transition-all scale-100 animate-in fade-in zoom-in duration-200">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-gray-900 leading-none">Create User</h3>
+          <p class="text-xs text-gray-400 mt-1 font-semibold">Add a new account and assign roles</p>
+        </div>
+        <button (click)="closeCreateModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-50 p-1.5 rounded-full transition-all">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 mb-6">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name</label>
+          <input type="text" [(ngModel)]="newUserForm.fullName" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. Nguyen Van A" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email</label>
+          <input type="email" [(ngModel)]="newUserForm.email" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. user@aims.com" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number <span class="text-gray-300 normal-case font-medium">(optional)</span></label>
+          <input type="text" [(ngModel)]="newUserForm.phoneNumber" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. 0901234567" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password</label>
+          <input type="password" [(ngModel)]="newUserForm.password" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="At least 6 characters" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Roles</label>
+          <div class="space-y-2">
+            @for (role of availableRoles; track role) {
+              <label class="flex items-center p-3 hover:bg-gray-50/70 border border-gray-100 hover:border-gray-200 rounded-2xl cursor-pointer transition-all">
+                <input type="checkbox" [(ngModel)]="newUserRolesMap[role]" class="h-4.5 w-4.5 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer" />
+                <span class="ml-3 text-sm font-bold text-gray-900">{{ role }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 justify-end border-t border-gray-100 pt-4">
+        <button (click)="closeCreateModal()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button
+          (click)="saveNewUser()"
+          [disabled]="isCreatingUser"
+          class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover shadow-md hover:shadow-lg text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ isCreatingUser ? 'Creating...' : 'Create User' }}
         </button>
       </div>
     </div>

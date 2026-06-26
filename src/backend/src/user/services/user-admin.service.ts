@@ -11,14 +11,7 @@ import { Role } from '../entities/role.entity';
 import { UserRepository } from '../entities/user.repository';
 import { PASSWORD_HASHER } from '../interfaces/password-hasher.interface';
 import type { IPasswordHasher } from '../interfaces/password-hasher.interface';
-
-export interface CreateUserInput {
-  email: string;
-  fullName: string;
-  phoneNumber?: string;
-  password: string;
-  roles: string[];
-}
+import { CreateUserDto } from '../dto/create-user.dto';
 
 export interface UpdateUserInput {
   email?: string;
@@ -52,17 +45,8 @@ export class UserAdminService {
     @Inject(PASSWORD_HASHER) private readonly passwordHasher: IPasswordHasher,
   ) {}
 
-  async createUser(input: CreateUserInput, performedBy: string): Promise<User> {
-    if (
-      !input.email ||
-      !input.fullName ||
-      !input.password ||
-      !Array.isArray(input.roles) ||
-      input.roles.length === 0
-    ) {
-      throw new BadRequestException('email, fullName, password, and roles are required');
-    }
-
+  async createUser(input: CreateUserDto, performedBy: string): Promise<User> {
+    // Input đã được CreateUserDto + ValidationPipe kiểm tra ở biên (controller).
     return this.dataSource.transaction(async (manager) => {
       const existing = await this.userRepository.findByEmailInTransaction(input.email, manager);
       if (existing) {
@@ -105,6 +89,14 @@ export class UserAdminService {
     );
     this.logger.log(`Returning ${result.length} user records`);
     return result;
+  }
+
+  /**
+   * Trả toàn bộ user logs (UserAuditLog) cho trang Admin Logs — gộp mọi hành động quản trị tài khoản.
+   * Functional Cohesion: nghiệp vụ quản trị; dữ liệu hoàn toàn độc lập với product logs.
+   */
+  async getUserLogs() {
+    return this.userRepository.findAllUserLogs();
   }
 
   async updateUser(userId: number, input: UpdateUserInput, performedBy: string): Promise<User> {
