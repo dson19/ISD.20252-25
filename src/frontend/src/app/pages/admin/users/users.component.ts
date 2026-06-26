@@ -149,6 +149,10 @@ export class UsersComponent implements OnInit {
     this.isCreateModalOpen = false;
   }
 
+  toggleNewRole(role: string) {
+    this.newUserRolesMap[role] = !this.newUserRolesMap[role];
+  }
+
   get selectedNewRoles(): string[] {
     return Object.keys(this.newUserRolesMap).filter((r) => this.newUserRolesMap[r]);
   }

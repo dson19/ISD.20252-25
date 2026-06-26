@@ -451,10 +451,16 @@
           <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Roles <span class="text-danger">*</span> <span class="text-gray-300 normal-case font-medium">(at least one)</span></label>
           <div class="space-y-2">
             @for (role of availableRoles; track role) {
-              <label class="flex items-center p-3 hover:bg-gray-50/70 border border-gray-100 hover:border-gray-200 rounded-2xl cursor-pointer transition-all">
-                <input type="checkbox" [(ngModel)]="newUserRolesMap[role]" class="h-4.5 w-4.5 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer" />
+              <div
+                (click)="toggleNewRole(role)"
+                class="flex items-center p-3 border rounded-2xl cursor-pointer transition-all select-none"
+                [class.bg-blue-50]="newUserRolesMap[role]"
+                [class.border-blue-200]="newUserRolesMap[role]"
+                [class.border-gray-100]="!newUserRolesMap[role]"
+                [class.hover:bg-gray-50]="!newUserRolesMap[role]">
+                <input type="checkbox" [checked]="!!newUserRolesMap[role]" class="h-4 w-4 text-primary border-gray-300 rounded pointer-events-none" />
                 <span class="ml-3 text-sm font-bold text-gray-900">{{ role }}</span>
-              </label>
+              </div>
             }
           </div>
         </div>
