@@ -1,7 +1,7 @@
 import { Body, Controller, Headers, Post, UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { VietqrCallbackDto } from '../dto/vietqr-callback.dto';
-import { VietqrPaymentService } from '../services/vietqr-payment.service';
+import { PaymentService } from '../services/payment.service';
 
 /**
  * Lab 11 Design Review
@@ -19,7 +19,7 @@ import { VietqrPaymentService } from '../services/vietqr-payment.service';
  */
 @Controller('vqr')
 export class VietqrMerchantController {
-  constructor(private readonly vietqrPaymentService: VietqrPaymentService) {}
+  constructor(private readonly paymentService: PaymentService) {}
 
   @Post('api/token_generate')
   generateToken(@Headers('authorization') authorization?: string) {
@@ -44,7 +44,7 @@ export class VietqrMerchantController {
   }
 
   private async processTransactionPayload(payload: Record<string, unknown>) {
-    return await this.vietqrPaymentService.handleCallback(this.toCallbackDto(payload));
+    return await this.paymentService.handleQrCallback(this.toCallbackDto(payload));
   }
 
   private validateBasicAuth(authorization?: string): void {

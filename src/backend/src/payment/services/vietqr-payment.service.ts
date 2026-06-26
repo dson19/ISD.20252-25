@@ -1,126 +1,107 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Order } from '../../order/entities/order.entity';
-import { CreateVietqrPaymentDto } from '../dto/create-vietqr-payment.dto';
 import { VietqrCallbackDto } from '../dto/vietqr-callback.dto';
 import { VietqrTransaction } from '../entities/vietqr-transaction.entity';
-import { PaymentRepository } from '../repositories/payment.repository';
 import { VietqrApiClient } from '../API/vietqr-api.client';
 import { VietqrRepository } from '../repositories/vietqr.repository';
-import { NotificationEventBus } from '../../notification/events/notification-event-bus';
-
-export interface VietqrPaymentResponse {
-  paymentId: number;
-  orderId: number;
-  amount: number;
-  transactionRef: string | null;
-  content: string;
-  paymentContent: string;
-  qrCode: string | null;
-  qrLink: string | null;
-  expiredAt: Date;
-  status: 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED';
-  bankCode?: string;
-  bankAccount?: string;
-  bankAccountName?: string;
-}
-
-export interface VietqrCallbackResult {
-  status: 'SUCCESS';
-  message: 'Callback processed' | 'Callback already processed';
-  paymentId: number;
-}
+import {
+  IPaymentQRCode,
+  QrCallbackResult,
+  QrStatusResult,
+  VietqrPaymentResponse,
+} from '../interfaces/payment-qrcode.interface';
 
 /**
  * + Coupling/Cohesion level:
- *   - Data Coupling: Interacts with VietqrRepository and PaymentRepository passing primitive parameters.
- *   - Procedural Cohesion: Orchestrates order status validation, requesting dynamic QR code, and writing transaction logs in sequence.
- *   - Sequential Cohesion: Receives raw webhook callback, parses callback payload, validates transaction reference, updates status, and maps result.
- * + Reason why:
- *   - Bundling state transitions, validations, and callback sync logic keeps the payment process transactional, safe, and easily testable.
+ *   - Data Coupling: Trao đổi tham số nguyên thủy với VietqrRepository và VietqrApiClient.
+ *   - Functional Cohesion: CHỈ lo việc đặc thù cổng VietQR — gọi VietQR API, ghi VietqrTransaction
+ *     (kho riêng của cổng) và xác thực callback ngân hàng. KHÔNG đụng PaymentTransaction (bảng chung)
+ *     / Order / notification — những việc đó do PaymentService điều phối.
+ *
+ * + SOLID Principles Review:
+ *   - SRP Adherence: Adapter cổng thuần cho modality QR. Vòng đời PaymentTransaction + cập nhật Order
+ *     + publish do PaymentService lo.
+ *   - ISP Adherence: implements IPaymentQRCode — interface riêng (không capture, không refund tự động),
+ *     không bị ép theo luồng thẻ tín dụng.
  */
 @Injectable()
-export class VietqrPaymentService {
+export class VietqrPaymentService implements IPaymentQRCode {
+  readonly method = 'VIETQR';
+
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-    private readonly paymentRepository: PaymentRepository,
     private readonly vietqrRepository: VietqrRepository,
     private readonly vietqrApiClient: VietqrApiClient,
-    private readonly notificationEventBus: NotificationEventBus,
   ) { }
 
-  async createPayment(dto: CreateVietqrPaymentDto): Promise<VietqrPaymentResponse> {
-    this.validateOrderIdForVietqr(dto.orderId);
-    const amount = Math.round(dto.amount);
-    this.validateAmount(amount);
-    const content = this.validateAndNormalizeContent(dto.content);
-
-    const order = await this.orderRepository.findOne({
-      select: { orderID: true },
-      where: { orderID: dto.orderId },
-    });
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${dto.orderId} not found`);
+  /** Tìm giao dịch QR đang chờ tái dùng được (cùng order + amount) để PaymentService khỏi tạo tx trùng. */
+  async findReusablePending(orderId: number, amount: number): Promise<VietqrPaymentResponse | null> {
+    const normalizedAmount = Math.round(amount);
+    const existingPending = await this.vietqrRepository.findPendingByOrderAndAmount(orderId, normalizedAmount);
+    if (!existingPending) {
+      return null;
     }
-
-    // Check if there is an existing pending, non-expired VietQR transaction for this order and amount
-    const existingPending = await this.vietqrRepository.findPendingByOrderAndAmount(dto.orderId, amount);
-    if (existingPending) {
-      return this.toPaymentResponse(existingPending, existingPending.paymentTransaction.transactionID);
-    }
-
-    const paymentTransaction = await this.paymentRepository.createTransaction(dto.orderId, amount, 'VIETQR', content);
-    try {
-      const qrResponse = await this.vietqrApiClient.generateQrCode({
-        orderId: String(dto.orderId),
-        amount,
-        content,
-      });
-      const expiredAt = this.calculateExpiredAt();
-
-      const vietqrTransaction = await this.vietqrRepository.createVietqrTransaction({
-        paymentTransactionId: paymentTransaction.transactionID,
-        orderId: dto.orderId,
-        amount,
-        content,
-        qrCode: qrResponse.qrCode,
-        qrLink: qrResponse.qrLink,
-        transactionId: qrResponse.transactionId,
-        transactionRefId: qrResponse.transactionRefId,
-        expiredAt,
-      });
-
-      return this.toPaymentResponse(vietqrTransaction, paymentTransaction.transactionID);
-    } catch (error) {
-      await this.paymentRepository.updateTransactionStatusIfCurrent(
-        paymentTransaction.transactionID,
-        'PENDING',
-        'FAILED',
-      );
-      throw error;
-    }
+    return this.toPaymentResponse(existingPending, existingPending.paymentTransaction.transactionID);
   }
 
-  async getStatusByPaymentId(paymentId: number): Promise<VietqrPaymentResponse> {
+  async createPayment(
+    orderId: number,
+    amount: number,
+    content: string,
+    paymentTransactionId: number,
+  ): Promise<VietqrPaymentResponse> {
+    this.validateOrderIdForVietqr(orderId);
+    const normalizedAmount = Math.round(amount);
+    this.validateAmount(normalizedAmount);
+    const normalizedContent = this.validateAndNormalizeContent(content);
+
+    const qrResponse = await this.vietqrApiClient.generateQrCode({
+      orderId: String(orderId),
+      amount: normalizedAmount,
+      content: normalizedContent,
+    });
+    const expiredAt = this.calculateExpiredAt();
+
+    const vietqrTransaction = await this.vietqrRepository.createVietqrTransaction({
+      paymentTransactionId,
+      orderId,
+      amount: normalizedAmount,
+      content: normalizedContent,
+      qrCode: qrResponse.qrCode,
+      qrLink: qrResponse.qrLink,
+      transactionId: qrResponse.transactionId,
+      transactionRefId: qrResponse.transactionRefId,
+      expiredAt,
+    });
+
+    return this.toPaymentResponse(vietqrTransaction, paymentTransactionId);
+  }
+
+  async getStatusByPaymentId(paymentId: number): Promise<QrStatusResult> {
     const vietqrTransaction = await this.vietqrRepository.findByPaymentTransactionId(paymentId);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR payment ${paymentId} was not found`);
     }
 
-    await this.expireIfNeeded(vietqrTransaction);
-    return this.toPaymentResponse(vietqrTransaction, paymentId);
+    const expired = await this.expireIfNeeded(vietqrTransaction);
+    return {
+      response: this.toPaymentResponse(vietqrTransaction, paymentId),
+      expired,
+      paymentTransactionId: paymentId,
+    };
   }
 
-  async getStatusByTransactionRef(transactionRef: string): Promise<VietqrPaymentResponse> {
+  async getStatusByTransactionRef(transactionRef: string): Promise<QrStatusResult> {
     const vietqrTransaction = await this.vietqrRepository.findByTransactionRefId(transactionRef);
     if (!vietqrTransaction) {
       throw new NotFoundException(`VietQR transaction reference ${transactionRef} was not found`);
     }
 
-    await this.expireIfNeeded(vietqrTransaction);
-    return this.toPaymentResponse(vietqrTransaction, vietqrTransaction.paymentTransaction.transactionID);
+    const expired = await this.expireIfNeeded(vietqrTransaction);
+    const paymentTransactionId = vietqrTransaction.paymentTransaction.transactionID;
+    return {
+      response: this.toPaymentResponse(vietqrTransaction, paymentTransactionId),
+      expired,
+      paymentTransactionId,
+    };
   }
 
   async triggerTestCallback(paymentId: number): Promise<{ status: string }> {
@@ -148,7 +129,11 @@ export class VietqrPaymentService {
     return { status: 'SUCCESS' };
   }
 
-  async handleCallback(dto: VietqrCallbackDto): Promise<VietqrCallbackResult> {
+  /**
+   * Xác thực + đánh dấu giao dịch QR đã trả (việc đặc thù cổng). KHÔNG đụng PaymentTransaction / Order /
+   * notification — trả cờ `changed` để PaymentService quyết định hệ quả (onPaymentConfirmed).
+   */
+  async handleCallback(dto: VietqrCallbackDto): Promise<QrCallbackResult> {
     if (dto.transType !== 'C') {
       throw new BadRequestException('Only credit VietQR callbacks can mark a payment as paid');
     }
@@ -156,12 +141,10 @@ export class VietqrPaymentService {
     const vietqrTransaction = await this.findCallbackTarget(dto);
     this.validateCallback(vietqrTransaction, dto);
 
+    const paymentTransactionId = vietqrTransaction.paymentTransaction.transactionID;
+
     if (vietqrTransaction.status === 'PAID') {
-      return {
-        status: 'SUCCESS',
-        message: 'Callback already processed',
-        paymentId: vietqrTransaction.paymentTransaction.transactionID,
-      };
+      return { changed: false, paymentTransactionId, orderId: vietqrTransaction.orderId, message: 'Callback already processed' };
     }
 
     if (vietqrTransaction.status !== 'PENDING') {
@@ -177,26 +160,11 @@ export class VietqrPaymentService {
       rawCallback: this.sanitizeCallback(dto),
     });
 
-    if (changed) {
-      await this.paymentRepository.updateTransactionStatusIfCurrent(
-        vietqrTransaction.paymentTransaction.transactionID,
-        'PENDING',
-        'SUCCESS',
-      );
-      await this.orderRepository.update(vietqrTransaction.orderId, {
-        status: 'PENDING_PROCESSING',
-      });
-      this.notificationEventBus.publish({
-        type: 'ORDER_PAYMENT_SUCCEEDED',
-        orderId: vietqrTransaction.orderId,
-        paymentTransactionId: vietqrTransaction.paymentTransaction.transactionID,
-      });
-    }
-
     return {
-      status: 'SUCCESS',
+      changed,
+      paymentTransactionId,
+      orderId: vietqrTransaction.orderId,
       message: changed ? 'Callback processed' : 'Callback already processed',
-      paymentId: vietqrTransaction.paymentTransaction.transactionID,
     };
   }
 
@@ -250,18 +218,18 @@ export class VietqrPaymentService {
     }
   }
 
-  private async expireIfNeeded(vietqrTransaction: VietqrTransaction): Promise<void> {
+  /**
+   * Đánh dấu giao dịch QR hết hạn (việc đặc thù cổng). Trả `true` nếu vừa chuyển sang EXPIRED để
+   * PaymentService cập nhật PaymentTransaction → FAILED. KHÔNG tự đụng bảng chung.
+   */
+  private async expireIfNeeded(vietqrTransaction: VietqrTransaction): Promise<boolean> {
     if (vietqrTransaction.status !== 'PENDING' || vietqrTransaction.expiredAt.getTime() > Date.now()) {
-      return;
+      return false;
     }
 
     await this.vietqrRepository.markExpired(vietqrTransaction.vietqrTransactionID);
-    await this.paymentRepository.updateTransactionStatusIfCurrent(
-      vietqrTransaction.paymentTransaction.transactionID,
-      'PENDING',
-      'FAILED',
-    );
     vietqrTransaction.status = 'EXPIRED';
+    return true;
   }
 
   private validateOrderIdForVietqr(orderId: number): void {

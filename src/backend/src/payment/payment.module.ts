@@ -17,10 +17,9 @@ import { VietqrPaymentService } from './services/vietqr-payment.service';
 import { VietqrRepository } from './repositories/vietqr.repository';
 import { PaypalApiClient } from './API/paypal-api-client';
 import { NotificationModule } from '../notification/notification.module';
-import { PaypalAdapter } from './adapters/paypal-adapter';
-import { VietqrAdapter } from './adapters/vietqr-adapter';
 import { PaymentService } from './services/payment.service';
-import { PAYMENT_ADAPTERS } from './interfaces/payment-adapter.interface';
+import { PAYMENT_CREDIT_CARD } from './interfaces/payment-creditcard.interface';
+import { PAYMENT_QR_CODE } from './interfaces/payment-qrcode.interface';
 import { PAYMENT_SERVICE } from './interfaces/payment-service.interface';
 
 @Module({
@@ -38,15 +37,10 @@ import { PAYMENT_SERVICE } from './interfaces/payment-service.interface';
     VietqrRepository,
     VietqrApiClient,
     VietqrPaymentService,
-    PaypalAdapter,
-    VietqrAdapter,
-    // OCP: register every adapter under one token so PaymentService discovers them dynamically.
-    // Adding a gateway (VNPay/MoMo) = add its adapter here, no change to PaymentService.
-    {
-      provide: PAYMENT_ADAPTERS,
-      useFactory: (paypal: PaypalAdapter, vietqr: VietqrAdapter) => [paypal, vietqr],
-      inject: [PaypalAdapter, VietqrAdapter],
-    },
+    // DIP + ISP: PaymentService phụ thuộc 2 abstraction theo modality (thẻ tín dụng / QR) thay cho
+    // adapter chung. Thêm cổng cùng modality = trỏ token sang implementation mới, PaymentService không đổi.
+    { provide: PAYMENT_CREDIT_CARD, useExisting: PaypalService },
+    { provide: PAYMENT_QR_CODE, useExisting: VietqrPaymentService },
     PaymentService,
     // DIP: expose PaymentService dưới abstraction IPaymentService cho OrderService inject.
     { provide: PAYMENT_SERVICE, useExisting: PaymentService },
@@ -59,8 +53,6 @@ import { PAYMENT_SERVICE } from './interfaces/payment-service.interface';
     VietqrRepository,
     VietqrApiClient,
     VietqrPaymentService,
-    PaypalAdapter,
-    VietqrAdapter,
     PaymentService,
     PAYMENT_SERVICE,
   ],
