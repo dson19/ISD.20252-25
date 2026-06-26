@@ -3,7 +3,6 @@ import {
   IsArray,
   IsEmail,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
@@ -24,9 +23,9 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'fullName không được để trống' })
   fullName: string;
 
-  @IsOptional()
   @IsString()
-  phoneNumber?: string;
+  @IsNotEmpty({ message: 'phoneNumber không được để trống' })
+  phoneNumber: string;
 
   @IsString()
   @MinLength(6, { message: 'password tối thiểu 6 ký tự' })

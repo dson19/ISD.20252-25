@@ -149,14 +149,29 @@ export class UsersComponent implements OnInit {
     this.isCreateModalOpen = false;
   }
 
+  get selectedNewRoles(): string[] {
+    return Object.keys(this.newUserRolesMap).filter((r) => this.newUserRolesMap[r]);
+  }
+
+  get canCreateUser(): boolean {
+    return (
+      !!this.newUserForm.email.trim() &&
+      !!this.newUserForm.fullName.trim() &&
+      !!this.newUserForm.phoneNumber.trim() &&
+      this.newUserForm.password.length >= 6 &&
+      this.selectedNewRoles.length > 0
+    );
+  }
+
   saveNewUser() {
     const email = this.newUserForm.email.trim();
     const fullName = this.newUserForm.fullName.trim();
+    const phoneNumber = this.newUserForm.phoneNumber.trim();
     const password = this.newUserForm.password;
-    const roles = Object.keys(this.newUserRolesMap).filter((r) => this.newUserRolesMap[r]);
+    const roles = this.selectedNewRoles;
 
-    if (!email || !fullName || !password) {
-      this.showAlert('Warning', 'Please fill in email, full name and password', 'warning');
+    if (!email || !fullName || !phoneNumber || !password) {
+      this.showAlert('Warning', 'Please fill in all fields (email, full name, phone number, password)', 'warning');
       return;
     }
     if (password.length < 6) {
@@ -171,7 +186,7 @@ export class UsersComponent implements OnInit {
     const payload: CreateUserPayload = {
       email,
       fullName,
-      phoneNumber: this.newUserForm.phoneNumber.trim() || undefined,
+      phoneNumber,
       password,
       roles,
     };

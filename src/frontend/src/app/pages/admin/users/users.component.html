@@ -417,8 +417,8 @@
   </div>
 
   <!-- MODAL: Create User -->
-  <div *ngIf="isCreateModalOpen" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-all duration-300">
-    <div class="relative bg-white w-full max-w-md rounded-3xl border border-gray-100 shadow-2xl p-6 transform transition-all scale-100 animate-in fade-in zoom-in duration-200">
+  <div *ngIf="isCreateModalOpen" class="fixed inset-0 z-50 overflow-y-auto flex items-start justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="relative bg-white w-full max-w-md my-8 max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-100 shadow-2xl p-6 transform transition-all scale-100 animate-in fade-in zoom-in duration-200">
       <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
         <div>
           <h3 class="text-lg font-extrabold text-gray-900 leading-none">Create User</h3>
@@ -431,24 +431,24 @@
 
       <div class="space-y-4 mb-6">
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name</label>
-          <input type="text" [(ngModel)]="newUserForm.fullName" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. Nguyen Van A" />
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name <span class="text-danger">*</span></label>
+          <input type="text" required [(ngModel)]="newUserForm.fullName" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. Nguyen Van A" />
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email</label>
-          <input type="email" [(ngModel)]="newUserForm.email" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. user@aims.com" />
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email <span class="text-danger">*</span></label>
+          <input type="email" required [(ngModel)]="newUserForm.email" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. user@aims.com" />
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number <span class="text-gray-300 normal-case font-medium">(optional)</span></label>
-          <input type="text" [(ngModel)]="newUserForm.phoneNumber" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. 0901234567" />
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number <span class="text-danger">*</span></label>
+          <input type="text" required [(ngModel)]="newUserForm.phoneNumber" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="e.g. 0901234567" />
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password</label>
-          <input type="password" [(ngModel)]="newUserForm.password" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="At least 6 characters" />
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password <span class="text-danger">*</span></label>
+          <input type="password" required [(ngModel)]="newUserForm.password" class="block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-primary focus:border-primary font-medium" placeholder="At least 6 characters" />
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Roles</label>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Roles <span class="text-danger">*</span> <span class="text-gray-300 normal-case font-medium">(at least one)</span></label>
           <div class="space-y-2">
             @for (role of availableRoles; track role) {
               <label class="flex items-center p-3 hover:bg-gray-50/70 border border-gray-100 hover:border-gray-200 rounded-2xl cursor-pointer transition-all">
@@ -466,7 +466,7 @@
         </button>
         <button
           (click)="saveNewUser()"
-          [disabled]="isCreatingUser"
+          [disabled]="isCreatingUser || !canCreateUser"
           class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover shadow-md hover:shadow-lg text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
           {{ isCreatingUser ? 'Creating...' : 'Create User' }}
         </button>
